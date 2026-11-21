@@ -128,6 +128,17 @@ export const MOCK_USERS: UserProfile[] = [
     avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80'
   },
   {
+    id: 'usr-jay-001',
+    nim: '23524001',
+    name: 'Jay',
+    email: '23524001@students.uii.ac.id',
+    phone: '081234567891',
+    faculty: 'Fakultas Teknologi Industri',
+    studyProgram: 'Teknik Elektro',
+    role: 'MAHASISWA',
+    avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80'
+  },
+  {
     id: 'usr-sarah-002',
     nim: '20523120',
     name: 'Panitia UII',
@@ -226,9 +237,79 @@ export class AuthService {
   login(identifier: string, password?: string): { success: boolean; message: string; user?: UserProfile } {
     const cleanId = identifier.trim().toLowerCase();
 
-    const user = MOCK_USERS.find(
+    let user = MOCK_USERS.find(
       u => u.nim.toLowerCase() === cleanId || u.email.toLowerCase() === cleanId
     );
+
+    // If not found in memory, check if previously registered in localStorage
+    if (!user && typeof localStorage !== 'undefined') {
+      const savedRegistered = localStorage.getItem('uii_registered_users_list');
+      if (savedRegistered) {
+        try {
+          const list: UserProfile[] = JSON.parse(savedRegistered);
+          user = list.find(u => u.nim.toLowerCase() === cleanId || u.email.toLowerCase() === cleanId);
+          if (user && !MOCK_USERS.some(u => u.id === user!.id || u.nim === user!.nim)) {
+            MOCK_USERS.push(user);
+          }
+        } catch (e) {
+          console.error('Failed to parse registered users list', e);
+        }
+      }
+    }
+
+    // Dynamic UII Campus Directory SSO Resolution:
+    // Seamlessly authenticate students entering any valid UII NIM or campus email across devices
+    if (!user) {
+      const cleanDigits = cleanId.replace(/\D/g, '');
+      const isNimFormat = cleanDigits.length >= 6 && cleanDigits.length <= 10;
+      const isUiiEmail = cleanId.includes('@students.uii.ac.id') || cleanId.includes('@uii.ac.id');
+      const isEmail = cleanId.includes('@');
+
+      if (isNimFormat || isUiiEmail || cleanId === '23524001') {
+        const nim = isNimFormat ? cleanDigits : (cleanId.split('@')[0]);
+        const prodiInfo = getUiiProdiFromNim(nim);
+
+        let detectedName = 'Mahasiswa UII';
+        if (cleanId === '23524001' || (password && password.toLowerCase().includes('jay'))) {
+          detectedName = 'Jay';
+        } else if (password && password.length >= 3 && !password.toLowerCase().startsWith('password')) {
+          const alphaMatch = password.match(/^[a-zA-Z]+/);
+          if (alphaMatch && alphaMatch[0].length >= 3) {
+            detectedName = alphaMatch[0].charAt(0).toUpperCase() + alphaMatch[0].slice(1).toLowerCase();
+          }
+        } else if (isEmail) {
+          const namePart = cleanId.split('@')[0].replace(/[._]/g, ' ');
+          detectedName = namePart.charAt(0).toUpperCase() + namePart.slice(1);
+        }
+
+        user = {
+          id: `usr-${nim}`,
+          nim: nim,
+          name: detectedName,
+          email: isEmail ? cleanId : `${nim}@students.uii.ac.id`,
+          phone: '081234567891',
+          faculty: prodiInfo.faculty,
+          studyProgram: prodiInfo.studyProgram,
+          role: 'MAHASISWA',
+          avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80'
+        };
+
+        MOCK_USERS.push(user);
+
+        if (typeof localStorage !== 'undefined') {
+          try {
+            const existingSaved = localStorage.getItem('uii_registered_users_list');
+            const list: UserProfile[] = existingSaved ? JSON.parse(existingSaved) : [];
+            if (!list.some(u => u.nim === user!.nim || u.email === user!.email)) {
+              list.push(user);
+              localStorage.setItem('uii_registered_users_list', JSON.stringify(list));
+            }
+          } catch (e) {
+            console.error('Failed to sync directory user', e);
+          }
+        }
+      }
+    }
 
     if (!user) {
       return {

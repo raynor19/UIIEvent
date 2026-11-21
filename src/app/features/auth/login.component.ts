@@ -70,6 +70,12 @@ export class LoginComponent implements OnInit, OnDestroy {
       avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80'
     },
     {
+      name: 'Jay',
+      email: '23524001@students.uii.ac.id',
+      role: 'Mahasiswa (Teknik Elektro)',
+      avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80'
+    },
+    {
       name: 'Sarah Nabila',
       email: 'sarah.nabila@lem.uii.ac.id',
       role: 'Panitia Ormawa',
