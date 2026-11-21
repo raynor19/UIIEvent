@@ -1,60 +1,84 @@
-<div class="min-h-screen bg-slate-50 flex flex-row font-sans text-slate-800 antialiased selection:bg-blue-100">
+<div class="min-h-screen bg-slate-50 flex flex-col md:flex-row font-sans text-slate-800 antialiased selection:bg-blue-100">
 
-  <!-- ================= SIDEBAR (SLIM ICON RAIL ON MOBILE, FULL ON LAPTOP) ================= -->
+  <!-- ================= MOBILE HEADER (< 768px) ================= -->
+  <header class="md:hidden bg-[#0B1E3B] text-white px-4 py-3 flex items-center justify-between sticky top-0 z-40 border-b border-slate-800 shadow-md">
+    <div class="flex items-center gap-2.5">
+      <div class="w-8 h-8 rounded-lg bg-white p-1 flex items-center justify-center shadow-xs">
+        <img src="/assets/images/logo-uii.png" alt="UII" class="h-full w-auto object-contain" />
+      </div>
+      <div>
+        <span class="font-extrabold text-base tracking-tight leading-none block">UIIEvent</span>
+        <span class="text-[10px] text-blue-200">DPK Super Admin</span>
+      </div>
+    </div>
+    <button 
+      (click)="isMobileMenuOpen.set(!isMobileMenuOpen())"
+      class="p-2 rounded-lg bg-white/10 text-white hover:bg-white/20 transition cursor-pointer"
+      aria-label="Toggle navigation menu">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        @if (isMobileMenuOpen()) {
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        } @else {
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+        }
+      </svg>
+    </button>
+  </header>
+
+  <!-- ================= SIDEBAR (DESKTOP & MOBILE DRAWER) ================= -->
   <aside 
-    class="w-14 sm:w-16 md:w-60 bg-[#0B1E3B] text-white shrink-0 flex flex-col justify-between z-30 sticky top-0 h-screen min-h-screen border-r border-[#152B4D] py-4 px-1.5 sm:px-2 md:p-5 select-none">
+    [class.hidden]="!isMobileMenuOpen()"
+    class="w-full md:w-60 bg-[#0B1E3B] text-white shrink-0 flex flex-col justify-between z-30 transition-all duration-200 md:flex border-r border-[#152B4D]">
     
     <!-- Top Brand & Navigation Links -->
-    <div>
+    <div class="p-5">
       <!-- Brand Logo matching SCR-ADM-01 & SCR-ADM-02 handoffs -->
-      <div class="flex items-center justify-center md:justify-start gap-3 mb-6 md:mb-8 cursor-pointer" title="UIIEvent DPK Super Admin">
-        <div class="w-9 h-9 rounded-xl bg-white p-1.5 flex items-center justify-center shadow-xs shrink-0">
+      <div class="hidden md:flex items-center gap-3 mb-8">
+        <div class="w-9 h-9 rounded-xl bg-white p-1.5 flex items-center justify-center shadow-xs">
           <img src="/assets/images/logo-uii.png" alt="UII" class="h-full w-auto object-contain" />
         </div>
-        <span class="text-xl font-extrabold text-white tracking-tight hidden md:inline">UIIEvent</span>
+        <span class="text-xl font-extrabold text-white tracking-tight">UIIEvent</span>
       </div>
 
       <!-- Navigation Items -->
-      <nav class="space-y-2 md:space-y-1.5">
+      <nav class="space-y-1.5">
         <button 
           type="button"
           (click)="switchNav('CURATION')"
-          title="Kurasi & Approval Acara"
-          class="w-full flex items-center justify-center md:justify-start gap-3 p-2.5 md:px-3.5 md:py-2.5 rounded-xl font-medium text-sm transition cursor-pointer text-left"
+          class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm transition cursor-pointer text-left"
           [class.bg-[#1E3A63]]="activeNav() === 'CURATION'"
           [class.text-white]="activeNav() === 'CURATION'"
           [class.text-slate-300]="activeNav() !== 'CURATION'"
           [class.hover:text-white]="activeNav() !== 'CURATION'"
           [class.hover:bg-white/5]="activeNav() !== 'CURATION'">
           <!-- Checkmark Shield Icon -->
-          <svg class="w-5 h-5 md:w-4 md:h-4 text-blue-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
           </svg>
-          <span class="hidden md:inline">Kurasi & Approval</span>
+          <span>Kurasi & Approval</span>
         </button>
 
         <button 
           type="button"
           (click)="switchNav('LOGS')"
-          title="Log Notifikasi & Omnichannel"
-          class="w-full flex items-center justify-center md:justify-start gap-3 p-2.5 md:px-3.5 md:py-2.5 rounded-xl font-medium text-sm transition cursor-pointer text-left"
+          class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm transition cursor-pointer text-left"
           [class.bg-[#1E3A63]]="activeNav() === 'LOGS'"
           [class.text-white]="activeNav() === 'LOGS'"
           [class.text-slate-300]="activeNav() !== 'LOGS'"
           [class.hover:text-white]="activeNav() !== 'LOGS'"
           [class.hover:bg-white/5]="activeNav() !== 'LOGS'">
           <!-- Paper plane / Send telegram icon -->
-          <svg class="w-5 h-5 md:w-4 md:h-4 shrink-0" [class.text-blue-400]="activeNav() === 'LOGS'" [class.text-slate-400]="activeNav() !== 'LOGS'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-4 h-4" [class.text-blue-400]="activeNav() === 'LOGS'" [class.text-slate-400]="activeNav() !== 'LOGS'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
           </svg>
-          <span class="hidden md:inline">Log Notifikasi</span>
+          <span>Log Notifikasi</span>
         </button>
       </nav>
     </div>
 
     <!-- Bottom User Profile Area -->
-    <div class="border-t border-[#152B4D]/80 pt-3 md:p-5 -mx-1.5 sm:-mx-2 md:mx-0">
-      <div class="mb-4 hidden md:block">
+    <div class="p-5 border-t border-[#152B4D]/80">
+      <div class="mb-4">
         <p class="font-bold text-white text-sm leading-tight">DPK UII</p>
         <p class="text-[11px] text-slate-400 leading-tight mt-0.5">dpk.admin@uii.ac.id · Super Admin</p>
       </div>
@@ -62,18 +86,17 @@
       <button 
         type="button" 
         (click)="logout()"
-        title="Keluar dari sesi DPK"
-        class="w-full flex items-center justify-center md:justify-start gap-2.5 text-xs text-slate-300 hover:text-white transition py-1 cursor-pointer">
-        <svg class="w-5 h-5 md:w-4 md:h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        class="w-full flex items-center gap-2.5 text-xs text-slate-300 hover:text-white transition py-1 cursor-pointer">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
         </svg>
-        <span class="hidden md:inline">Keluar</span>
+        <span>Keluar</span>
       </button>
     </div>
   </aside>
 
   <!-- ================= MAIN CONTENT AREA ================= -->
-  <main class="flex-1 min-w-0 p-3 sm:p-6 lg:p-8 overflow-y-auto">
+  <main class="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
     <div class="max-w-[1320px] mx-auto space-y-6">
 
       <!-- ================= GLOBAL ACTION TOAST NOTIFICATION ================= -->

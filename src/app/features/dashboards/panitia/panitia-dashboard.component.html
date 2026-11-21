@@ -1,84 +1,133 @@
-<div class="min-h-screen bg-[#F8FAFC] flex flex-row antialiased font-sans text-slate-800">
+<div class="min-h-screen bg-[#F8FAFC] flex flex-col md:flex-row antialiased font-sans text-slate-800">
 
-  <!-- ================= SIDEBAR (SLIM ICON RAIL ON MOBILE, FULL ON LAPTOP) ================= -->
-  <aside class="flex flex-col w-14 sm:w-16 md:w-64 bg-[#0B1E3B] text-white shrink-0 min-h-screen sticky top-0 h-screen justify-between border-r border-[#152e54] z-30 select-none py-4 px-1.5 sm:px-2 md:p-6">
+  <!-- ================= DESKTOP DEEP NAVY SIDEBAR ================= -->
+  <aside class="hidden md:flex flex-col w-64 bg-[#0B1E3B] text-white shrink-0 min-h-screen sticky top-0 h-screen justify-between border-r border-[#152e54] z-30 select-none">
     
     <!-- Top Branding & Navigation -->
-    <div>
+    <div class="p-6">
       <!-- Brand Logo / Title -->
-      <div class="flex items-center justify-center md:justify-start gap-3 mb-6 md:mb-8 cursor-pointer" (click)="openDashboard()" title="UIIEvent Panitia">
-        <div class="w-9 h-9 rounded-xl bg-white p-1.5 flex items-center justify-center shadow-xs shrink-0">
+      <div class="flex items-center gap-3 mb-8 cursor-pointer" (click)="openDashboard()">
+        <div class="w-9 h-9 rounded-xl bg-white p-1.5 flex items-center justify-center shadow-xs">
           <img src="/assets/images/logo-uii.png" alt="UII" class="h-full w-auto object-contain" />
         </div>
-        <span class="text-xl font-bold tracking-tight text-white hidden md:inline">UIIEvent</span>
+        <span class="text-xl font-bold tracking-tight text-white">UIIEvent</span>
       </div>
 
-      <!-- Navigation Links (Matching Laptop Web Exactly: Dashboard, Acara Saya, Buat Acara) -->
-      <nav class="space-y-2 md:space-y-1.5">
+      <!-- Navigation Links -->
+      <nav class="space-y-1.5">
         <button 
           type="button" 
           (click)="openDashboard()"
-          title="Dashboard Acara"
           [class.bg-[#1E3A63]]="activeView() === 'DASHBOARD'"
           [class.text-white]="activeView() === 'DASHBOARD'"
           [class.text-slate-300]="activeView() !== 'DASHBOARD'"
-          class="w-full flex items-center justify-center md:justify-start gap-3 p-2.5 md:px-3.5 md:py-2.5 rounded-xl md:rounded-lg text-sm font-semibold hover:bg-[#183258] hover:text-white transition cursor-pointer text-left">
-          <svg class="w-5 h-5 text-blue-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-semibold hover:bg-[#183258] hover:text-white transition cursor-pointer text-left">
+          <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
           </svg>
-          <span class="hidden md:inline">Dashboard</span>
+          <span>Dashboard</span>
         </button>
 
         <button 
           type="button" 
           (click)="openAcaraSaya()"
-          title="Acara Saya (Rekap & Seleksi)"
           [class.bg-[#1E3A63]]="activeView() === 'REKAP_PESERTA' || activeView() === 'SELEKSI_OPREC'"
           [class.text-white]="activeView() === 'REKAP_PESERTA' || activeView() === 'SELEKSI_OPREC'"
           [class.text-slate-300]="activeView() !== 'REKAP_PESERTA' && activeView() !== 'SELEKSI_OPREC'"
-          class="w-full flex items-center justify-center md:justify-start gap-3 p-2.5 md:px-3.5 md:py-2.5 rounded-xl md:rounded-lg text-sm font-semibold hover:bg-[#183258] hover:text-white transition cursor-pointer text-left">
-          <svg class="w-5 h-5 shrink-0" [class.text-blue-400]="activeView() === 'REKAP_PESERTA' || activeView() === 'SELEKSI_OPREC'" [class.text-slate-400]="activeView() !== 'REKAP_PESERTA' && activeView() !== 'SELEKSI_OPREC'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-semibold hover:bg-[#183258] hover:text-white transition cursor-pointer text-left">
+          <svg class="w-5 h-5" [class.text-blue-400]="activeView() === 'REKAP_PESERTA' || activeView() === 'SELEKSI_OPREC'" [class.text-slate-400]="activeView() !== 'REKAP_PESERTA' && activeView() !== 'SELEKSI_OPREC'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
-          <span class="hidden md:inline">Acara Saya</span>
+          <span>Acara Saya</span>
         </button>
 
         <button 
           type="button" 
           (click)="openCreateWizard(false)"
-          title="Buat Acara Baru"
           [class.bg-[#1E3A63]]="activeView() === 'CREATE'"
           [class.text-white]="activeView() === 'CREATE'"
-          class="w-full flex items-center justify-center md:justify-start gap-3 p-2.5 md:px-3.5 md:py-2.5 rounded-xl md:rounded-lg text-sm font-medium text-slate-300 hover:bg-[#183258] hover:text-white transition cursor-pointer text-left">
-          <svg class="w-5 h-5 text-amber-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-[#183258] hover:text-white transition cursor-pointer text-left">
+          <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
           </svg>
-          <span class="hidden md:inline">Buat Acara</span>
+          <span>Buat Acara</span>
         </button>
       </nav>
     </div>
 
     <!-- Bottom Organization Profile & Logout -->
-    <div class="border-t border-slate-700/60 pt-3 md:p-5 md:bg-[#07152A] -mx-1.5 sm:-mx-2 md:mx-0">
-      <div class="mb-3 hidden md:block">
+    <div class="p-5 border-t border-slate-700/60 bg-[#07152A]">
+      <div class="mb-3">
         <div class="font-bold text-white text-sm">Panitia UII</div>
         <div class="text-[11px] text-slate-400 truncate">panitia@uii.ac.id · Panitia</div>
       </div>
       <button 
         type="button" 
         (click)="logout()" 
-        title="Keluar dari sesi Panitia"
-        class="w-full flex items-center justify-center md:justify-start gap-2 p-2 text-xs text-slate-300 hover:text-rose-400 transition font-medium cursor-pointer">
-        <svg class="w-5 h-5 md:w-4 md:h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        class="inline-flex items-center gap-2 text-xs text-slate-300 hover:text-rose-400 transition font-medium cursor-pointer">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
         </svg>
-        <span class="hidden md:inline">Keluar</span>
+        <span>Keluar</span>
       </button>
     </div>
   </aside>
 
+  <!-- ================= MOBILE HEADER FOR HP ================= -->
+  <header class="md:hidden flex items-center justify-between bg-[#0B1E3B] text-white px-4 py-3.5 sticky top-0 z-40 shadow-md">
+    <div class="flex items-center gap-2.5">
+      <div class="w-8 h-8 rounded-lg bg-white p-1 flex items-center justify-center shadow-xs">
+        <img src="/assets/images/logo-uii.png" alt="UII" class="h-full w-auto object-contain" />
+      </div>
+      <span class="font-bold text-base tracking-tight">UIIEvent</span>
+      <span class="text-[11px] px-2 py-0.5 rounded-full bg-blue-900/60 text-blue-200 border border-blue-400/30">Panitia</span>
+    </div>
+
+    <button 
+      type="button" 
+      (click)="mobileMenuOpen.set(!mobileMenuOpen())"
+      class="p-2 rounded-lg bg-[#183258] text-white hover:bg-blue-800 transition">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+      </svg>
+    </button>
+  </header>
+
+  <!-- Mobile Dropdown Drawer -->
+  @if (mobileMenuOpen()) {
+    <div class="md:hidden bg-[#0B1E3B] text-white border-b border-slate-700 p-4 space-y-2 z-40 shadow-xl">
+      <button 
+        type="button" 
+        (click)="openDashboard()"
+        class="w-full text-left px-3 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2"
+        [class.bg-[#1E3A63]]="activeView() === 'DASHBOARD'">
+        <span>⊞ Dashboard Acara</span>
+      </button>
+      <button 
+        type="button" 
+        (click)="openAcaraSaya()"
+        class="w-full text-left px-3 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2 text-blue-300"
+        [class.bg-[#1E3A63]]="activeView() === 'REKAP_PESERTA' || activeView() === 'SELEKSI_OPREC'">
+        <span>📅 Acara Saya (Rekap &amp; Seleksi)</span>
+      </button>
+      <button 
+        type="button" 
+        (click)="openCreateWizard(false)"
+        class="w-full text-left px-3 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2 text-amber-300"
+        [class.bg-[#1E3A63]]="activeView() === 'CREATE'">
+        <span>+ Buat Acara Baru</span>
+      </button>
+      <button 
+        type="button" 
+        (click)="logout()" 
+        class="w-full text-left px-3 py-2 text-xs text-rose-300 hover:text-rose-200 transition font-medium flex items-center gap-1.5 cursor-pointer">
+        <span>🚪 Keluar</span>
+      </button>
+    </div>
+  }
+
   <!-- ================= MAIN CONTENT VIEWPORT ================= -->
-  <main class="flex-1 min-w-0 p-3 sm:p-6 lg:p-8 overflow-y-auto">
+  <main class="flex-1 min-w-0 p-4 sm:p-6 lg:p-8 overflow-y-auto">
 
     <!-- Global Toast Alert -->
     @if (toastMessage()) {
