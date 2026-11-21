@@ -1,0 +1,55 @@
+<div class="min-h-screen flex flex-col bg-slate-50 selection:bg-amber-400 selection:text-slate-900">
+  <!-- Desktop / Mobile Sticky Header Navbar (hidden on dedicated standalone layouts like login and organizer portal) -->
+  @if (!isStandaloneLayout) {
+    <app-navbar></app-navbar>
+  }
+
+  <!-- Main Routed Application Views -->
+  <main class="flex-1">
+    <router-outlet></router-outlet>
+  </main>
+
+  <!-- Mobile Bottom Sticky Ergonomic Navigation Bar (hidden on dedicated standalone layouts) -->
+  @if (!isStandaloneLayout) {
+    <app-bottom-nav></app-bottom-nav>
+  }
+
+  <!-- Footer Info (hidden on dedicated standalone layouts) -->
+  @if (!isStandaloneLayout) {
+    <footer class="bg-[#002244] text-slate-300 text-xs pt-10 pb-24 md:pb-10 border-t border-blue-900 mt-auto no-print">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+          <div class="md:col-span-2">
+            <div class="flex items-center gap-2 mb-2 font-black text-white text-base">
+              <span>UII Event</span>
+            </div>
+            <p class="text-xs text-blue-200/80 leading-relaxed max-w-sm">
+              Portal satu pintu kegiatan mahasiswa Universitas Islam Indonesia. Acara diajukan LEM dan UKM, lalu dikurasi Direktorat Pembinaan Kemahasiswaan (DPK).
+            </p>
+          </div>
+          <div>
+            <h4 class="font-bold text-white text-xs mb-3 uppercase tracking-wider">JELAJAHI</h4>
+            <ul class="space-y-2 text-xs text-blue-200/80">
+              <li><a routerLink="/catalog" class="hover:text-white transition">Katalog acara</a></li>
+              <li><a routerLink="/my-events" class="hover:text-white transition">Event Saya</a></li>
+              <li><a routerLink="/certificates" class="hover:text-white transition">Brankas e-sertifikat</a></li>
+            </ul>
+          </div>
+          <div>
+            <h4 class="font-bold text-white text-xs mb-3 uppercase tracking-wider">LAYANAN</h4>
+            <ul class="space-y-2 text-xs text-blue-200/80">
+              <li><a routerLink="/verify/7f3a9c2e41b8d05a" class="hover:text-white transition">Verifikasi sertifikat</a></li>
+              <li><a routerLink="/login" class="hover:text-white transition">Masuk</a></li>
+            </ul>
+          </div>
+        </div>
+        <div class="pt-6 border-t border-blue-900/60 flex flex-col sm:flex-row items-center justify-between text-[11px] text-blue-300/70 gap-2">
+          <div>Universitas Islam Indonesia &copy; 2026. Hak Cipta Dilindungi.</div>
+          <div class="flex gap-4">
+            <span>Sistem Verifikasi Presensi & SKPI Resmi</span>
+          </div>
+        </div>
+      </div>
+    </footer>
+  }
+</div>

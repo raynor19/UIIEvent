@@ -1,0 +1,398 @@
+<div class="min-h-screen bg-slate-50/70 pt-6 pb-28 sm:pb-12 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-7xl mx-auto space-y-8">
+
+    <!-- ================= TOP SEARCH BAR ================= -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div>
+        <h1 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+          Katalog Kegiatan UII
+        </h1>
+        <p class="text-xs sm:text-sm text-slate-500 mt-0.5">
+          Eksplorasi seminar, workshop, lomba, konser, & seleksi kepanitiaan ormawa kampus
+        </p>
+      </div>
+
+      <!-- Search Input -->
+      <div class="relative w-full sm:w-80">
+        <input 
+          type="text" 
+          [ngModel]="searchQuery()" 
+          (ngModelChange)="searchQuery.set($event)"
+          placeholder="Cari kegiatan atau topik..."
+          class="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-uii-blue shadow-2xs transition"
+        />
+        <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+        </svg>
+      </div>
+    </div>
+
+    <!-- ================= HERO FEATURED SECTION (SCR-PUB-01) ================= -->
+    @if (!searchQuery() && selectedCategory() === 'ALL' && currentFeatured()) {
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+        
+        <!-- Left: Big Featured Banner (8 cols) -->
+        <div class="lg:col-span-8 bg-gradient-to-r from-slate-950 via-[#002244] to-uii-blue rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden flex flex-col justify-between min-h-[300px]">
+          
+          <!-- Background Abstract Graphic / Network illustration -->
+          <div class="absolute right-0 top-0 w-80 h-full opacity-20 pointer-events-none">
+            <svg class="w-full h-full" viewBox="0 0 200 200" fill="none" stroke="currentColor">
+              <circle cx="100" cy="100" r="80" stroke-width="1.5" stroke-dasharray="4 4" />
+              <circle cx="60" cy="60" r="12" fill="currentColor" />
+              <circle cx="140" cy="80" r="16" fill="currentColor" />
+              <circle cx="100" cy="140" r="10" fill="currentColor" />
+              <path d="M60 60 L140 80 L100 140 Z" stroke-width="1.5" />
+            </svg>
+          </div>
+
+          <div class="relative z-10 space-y-3">
+            <div class="flex items-center gap-2">
+              <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-400 text-slate-950 shadow-xs">
+                ★ ACARA UNGGULAN KAMPUS
+              </span>
+              <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-white/20 text-blue-100 uppercase">
+                {{ currentFeatured()?.categoryLabel }}
+              </span>
+            </div>
+
+            <h2 class="text-2xl sm:text-3xl lg:text-4xl font-black text-white leading-tight max-w-xl">
+              {{ currentFeatured()?.title }}
+            </h2>
+
+            <p class="text-xs sm:text-sm text-blue-100/90 max-w-lg line-clamp-2">
+              {{ currentFeatured()?.description }}
+            </p>
+
+            <div class="flex flex-wrap items-center gap-y-1 gap-x-4 text-xs text-blue-200 pt-1">
+              <div>📅 {{ currentFeatured()?.date }} &bull; {{ currentFeatured()?.time }}</div>
+              <div>📍 {{ currentFeatured()?.room }}</div>
+              <div class="font-bold text-amber-300">★ +{{ currentFeatured()?.skpiPoints }} Poin SKPI</div>
+            </div>
+          </div>
+
+          <!-- Bottom Action -->
+          <div class="relative z-10 pt-6 mt-4 border-t border-white/10 flex flex-wrap items-center justify-between gap-4">
+            <div class="text-xs text-blue-200">
+              Sisa Kuota: <strong class="text-white font-mono text-sm">{{ currentFeatured()?.quotaRemaining }}</strong> dari {{ currentFeatured()?.quotaTotal }}
+            </div>
+
+            <button 
+              type="button" 
+              (click)="openDetail(currentFeatured()!)"
+              class="px-5 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs transition duration-200 shadow-md flex items-center gap-2 cursor-pointer">
+              <span>Lihat Detail & Daftar</span>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+              </svg>
+            </button>
+          </div>
+
+        </div>
+
+        <!-- Right: Stacked Mini Featured List with < > Controls (4 cols) -->
+        <div class="lg:col-span-4 bg-white rounded-3xl p-5 border border-slate-200/90 shadow-2xs flex flex-col justify-between space-y-3">
+          
+          <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+            <span class="text-xs font-black uppercase text-slate-700 tracking-wider">Acara Unggulan</span>
+            <!-- Carousel Controls -->
+            <div class="flex items-center gap-1.5">
+              <button 
+                type="button" 
+                (click)="prevFeatured()" 
+                class="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center text-xs font-bold transition cursor-pointer">
+                &larr;
+              </button>
+              <button 
+                type="button" 
+                (click)="nextFeatured()" 
+                class="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center text-xs font-bold transition cursor-pointer">
+                &rarr;
+              </button>
+            </div>
+          </div>
+
+          <!-- Mini Cards List -->
+          <div class="space-y-2.5">
+            @for (evt of featuredEvents(); track evt.id; let i = $index) {
+              <div 
+                (click)="selectFeatured(i)"
+                [class.border-uii-blue]="featuredIndex() === i"
+                [class.bg-blue-50/50]="featuredIndex() === i"
+                [class.border-slate-200]="featuredIndex() !== i"
+                class="p-3 rounded-2xl border transition cursor-pointer hover:border-uii-blue/60 flex items-start gap-3">
+                
+                <div class="w-11 h-11 rounded-xl bg-slate-900 text-white flex items-center justify-center shrink-0 text-xs font-black">
+                  UII
+                </div>
+
+                <div class="min-w-0 flex-1">
+                  <div class="text-[10px] font-bold text-uii-blue uppercase">{{ evt.categoryLabel }}</div>
+                  <h4 class="font-bold text-slate-900 text-xs truncate leading-snug">{{ evt.title }}</h4>
+                  <div class="text-[10px] text-slate-500 mt-0.5">{{ evt.date }} &bull; +{{ evt.skpiPoints }} SKPI</div>
+                </div>
+
+              </div>
+            }
+          </div>
+
+          <div class="pt-2 text-center text-[11px] text-slate-400">
+            Geser untuk melihat jadwal unggulan kampus
+          </div>
+
+        </div>
+
+      </div>
+    }
+
+    <!-- ================= SEGMENTED CATEGORY PILLS (SCR-PUB-01) ================= -->
+    <div class="space-y-4 pt-2">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <h2 class="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+          <span>Acara Mendatang</span>
+          <span class="text-xs font-normal text-slate-400">({{ filteredEvents().length }} kegiatan)</span>
+        </h2>
+      </div>
+
+      <!-- Category Filter Pills matching SCR-PUB-01 -->
+      <div class="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+        @for (cat of categories; track cat.value) {
+          <button 
+            type="button" 
+            (click)="selectedCategory.set(cat.value)"
+            [class.bg-uii-blue]="selectedCategory() === cat.value"
+            [class.text-white]="selectedCategory() === cat.value"
+            [class.font-bold]="selectedCategory() === cat.value"
+            [class.shadow-xs]="selectedCategory() === cat.value"
+            [class.bg-white]="selectedCategory() !== cat.value"
+            [class.text-slate-600]="selectedCategory() !== cat.value"
+            [class.hover:bg-slate-100]="selectedCategory() !== cat.value"
+            class="px-4 py-2 rounded-xl border border-slate-200 text-xs transition shrink-0 cursor-pointer">
+            {{ cat.label }}
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- ================= EVENT CARDS GRID (4 COLS DESKTOP, 1 COL MOBILE) ================= -->
+    @if (filteredEvents().length === 0) {
+      <div class="bg-white rounded-3xl p-10 sm:p-14 text-center border border-slate-200 shadow-2xs space-y-3">
+        <div class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto text-2xl font-bold">
+          🔍
+        </div>
+        <h3 class="text-base font-bold text-slate-800">Tidak Ada Kegiatan yang Cocok</h3>
+        <p class="text-xs text-slate-500 max-w-sm mx-auto">
+          Tidak ditemukan acara dengan kata kunci atau filter yang Anda pilih. Silakan ganti kategori atau reset pencarian.
+        </p>
+        <button 
+          type="button" 
+          (click)="searchQuery.set(''); selectedCategory.set('ALL')"
+          class="px-4 py-2 rounded-xl bg-uii-blue text-white text-xs font-bold hover:bg-blue-900 transition shadow-xs">
+          Reset Filter & Cari Ulang
+        </button>
+      </div>
+    } @else {
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        @for (event of filteredEvents(); track event.id) {
+          
+          <div 
+            (click)="openDetail(event)"
+            class="bg-white rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-lg hover:border-uii-blue/50 transition duration-200 overflow-hidden flex flex-col justify-between cursor-pointer group">
+            
+            <div>
+              <!-- Poster / Graphic Banner Container -->
+              <div class="aspect-16/10 w-full bg-gradient-to-tr from-[#002244] to-slate-900 relative overflow-hidden flex items-center justify-center p-4">
+                
+                @if (event.bannerUrl) {
+                  <img [src]="event.title.toLowerCase().includes('dies natalis') ? '/assets/images/dies-natalis-uii.jpg' : event.bannerUrl" [alt]="event.title" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" />
+                } @else {
+                  <div class="text-center text-white space-y-1">
+                    <div class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center mx-auto font-black text-xs text-amber-300">
+                      UII
+                    </div>
+                    <div class="text-xs font-black truncate max-w-[180px]">{{ event.title }}</div>
+                  </div>
+                }
+
+                <!-- Category Badge on Top-Left of Poster -->
+                <div class="absolute top-2.5 left-2.5">
+                  <span class="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider" [ngClass]="getCategoryBadgeClass(event.category)">
+                    {{ event.categoryLabel }}
+                  </span>
+                </div>
+
+                <!-- SKPI Points Pill on Top-Right of Poster -->
+                <div class="absolute top-2.5 right-2.5">
+                  <span class="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-black/60 backdrop-blur-xs text-amber-300 border border-white/10">
+                    +{{ event.skpiPoints }} SKPI
+                  </span>
+                </div>
+              </div>
+
+              <!-- Card Content Body -->
+              <div class="p-4 space-y-2">
+                <div class="text-[11px] font-medium text-slate-400 truncate">
+                  {{ event.organizer }}
+                </div>
+
+                <h3 class="font-bold text-slate-900 text-sm leading-snug line-clamp-2 group-hover:text-uii-blue transition">
+                  {{ event.title }}
+                </h3>
+
+                <div class="space-y-1 text-xs text-slate-500 pt-1">
+                  <div class="flex items-center gap-1.5 truncate">
+                    <span>📅</span>
+                    <span>{{ event.date }} &bull; {{ event.time }}</span>
+                  </div>
+                  <div class="flex items-center gap-1.5 truncate">
+                    <span>📍</span>
+                    <span>{{ event.room }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card Bottom Bar: Quota & Action -->
+            <div class="p-4 pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
+              <div>
+                <span class="text-[10px] text-slate-400 block font-semibold">KUOTA</span>
+                <span class="font-bold text-slate-700 text-xs">
+                  Sisa {{ event.quotaRemaining }} / {{ event.quotaTotal }}
+                </span>
+              </div>
+
+              @if (isUserRegistered(event.id)) {
+                <span class="px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-800 text-[11px] font-bold">
+                  ✓ Terdaftar
+                </span>
+              } @else {
+                <span class="px-3 py-1 rounded-lg bg-blue-50 text-uii-blue font-bold text-[11px] group-hover:bg-uii-blue group-hover:text-white transition">
+                  Detail &rarr;
+                </span>
+              }
+            </div>
+
+          </div>
+
+        }
+      </div>
+    }
+
+  </div>
+</div>
+
+<!-- ================= MODAL: DETAIL EVENT (SCR-PUB-02) ================= -->
+@if (activeDetailEvent()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-xs animate-in fade-in duration-200">
+    <div class="bg-white rounded-3xl max-w-2xl w-full shadow-2xl relative border border-slate-100 max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200">
+      
+      <!-- Close Button -->
+      <button 
+        type="button" 
+        (click)="closeDetail()" 
+        class="absolute top-4 right-4 z-10 w-8 h-8 rounded-full bg-black/50 hover:bg-black/70 text-white flex items-center justify-center transition cursor-pointer">
+        ✕
+      </button>
+
+      <!-- Event Poster Frame (SCR-PUB-02) -->
+      <div class="aspect-16/9 w-full bg-slate-900 relative overflow-hidden">
+        <img 
+          [src]="activeDetailEvent()?.title?.toLowerCase()?.includes('dies natalis') ? '/assets/images/dies-natalis-uii.jpg' : (activeDetailEvent()?.bannerUrl || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1200&q=80')" 
+          [alt]="activeDetailEvent()?.title" 
+          class="w-full h-full object-cover" 
+        />
+        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20"></div>
+
+        <div class="absolute bottom-4 left-4 right-4 text-white">
+          <div class="flex items-center gap-2 mb-1.5">
+            <span class="px-2.5 py-0.5 rounded text-[10px] font-black uppercase tracking-wider" [ngClass]="getCategoryBadgeClass(activeDetailEvent()!.category)">
+              {{ activeDetailEvent()?.categoryLabel }}
+            </span>
+            <span class="px-2.5 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-amber-400 text-slate-950">
+              +{{ activeDetailEvent()?.skpiPoints }} Poin SKPI
+            </span>
+          </div>
+          <h2 class="text-xl sm:text-2xl font-black text-white leading-tight">
+            {{ activeDetailEvent()?.title }}
+          </h2>
+        </div>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-6 sm:p-8 space-y-6">
+        
+        <!-- Key Metadata Grid -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-200 text-xs">
+          <div>
+            <span class="text-[10px] font-bold text-slate-400 uppercase block">TANGGAL</span>
+            <span class="font-bold text-slate-900">{{ activeDetailEvent()?.date }}</span>
+          </div>
+          <div>
+            <span class="text-[10px] font-bold text-slate-400 uppercase block">WAKTU</span>
+            <span class="font-bold text-slate-900">{{ activeDetailEvent()?.time }}</span>
+          </div>
+          <div>
+            <span class="text-[10px] font-bold text-slate-400 uppercase block">GEDUNG</span>
+            <span class="font-bold text-slate-900 truncate block">{{ activeDetailEvent()?.room }}</span>
+          </div>
+          <div>
+            <span class="text-[10px] font-bold text-slate-400 uppercase block">PENYELENGGARA</span>
+            <span class="font-bold text-slate-900 truncate block">{{ activeDetailEvent()?.organizer }}</span>
+          </div>
+        </div>
+
+        <!-- Quota Progress Status -->
+        <div class="space-y-1.5">
+          <div class="flex justify-between text-xs">
+            <span class="text-slate-500 font-medium">Ketersediaan Kuota Peserta:</span>
+            <span class="font-bold text-slate-900">Sisa {{ activeDetailEvent()?.quotaRemaining }} dari {{ activeDetailEvent()?.quotaTotal }}</span>
+          </div>
+          <div class="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+            <div class="h-full bg-uii-blue rounded-full" [style.width.%]="100 - ((activeDetailEvent()!.quotaRemaining / activeDetailEvent()!.quotaTotal) * 100)"></div>
+          </div>
+        </div>
+
+        <!-- Event Description (Tentang Acara Ini) -->
+        <div class="space-y-2">
+          <h3 class="font-black text-slate-900 text-sm uppercase tracking-wider">Tentang Acara Ini</h3>
+          <p class="text-xs sm:text-sm text-slate-600 leading-relaxed whitespace-pre-line">
+            {{ activeDetailEvent()?.description }}
+          </p>
+        </div>
+
+        <!-- Action CTA -->
+        <div class="pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div class="text-xs text-slate-500 text-center sm:text-left">
+            Terverifikasi DPK UII &bull; Bebas biaya pendaftaran (Gratis)
+          </div>
+
+          <div class="flex items-center gap-2 w-full sm:w-auto">
+            <button 
+              type="button" 
+              (click)="closeDetail()" 
+              class="w-full sm:w-auto py-2.5 px-4 rounded-xl border border-slate-200 text-slate-600 font-bold text-xs hover:bg-slate-50 transition">
+              Kembali
+            </button>
+
+            @if (isUserRegistered(activeDetailEvent()!.id)) {
+              <a 
+                routerLink="/tickets" 
+                (click)="closeDetail()"
+                class="w-full sm:w-auto py-2.5 px-5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition text-center shadow-sm">
+                Lihat E-Tiket Saya
+              </a>
+            } @else {
+              <button 
+                type="button" 
+                (click)="goToRegister(activeDetailEvent()!)"
+                class="w-full sm:w-auto py-2.5 px-6 rounded-xl bg-uii-blue hover:bg-blue-900 text-white font-bold text-xs transition shadow-md flex items-center justify-center gap-1.5 cursor-pointer">
+                <span>Daftar Sekarang &rarr;</span>
+              </button>
+            }
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+}

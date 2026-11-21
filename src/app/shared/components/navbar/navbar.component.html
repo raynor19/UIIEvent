@@ -1,0 +1,207 @@
+<header class="sticky top-0 z-40 bg-uii-blue text-white shadow-md border-b border-uii-navy no-print">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between h-16">
+      
+      <!-- Logo & Brand -->
+      <div class="flex items-center gap-3">
+        <a routerLink="/catalog" class="flex items-center gap-3 group">
+          <!-- Official UII Emblem representation -->
+          <div class="w-10 h-10 rounded-xl bg-white p-1.5 flex items-center justify-center shadow-md group-hover:scale-105 transition-transform">
+            <img src="/assets/images/logo-uii.png" alt="UII" class="h-full w-auto object-contain" />
+          </div>
+          <div class="flex flex-col">
+            <span class="font-extrabold text-lg tracking-tight text-white leading-tight flex items-center gap-1.5">
+              UIIEvent
+            </span>
+            <span class="text-[11px] text-blue-200">Universitas Islam Indonesia</span>
+          </div>
+        </a>
+      </div>
+
+      <!-- Desktop Navigation Links -->
+      <nav class="hidden md:flex items-center gap-2 lg:gap-3">
+        <a routerLink="/dashboard" routerLinkActive="bg-white/10 text-amber-300 font-semibold"
+           class="px-3.5 py-2 rounded-xl text-sm text-slate-200 hover:text-white hover:bg-white/10 transition flex items-center gap-1.5">
+          <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
+          </svg>
+          <span>Dashboard</span>
+        </a>
+
+        <a routerLink="/catalog" routerLinkActive="bg-white/10 text-amber-300 font-semibold"
+           class="px-3.5 py-2 rounded-xl text-sm text-slate-200 hover:text-white hover:bg-white/10 transition flex items-center gap-1.5">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+          </svg>
+          <span>Katalog</span>
+        </a>
+
+        @if (authService.currentUser().role === 'MAHASISWA') {
+          <a routerLink="/tickets" routerLinkActive="bg-white/10 text-amber-300 font-semibold"
+             class="relative px-3.5 py-2 rounded-xl text-sm text-slate-200 hover:text-white hover:bg-white/10 transition flex items-center gap-1.5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"></path>
+            </svg>
+            <span>E-Tiket</span>
+            @if (myTicketsCount() > 0) {
+              <span class="bg-amber-400 text-slate-900 text-[10px] font-bold px-1.5 py-0.5 rounded-full ml-1">
+                {{ myTicketsCount() }}
+              </span>
+            }
+          </a>
+
+          <a routerLink="/certificates" routerLinkActive="bg-white/10 text-amber-300 font-semibold"
+             class="relative px-3.5 py-2 rounded-xl text-sm text-slate-200 hover:text-white hover:bg-white/10 transition flex items-center gap-1.5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path>
+            </svg>
+            <span>SKPI</span>
+          </a>
+        }
+
+        <!-- Web Scanner (Exclusively for Panitia) -->
+        @if (authService.currentUser().role === 'PANITIA') {
+          <a routerLink="/scanner" routerLinkActive="bg-emerald-600 text-white font-bold ring-2 ring-emerald-300"
+             class="px-3.5 py-2 rounded-xl text-sm bg-emerald-700/80 hover:bg-emerald-600 text-white transition flex items-center gap-1.5 shadow-sm">
+            <svg class="w-4 h-4 text-emerald-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
+            </svg>
+            <span>Scanner</span>
+          </a>
+        }
+      </nav>
+
+      <!-- Right side: Omnichannel Drawer & Persona Switcher & Demo Tools -->
+      <div class="flex items-center gap-3 sm:gap-4">
+        
+        <!-- Omnichannel Simulator Button (Exclusively for Panitia) -->
+        @if (authService.currentUser().role === 'PANITIA') {
+          <button 
+            (click)="showOmnichannelModal.set(true)"
+            class="px-3 py-1.5 rounded-xl bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-500/40 text-emerald-300 text-xs font-semibold flex items-center gap-1.5 transition shadow-sm cursor-pointer">
+            <span>💬</span>
+            <span class="hidden sm:inline">Otomasi WA</span>
+          </button>
+        }
+
+
+
+        <!-- User avatar badge matching design handoff -->
+        @if (authService.isLoggedIn()) {
+          <div class="flex items-center gap-2 bg-[#001730] rounded-xl px-2.5 py-1.5 border border-white/10 text-xs">
+            <div class="w-6 h-6 rounded-full bg-slate-800 text-white font-black flex items-center justify-center text-[10px]">
+              {{ userInitials() }}
+            </div>
+            <span class="font-bold text-white text-xs hidden md:inline">{{ shortName() }}</span>
+          </div>
+        }
+
+        <!-- Login / User status -->
+        @if (authService.isLoggedIn()) {
+          <button 
+            (click)="authService.logout()"
+            title="Keluar dari sesi SSO"
+            class="px-3 py-1.5 rounded-xl bg-red-950/50 hover:bg-red-900 border border-red-500/30 text-red-300 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+            </svg>
+            <span class="hidden sm:inline">Keluar</span>
+          </button>
+        } @else {
+          <a 
+            routerLink="/login"
+            class="px-3.5 py-1.5 rounded-xl bg-uii-gold hover:bg-amber-400 text-slate-900 text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
+            <span>Masuk SSO</span>
+          </a>
+        }
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Omnichannel Simulation Modal (EPIC 3 / FR-NOT-01, 02, 03) -->
+  @if (showOmnichannelModal()) {
+    <div class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4">
+      <div class="bg-white rounded-3xl max-w-lg w-full text-slate-800 shadow-2xl border border-slate-200 overflow-hidden">
+        
+        <div class="bg-emerald-800 text-white p-4 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="text-xl">💬</span>
+            <div>
+              <h3 class="text-sm font-bold">Simulator WhatsApp Gateway & Email</h3>
+              <p class="text-[11px] text-emerald-200">FR-NOT-01 / BPMN 3 Omnichannel Scheduler</p>
+            </div>
+          </div>
+          <button (click)="showOmnichannelModal.set(false)" class="text-white hover:text-slate-200 font-bold text-lg">✕</button>
+        </div>
+
+        <div class="p-5 space-y-4 max-h-[70vh] overflow-y-auto text-xs">
+          
+          <!-- WhatsApp Message Bubble Preview -->
+          <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 space-y-2">
+            <div class="flex items-center justify-between font-bold text-emerald-900 text-[11px]">
+              <span>Pesan Terjadwal H-1 (09.00 WIB)</span>
+              <span class="bg-emerald-200 text-emerald-800 px-2 py-0.5 rounded text-[10px]">Fonnte / Wablas API</span>
+            </div>
+            
+            <div class="bg-white p-3 rounded-xl border border-emerald-100 shadow-sm text-slate-700 leading-relaxed font-sans">
+              <p><strong>[PENGINGAT RESMI UII EVENT]</strong></p>
+              <p class="mt-1">Assalamu'alaikum Wr. Wb. Halo <strong>Muhammad Rian</strong>,</p>
+              <p class="mt-1">Mengingatkan besok <strong>Seminar Nasional AI 2026</strong> akan diselenggarakan:</p>
+              <ul class="list-disc pl-4 mt-1 space-y-0.5">
+                <li>Waktu: <strong>08:30 WIB (Open Gate 08:00)</strong></li>
+                <li>Gedung: <strong>Auditorium Prof. K.H. Abdul Kahar Mudzakkir</strong></li>
+                <li>Syarat Masuk: Tunjukkan E-Tiket QR Anda di meja registrasi.</li>
+              </ul>
+              <p class="mt-2 text-uii-blue font-bold">👉 Link Tiket: uii-event.id/tickets</p>
+            </div>
+
+            <div class="text-[10px] text-slate-500 flex items-center justify-between">
+              <span>Nomor Tujuan: +62 812-3456-7890</span>
+              <span class="text-emerald-700 font-bold">Status: SENT (Terkirim)</span>
+            </div>
+          </div>
+
+          <!-- Fallback to Email SMTP Demo -->
+          <div class="bg-blue-50 border border-blue-200 rounded-2xl p-3 text-[11px] text-blue-900 space-y-1">
+            <div class="font-bold flex items-center gap-1.5">
+              <span>🛡️</span>
+              <span>Fallback SMTP Engine (FR-NOT-03):</span>
+            </div>
+            <p class="text-slate-600">
+              Jika jaringan vendor WhatsApp Gateway timeout / saldo habis, sistem otomatis melakukan fallback menembakkan pesan ke <code>21523001&#64;students.uii.ac.id</code> dalam waktu &lt; 60 detik.
+            </p>
+          </div>
+
+          <!-- Notification Delivery Log Feed -->
+          <div>
+            <h4 class="font-bold text-slate-700 text-xs mb-2">Riwayat Log Transmisi Terakhir:</h4>
+            <div class="space-y-1.5">
+              @for (log of eventService.notificationLogs(); track log.id) {
+                <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between">
+                  <div>
+                    <div class="font-bold text-slate-800">{{ log.eventTitle }}</div>
+                    <div class="text-[10px] text-slate-500">{{ log.recipientName }} ({{ log.channel }}) • {{ log.timestamp }}</div>
+                  </div>
+                  <span class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded">
+                    {{ log.status }}
+                  </span>
+                </div>
+              }
+            </div>
+          </div>
+
+        </div>
+
+        <div class="p-4 bg-slate-50 border-t border-slate-200 flex justify-end">
+          <button (click)="showOmnichannelModal.set(false)" class="px-4 py-2 bg-slate-800 text-white rounded-xl text-xs font-bold">
+            Tutup Simulator
+          </button>
+        </div>
+
+      </div>
+    </div>
+  }
+
+</header>

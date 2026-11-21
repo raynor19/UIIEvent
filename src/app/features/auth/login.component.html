@@ -1,0 +1,639 @@
+<div class="min-h-screen text-slate-100 relative overflow-x-hidden flex flex-col justify-between selection:bg-blue-600 selection:text-white">
+
+  <!-- ================= ANIMATED KEN BURNS BACKGROUND (HD UII BOULEVARD & GERBANG UTAMA) ================= -->
+  <div class="bg-slideshow-container">
+    <div 
+      class="bg-slide active"
+      [style.background-image]="'url(' + campusBackground.imageUrl + ')'">
+    </div>
+  </div>
+
+  <!-- Traditional Batik Watermark Pattern -->
+  <div class="batik-overlay"></div>
+
+  <!-- Atmospheric Warm Vignette & Contrast Overlay -->
+  <div class="vignette-overlay"></div>
+
+  <!-- ================= TOP NAVBAR ================= -->
+  <header class="w-full px-6 lg:px-12 py-5 relative z-30">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      
+      <!-- Logo: UII Event Platform -->
+      <a routerLink="/catalog" class="flex items-center gap-3 group">
+        <div class="w-10 h-10 rounded-2xl bg-white p-1.5 flex items-center justify-center text-lg shadow-sm border border-blue-500/30 group-hover:scale-105 transition">
+          <img src="/assets/images/logo-uii.png" alt="UII" class="h-full w-auto object-contain" />
+        </div>
+        <div class="flex items-center">
+          <span class="text-2xl font-black tracking-tight text-white leading-none">
+            UIIEvent
+          </span>
+        </div>
+      </a>
+
+      <!-- Kembali ke Beranda / Katalog & Tombol Masuk jika ditutup -->
+      <div class="flex items-center gap-3">
+        @if (!isLoginModalOpen) {
+          <button 
+            type="button" 
+            (click)="openLoginModal()"
+            class="px-4 py-2 rounded-xl bg-uii-blue hover:bg-blue-900 text-white font-bold text-xs transition duration-200 shadow-md flex items-center gap-2 cursor-pointer animate-in fade-in">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
+            </svg>
+            <span>Masuk Akun</span>
+          </button>
+        }
+        <a routerLink="/catalog" class="px-4 py-2 rounded-xl border border-white/20 bg-white/10 hover:bg-white hover:text-slate-900 text-white font-bold text-xs transition duration-200 backdrop-blur-md flex items-center gap-2 group">
+          <svg class="w-3.5 h-3.5 text-blue-400 group-hover:text-uii-blue transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+          </svg>
+          <span>Kembali ke Katalog</span>
+        </a>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- ================= MAIN CENTERED AUTHENTICATION PORTAL ================= -->
+  <main class="flex-1 relative z-30 flex items-center justify-center p-4 sm:p-6 my-4">
+    @if (isLoginModalOpen) {
+      <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl text-slate-800 relative border border-slate-100 my-auto animate-in fade-in zoom-in-95 duration-200">
+        
+        <!-- Tombol Tanda Silang (X) di Pojok Kanan Atas -->
+        <button 
+          type="button" 
+          (click)="closeLoginModal()" 
+          title="Tutup login (Lihat pemandangan kampus)"
+          aria-label="Tutup form login"
+          class="absolute top-5 right-5 w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-900 flex items-center justify-center transition cursor-pointer shadow-xs group z-20">
+          <svg class="w-4 h-4 transition-transform group-hover:rotate-90 duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+          
+      <!-- Alert Box -->
+      @if (errorMessage) {
+        <div class="mb-4 p-3 bg-red-50 border border-red-200 text-red-800 rounded-xl text-xs flex items-center gap-2 animate-in fade-in">
+          <span class="font-bold text-red-600">✕</span>
+          <span>{{ errorMessage }}</span>
+        </div>
+      }
+      @if (successMessage) {
+        <div class="mb-4 p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs flex items-center gap-2 animate-in fade-in">
+          <span class="font-bold text-emerald-600">✓</span>
+          <span>{{ successMessage }}</span>
+        </div>
+      }
+
+      @if (authMode === 'LOGIN') {
+        <!-- Card Title -->
+        <div class="mb-5 text-left">
+          <span class="text-[10px] font-extrabold uppercase tracking-widest text-[#002855] block mb-1">
+            Portal Mahasiswa & Pengelola Acara
+          </span>
+          <h2 class="text-2xl font-black text-slate-900 tracking-tight">Masuk Pengguna</h2>
+          <p class="text-xs text-slate-500 mt-1">Pilih peran masuk: Mahasiswa, Panitia Ormawa, atau Admin DPK UII.</p>
+        </div>
+
+        <!-- LOGIN FORM -->
+        <form (ngSubmit)="onLoginSubmit()" class="space-y-4 text-xs text-left">
+          <!-- Role Dropdown Selector -->
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Masuk Sebagai</label>
+            <div class="relative">
+              <!-- Left Icon -->
+              <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 z-10">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                </svg>
+              </span>
+
+              <!-- Dropdown Trigger Button matching input styling -->
+              <button 
+                type="button" 
+                (click)="toggleRoleDropdown()"
+                class="w-full bg-slate-50 hover:bg-slate-100/60 border border-slate-200 rounded-xl pl-10 pr-10 py-2.5 text-sm font-medium text-slate-800 text-left focus:outline-none focus:border-uii-blue transition flex items-center justify-between cursor-pointer">
+                <span>{{ selectedRoleDisplayName }}</span>
+              </button>
+
+              <!-- Chevron Down Arrow comfortably spaced from the right edge -->
+              <span 
+                class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-slate-400 transition">
+                <svg class="w-4 h-4 transition-transform duration-200" [class.rotate-180]="isRoleDropdownOpen" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+              </span>
+
+              <!-- Floating Options Menu -->
+              @if (isRoleDropdownOpen) {
+                <div class="absolute left-0 right-0 top-full mt-1.5 bg-white border border-slate-200 rounded-xl shadow-xl z-50 py-1 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+                  <button 
+                    type="button" 
+                    (click)="selectRole('MAHASISWA')"
+                    [class.bg-blue-50]="selectedRoleTab === 'MAHASISWA'"
+                    [class.text-uii-blue]="selectedRoleTab === 'MAHASISWA'"
+                    class="w-full px-4 py-2.5 text-left text-sm font-medium hover:bg-slate-50 transition flex items-center justify-between cursor-pointer">
+                    <div class="flex items-center gap-2.5">
+                      <span>👨‍🎓</span>
+                      <span>Mahasiswa</span>
+                    </div>
+                    @if (selectedRoleTab === 'MAHASISWA') {
+                      <span class="text-uii-blue font-bold">✓</span>
+                    }
+                  </button>
+                  <button 
+                    type="button" 
+                    (click)="selectRole('PANITIA')"
+                    [class.bg-blue-50]="selectedRoleTab === 'PANITIA'"
+                    [class.text-uii-blue]="selectedRoleTab === 'PANITIA'"
+                    class="w-full px-4 py-2.5 text-left text-sm font-medium hover:bg-slate-50 transition flex items-center justify-between cursor-pointer">
+                    <div class="flex items-center gap-2.5">
+                      <span>📋</span>
+                      <span>Panitia</span>
+                    </div>
+                    @if (selectedRoleTab === 'PANITIA') {
+                      <span class="text-uii-blue font-bold">✓</span>
+                    }
+                  </button>
+                  <button 
+                    type="button" 
+                    (click)="selectRole('ADMIN')"
+                    [class.bg-blue-50]="selectedRoleTab === 'ADMIN'"
+                    [class.text-uii-blue]="selectedRoleTab === 'ADMIN'"
+                    class="w-full px-4 py-2.5 text-left text-sm font-medium hover:bg-slate-50 transition flex items-center justify-between cursor-pointer">
+                    <div class="flex items-center gap-2.5">
+                      <span>🛡️</span>
+                      <span>Admin DPK</span>
+                    </div>
+                    @if (selectedRoleTab === 'ADMIN') {
+                      <span class="text-uii-blue font-bold">✓</span>
+                    }
+                  </button>
+                </div>
+              }
+            </div>
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">{{ identifierLabel }}</label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                </svg>
+              </span>
+              <input 
+                type="text" 
+                [(ngModel)]="identifier" 
+                name="identifier" 
+                [placeholder]="identifierPlaceholder" 
+                required 
+                class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-3 py-2.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-uii-blue focus:bg-white transition"
+              />
+            </div>
+          </div>
+
+          <div>
+            <div class="flex justify-between items-center mb-1">
+              <label class="font-semibold text-slate-700">Kata Sandi</label>
+              <a href="javascript:void(0)" class="text-[11px] text-[#002855] hover:text-blue-900 font-semibold hover:underline">
+                Lupa sandi?
+              </a>
+            </div>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                </svg>
+              </span>
+              <input 
+                [type]="showPassword ? 'text' : 'password'" 
+                [(ngModel)]="password" 
+                name="password" 
+                placeholder="••••••••" 
+                required 
+                class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-10 py-2.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-uii-blue focus:bg-white transition"
+              />
+              <button 
+                type="button" 
+                (click)="showPassword = !showPassword" 
+                class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-700 transition">
+                @if (showPassword) {
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18"></path>
+                  </svg>
+                } @else {
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                  </svg>
+                }
+              </button>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between pt-1">
+            <label class="flex items-center gap-2 text-slate-600 cursor-pointer">
+              <input 
+                type="checkbox" 
+                [(ngModel)]="rememberMe" 
+                name="rememberMe" 
+                class="w-4 h-4 rounded text-uii-blue border-slate-300 focus:ring-uii-blue"
+              />
+              <span>Ingat saya di perangkat ini</span>
+            </label>
+          </div>
+
+          <!-- Submit Button -->
+          <button 
+            type="submit" 
+            [disabled]="isLoading || !identifier.trim()"
+            style="background-color: #002855 !important; color: #ffffff !important;"
+            class="w-full py-3 px-4 bg-[#002855] hover:bg-blue-900 active:bg-blue-950 text-white rounded-xl font-bold text-sm shadow-md transition flex items-center justify-center gap-2 uppercase tracking-wider cursor-pointer">
+            @if (isLoading) {
+              <span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+              <span>Memverifikasi Sesi...</span>
+            } @else {
+              <span>{{ roleButtonLabel }}</span>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+              </svg>
+            }
+          </button>
+
+          <!-- Divider 'atau masuk dengan' -->
+          <div class="flex items-center gap-3 my-3">
+            <div class="flex-1 border-t border-slate-200"></div>
+            <span class="text-[11px] text-slate-400 font-semibold tracking-wide whitespace-nowrap">atau masuk dengan</span>
+            <div class="flex-1 border-t border-slate-200"></div>
+          </div>
+
+          <!-- Google / Gmail Login Button -->
+          <button 
+            type="button" 
+            (click)="openGoogleLogin()"
+            class="w-full py-2.5 px-4 bg-white hover:bg-slate-50 active:bg-slate-100 border border-slate-200 hover:border-slate-300 rounded-xl font-bold text-slate-700 text-xs shadow-xs transition flex items-center justify-center gap-2.5 cursor-pointer">
+            <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+            </svg>
+            <span>Masuk menggunakan Akun Gmail</span>
+          </button>
+
+          <!-- Belum memiliki akun ? Daftarkan Sekarang -->
+          <div class="pt-3 text-center text-xs text-slate-600">
+            <span>Belum memiliki akun ?</span>
+            <button 
+              type="button" 
+              (click)="toggleAuthMode('REGISTER')" 
+              class="text-[#002855] hover:text-blue-900 font-bold hover:underline ml-1 cursor-pointer">
+              Daftarkan Sekarang
+            </button>
+          </div>
+        </form>
+      } @else {
+        <!-- ================= REGISTER VIEW ================= -->
+        <!-- Card Title -->
+        <div class="mb-5 text-left">
+          <span class="text-[10px] font-extrabold uppercase tracking-widest text-[#002855] block mb-1">
+            Pendaftaran Pengguna Baru
+          </span>
+          <h2 class="text-2xl font-black text-slate-900 tracking-tight">Daftar Akun Baru</h2>
+          <p class="text-xs text-slate-500 mt-1">Lengkapi data untuk membuat akun SSO UIIEvent baru.</p>
+        </div>
+
+        <!-- REGISTER FORM -->
+        <form (ngSubmit)="onRegisterSubmit()" class="space-y-3.5 text-xs text-left">
+          <!-- Role Dropdown Selector for Register -->
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Daftar Sebagai Peran</label>
+            <div class="relative">
+              <!-- Left Icon -->
+              <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 z-10">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                </svg>
+              </span>
+
+              <!-- Dropdown Trigger Button matching input styling -->
+              <button 
+                type="button" 
+                (click)="toggleRegRoleDropdown()"
+                class="w-full bg-slate-50 hover:bg-slate-100/60 border border-slate-200 rounded-xl pl-10 pr-10 py-2.5 text-sm font-medium text-slate-800 text-left focus:outline-none focus:border-uii-blue transition flex items-center justify-between cursor-pointer">
+                <span>{{ regRoleDisplayName }}</span>
+              </button>
+
+              <!-- Chevron Down Arrow comfortably spaced from the right edge -->
+              <span 
+                class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-slate-400 transition">
+                <svg class="w-4 h-4 transition-transform duration-200" [class.rotate-180]="isRegRoleDropdownOpen" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+              </span>
+
+              <!-- Floating Options Menu -->
+              @if (isRegRoleDropdownOpen) {
+                <div class="absolute left-0 right-0 top-full mt-1.5 bg-white border border-slate-200 rounded-xl shadow-xl z-50 py-1 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+                  <button 
+                    type="button" 
+                    (click)="selectRegRole('MAHASISWA')"
+                    [class.bg-blue-50]="regRole === 'MAHASISWA'"
+                    [class.text-uii-blue]="regRole === 'MAHASISWA'"
+                    class="w-full px-4 py-2.5 text-left text-sm font-medium hover:bg-slate-50 transition flex items-center justify-between cursor-pointer">
+                    <div class="flex items-center gap-2.5">
+                      <span>👨‍🎓</span>
+                      <span>Mahasiswa</span>
+                    </div>
+                    @if (regRole === 'MAHASISWA') {
+                      <span class="text-uii-blue font-bold">✓</span>
+                    }
+                  </button>
+                  <button 
+                    type="button" 
+                    (click)="selectRegRole('PANITIA')"
+                    [class.bg-blue-50]="regRole === 'PANITIA'"
+                    [class.text-uii-blue]="regRole === 'PANITIA'"
+                    class="w-full px-4 py-2.5 text-left text-sm font-medium hover:bg-slate-50 transition flex items-center justify-between cursor-pointer">
+                    <div class="flex items-center gap-2.5">
+                      <span>📋</span>
+                      <span>Panitia</span>
+                    </div>
+                    @if (regRole === 'PANITIA') {
+                      <span class="text-uii-blue font-bold">✓</span>
+                    }
+                  </button>
+                  <button 
+                    type="button" 
+                    (click)="selectRegRole('DPK_ADMIN')"
+                    [class.bg-blue-50]="regRole === 'DPK_ADMIN'"
+                    [class.text-uii-blue]="regRole === 'DPK_ADMIN'"
+                    class="w-full px-4 py-2.5 text-left text-sm font-medium hover:bg-slate-50 transition flex items-center justify-between cursor-pointer">
+                    <div class="flex items-center gap-2.5">
+                      <span>🛡️</span>
+                      <span>Admin DPK</span>
+                    </div>
+                    @if (regRole === 'DPK_ADMIN') {
+                      <span class="text-uii-blue font-bold">✓</span>
+                    }
+                  </button>
+                </div>
+              }
+            </div>
+          </div>
+          <!-- Nama Lengkap -->
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Nama Lengkap</label>
+            <input 
+              type="text" 
+              [(ngModel)]="regName" 
+              name="regName" 
+              placeholder="Contoh: Fajar Pratama" 
+              required 
+              class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-uii-blue focus:bg-white transition"
+            />
+          </div>
+
+          <!-- NIM / NIP -->
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label class="block font-semibold text-slate-700">
+                {{ regRole === 'DPK_ADMIN' ? 'NIP (Nomor Induk Pegawai)' : (regRole === 'PANITIA' ? 'NIM Panitia / Ormawa ID' : 'NIM (Nomor Induk Mahasiswa)') }}
+              </label>
+              @if (regRole === 'MAHASISWA') {
+                <button 
+                  type="button" 
+                  (click)="toggleDirectoryModal()"
+                  class="text-[11px] font-bold text-uii-blue hover:text-blue-900 transition underline cursor-pointer flex items-center gap-1">
+                  <span>🏛️ Kode Jurusan & Fakultas UII</span>
+                </button>
+              }
+            </div>
+            <input 
+              type="text" 
+              [(ngModel)]="regNim" 
+              name="regNim" 
+              [placeholder]="regRole === 'DPK_ADMIN' ? 'Contoh: NIP.19850101' : 'Contoh: 23525055'" 
+              required 
+              class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-uii-blue focus:bg-white transition"
+            />
+            @if (regRole === 'MAHASISWA' && regNim.length >= 5) {
+              <div class="mt-2 p-2 rounded-xl bg-blue-50 border border-blue-200/80 text-[11px] text-uii-blue flex items-center gap-1.5 font-medium animate-in fade-in">
+                <span>🎓</span>
+                <span>Program Studi: <strong class="text-blue-900">{{ detectedProdiInfo.studyProgram }}</strong> &bull; {{ detectedProdiInfo.faculty }}</span>
+              </div>
+            }
+
+            <!-- Expandable UII Faculties & Departments Directory Reference -->
+            @if (showDirectoryModal && regRole === 'MAHASISWA') {
+              <div class="mt-3 p-3 bg-slate-50 border border-slate-200 rounded-2xl space-y-3 animate-in fade-in text-xs shadow-xs">
+                <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+                  <div class="flex items-center gap-1.5 font-bold text-slate-800">
+                    <span>🏛️</span>
+                    <span>Direktori Resmi Fakultas & Jurusan UII</span>
+                  </div>
+                  <button type="button" (click)="showDirectoryModal = false" class="text-slate-400 hover:text-slate-600 font-bold text-sm cursor-pointer">✕</button>
+                </div>
+                <p class="text-[11px] text-slate-500">
+                  Pilih atau klik jurusan di bawah ini untuk mengisi kode otomatis ke NIM Anda:
+                </p>
+
+                <!-- Faculty Tabs (Pills) -->
+                <div class="flex flex-wrap gap-1.5">
+                  @for (fac of uiiFacultyList; track fac.facultyShort) {
+                    <button 
+                      type="button" 
+                      (click)="selectDirectoryFaculty(fac)"
+                      [class.bg-uii-blue]="selectedDirectoryFaculty.facultyShort === fac.facultyShort"
+                      [class.text-white]="selectedDirectoryFaculty.facultyShort === fac.facultyShort"
+                      [class.bg-white]="selectedDirectoryFaculty.facultyShort !== fac.facultyShort"
+                      [class.text-slate-700]="selectedDirectoryFaculty.facultyShort !== fac.facultyShort"
+                      class="px-2.5 py-1 rounded-lg font-bold border border-slate-200 text-[10px] transition cursor-pointer hover:border-uii-blue">
+                      {{ fac.facultyShort }}
+                    </button>
+                  }
+                </div>
+
+                <!-- Active Faculty Departments List -->
+                <div class="bg-white p-2.5 rounded-xl border border-slate-200 space-y-2">
+                  <div class="font-bold text-uii-blue text-[11px]">
+                    {{ selectedDirectoryFaculty.facultyName }} ({{ selectedDirectoryFaculty.facultyShort }})
+                  </div>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                    @for (dept of selectedDirectoryFaculty.departments; track dept.code) {
+                      <button 
+                        type="button" 
+                        (click)="pickDepartmentCode(dept.code)"
+                        class="p-1.5 rounded-lg border border-slate-100 hover:border-uii-blue hover:bg-blue-50/50 text-left transition flex items-center justify-between cursor-pointer group">
+                        <span class="text-slate-800 group-hover:text-uii-blue font-medium text-[11px]">{{ dept.name }}</span>
+                        <span class="px-1.5 py-0.5 rounded font-mono font-bold text-[10px] bg-slate-100 text-slate-600 group-hover:bg-blue-100 group-hover:text-uii-blue">{{ dept.code }}</span>
+                      </button>
+                    }
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+
+          <!-- Email -->
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Alamat Email (Gmail / UII)</label>
+            <input 
+              type="email" 
+              [(ngModel)]="regEmail" 
+              name="regEmail" 
+              placeholder="fajar.pratama@students.uii.ac.id / gmail.com" 
+              required 
+              class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-uii-blue focus:bg-white transition"
+            />
+          </div>
+
+          <!-- Kata Sandi -->
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Kata Sandi</label>
+            <input 
+              type="password" 
+              [(ngModel)]="regPassword" 
+              name="regPassword" 
+              placeholder="Minimal 6 karakter" 
+              required 
+              class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-uii-blue focus:bg-white transition"
+            />
+          </div>
+
+          <!-- Submit Register Button -->
+          <button 
+            type="submit" 
+            [disabled]="isRegisterLoading"
+            style="background-color: #002855 !important; color: #ffffff !important;"
+            class="w-full py-3 px-4 bg-[#002855] hover:bg-blue-900 active:bg-blue-950 text-white rounded-xl font-bold text-sm shadow-md transition flex items-center justify-center gap-2 uppercase tracking-wider cursor-pointer mt-1">
+            @if (isRegisterLoading) {
+              <span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+              <span>Mendaftarkan Akun...</span>
+            } @else {
+              <span>DAFTAR AKUN BARU</span>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+              </svg>
+            }
+          </button>
+
+          <!-- Toggle Kembali ke Login -->
+          <div class="pt-2 text-center text-xs text-slate-600">
+            <span>Sudah memiliki akun?</span>
+            <button 
+              type="button" 
+              (click)="toggleAuthMode('LOGIN')" 
+              class="text-[#002855] hover:text-blue-900 font-bold hover:underline ml-1 cursor-pointer">
+              Masuk ke Akun
+            </button>
+          </div>
+        </form>
+      }
+
+    </div>
+  }
+
+  <!-- ================= GOOGLE / GMAIL ACCOUNT SELECTOR MODAL ================= -->
+  @if (showGooglePicker) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
+      <div class="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-6 text-slate-800 border border-slate-100 relative">
+        <!-- Close button -->
+        <button 
+          type="button" 
+          (click)="closeGoogleLogin()" 
+          class="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-700 flex items-center justify-center text-sm transition cursor-pointer">
+          ✕
+        </button>
+
+        <div class="text-center mb-5">
+          <svg class="w-9 h-9 mx-auto mb-2.5" viewBox="0 0 24 24">
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+          </svg>
+          <h3 class="text-base font-black text-slate-900 tracking-tight">Login dengan Google</h3>
+          <p class="text-xs text-slate-500 mt-0.5">Pilih akun Gmail atau Google Workspace UII</p>
+        </div>
+
+        @if (isGoogleAuthenticating) {
+          <div class="py-8 text-center space-y-3">
+            <span class="w-8 h-8 border-3 border-[#002855] border-t-transparent rounded-full animate-spin inline-block"></span>
+            <p class="text-xs font-semibold text-slate-700">Menghubungkan akun Google...</p>
+          </div>
+        } @else {
+          <div class="space-y-2 mb-4">
+            @for (acc of googleAccounts; track acc.email) {
+              <button 
+                type="button" 
+                (click)="selectGoogleAccount(acc.email, acc.name)"
+                class="w-full p-2.5 flex items-center gap-3 bg-slate-50 hover:bg-slate-100/80 active:bg-slate-200/70 border border-slate-200 rounded-2xl transition text-left cursor-pointer">
+                <img [src]="acc.avatarUrl" [alt]="acc.name" class="w-9 h-9 rounded-full object-cover border border-slate-200 shrink-0">
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center justify-between gap-1">
+                    <p class="text-xs font-bold text-slate-900 truncate">{{ acc.name }}</p>
+                    <span class="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
+                          [class.bg-emerald-100]="acc.role === 'Mahasiswa'"
+                          [class.text-emerald-800]="acc.role === 'Mahasiswa'"
+                          [class.bg-blue-100]="acc.role === 'Panitia Ormawa'"
+                          [class.text-blue-800]="acc.role === 'Panitia Ormawa'"
+                          [class.bg-purple-100]="acc.role === 'Admin DPK UII'"
+                          [class.text-purple-800]="acc.role === 'Admin DPK UII'">
+                      {{ acc.role }}
+                    </span>
+                  </div>
+                  <p class="text-[11px] text-slate-500 truncate">{{ acc.email }}</p>
+                </div>
+              </button>
+            }
+
+            @if (showCustomGmailField) {
+              <div class="p-3 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
+                <label class="block text-[11px] font-semibold text-slate-700">Masukkan Alamat Gmail Lain:</label>
+                <div class="flex gap-1.5">
+                  <input 
+                    type="email" 
+                    [(ngModel)]="customGmailInput" 
+                    placeholder="nama@gmail.com" 
+                    class="flex-1 bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-800 focus:outline-none focus:border-uii-blue"
+                    (keyup.enter)="submitCustomGmail()"
+                  />
+                  <button 
+                    type="button" 
+                    (click)="submitCustomGmail()" 
+                    class="px-3 py-1.5 bg-[#002855] hover:bg-blue-900 text-white font-bold text-xs rounded-xl transition cursor-pointer">
+                    Masuk
+                  </button>
+                </div>
+              </div>
+            } @else {
+              <button 
+                type="button" 
+                (click)="showCustomGmailField = true"
+                class="w-full py-2 px-3 text-center text-xs font-semibold text-[#002855] hover:text-blue-900 hover:bg-blue-50/60 rounded-xl transition cursor-pointer">
+                + Gunakan akun Gmail lain
+              </button>
+            }
+          </div>
+
+          <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
+            <span>Google Identity Services</span>
+            <button type="button" (click)="closeGoogleLogin()" class="hover:text-slate-600 font-semibold cursor-pointer">Batal</button>
+          </div>
+        }
+      </div>
+    </div>
+  }
+  </main>
+
+
+  <!-- ================= FOOTER ================= -->
+  <footer class="w-full px-6 lg:px-12 py-4 bg-black/80 border-t border-white/10 text-xs text-slate-400 relative z-30">
+    <div class="max-w-7xl mx-auto text-center">
+      <span class="text-white font-bold tracking-wider">UII Event Platform</span> &bull; 
+      <span>Sistem Informasi Manajemen Kegiatan Mahasiswa Terpadu &copy; 2026</span>
+    </div>
+  </footer>
+
+</div>

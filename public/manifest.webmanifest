@@ -1,0 +1,26 @@
+{
+  "name": "UII Event Management Platform",
+  "short_name": "UII Event",
+  "description": "Portal Satu Pintu Manajemen & Presensi Kegiatan Mahasiswa Universitas Islam Indonesia",
+  "start_url": "/catalog",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#002855",
+  "theme_color": "#002855",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/assets/images/logo-uii.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/images/logo-uii.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["education", "events", "productivity"]
+}

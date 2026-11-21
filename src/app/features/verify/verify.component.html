@@ -1,0 +1,98 @@
+<div class="min-h-screen bg-slate-50 py-10 px-4 sm:px-6">
+  <div class="max-w-2xl mx-auto">
+    
+    <!-- Header Brand -->
+    <div class="text-center mb-8">
+      <div class="w-14 h-14 rounded-2xl bg-uii-blue text-white font-extrabold text-xl flex items-center justify-center mx-auto shadow-md mb-3">
+        UII
+      </div>
+      <h1 class="text-xl font-bold text-slate-900">
+        Sistem Verifikasi Publik Ijazah & SKPI
+      </h1>
+      <p class="text-xs text-slate-500">
+        Direktorat Pembinaan Kemahasiswaan • Universitas Islam Indonesia
+      </p>
+    </div>
+
+    @if (cert) {
+      <!-- Valid Certificate Card -->
+      <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-lg border-2 border-emerald-500/80 relative overflow-hidden">
+        
+        <div class="flex items-center gap-3 pb-5 border-b border-slate-100">
+          <div class="w-10 h-10 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-xl">
+            ✓
+          </div>
+          <div>
+            <span class="text-[10px] font-extrabold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+              Sertifikat Asli & Terverifikasi
+            </span>
+            <h2 class="text-base font-extrabold text-slate-900 mt-0.5">
+              Rekognisi Kemahasiswaan Sah
+            </h2>
+          </div>
+        </div>
+
+        <div class="mt-6 space-y-4 text-xs">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-200">
+            <div>
+              <span class="text-slate-400 font-semibold block uppercase text-[10px]">Nama Mahasiswa</span>
+              <strong class="text-sm text-slate-900">{{ cert.userName }}</strong>
+            </div>
+            <div>
+              <span class="text-slate-400 font-semibold block uppercase text-[10px]">NIM Mahasiswa</span>
+              <strong class="font-mono text-slate-800">{{ cert.userNim }}</strong>
+            </div>
+            <div>
+              <span class="text-slate-400 font-semibold block uppercase text-[10px]">Program Studi / Fakultas</span>
+              <span class="text-slate-800">{{ cert.userStudyProgram }}</span>
+            </div>
+            <div>
+              <span class="text-slate-400 font-semibold block uppercase text-[10px]">Nomor Registrasi SKPI</span>
+              <span class="font-mono font-bold text-uii-blue">{{ cert.certificateNumber }}</span>
+            </div>
+          </div>
+
+          <div class="bg-blue-50 p-4 rounded-2xl border border-blue-200">
+            <span class="text-blue-700 font-semibold block uppercase text-[10px]">Kegiatan yang Diikuti</span>
+            <h3 class="text-sm font-bold text-slate-900 mt-0.5">{{ cert.eventTitle }}</h3>
+            <div class="text-[11px] text-slate-600 mt-1">Tanggal Pelaksanaan: {{ cert.eventDate }}</div>
+            <div class="mt-2 inline-block px-2 py-0.5 bg-amber-400 text-slate-950 font-bold rounded text-[11px]">
+              ★ Bobot Nilai SKPI: {{ cert.skpiPoints }} Poin
+            </div>
+          </div>
+
+          <!-- Cryptographic Hash Bar -->
+          <div class="bg-slate-100 p-3 rounded-xl border border-slate-200 font-mono text-[10px] text-slate-600 break-all">
+            <strong class="text-slate-800">Hash SHA-256:</strong> {{ cert.verificationHash }}
+          </div>
+
+          <div class="text-[11px] text-slate-500 text-center pt-2">
+            Diterbitkan secara digital oleh <strong>{{ cert.issuerName }}</strong> ({{ cert.issuerRole }}) pada tanggal {{ cert.issueDate }}.
+          </div>
+        </div>
+
+        <div class="mt-6 pt-4 border-t border-slate-100 text-center">
+          <a routerLink="/catalog" class="text-xs font-bold text-uii-blue hover:underline">
+            &larr; Kembali ke Portal Kegiatan UII
+          </a>
+        </div>
+
+      </div>
+    } @else {
+      <!-- Invalid / Not Found Card -->
+      <div class="bg-white rounded-3xl p-8 shadow-sm border border-slate-200 text-center">
+        <div class="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto text-xl font-bold mb-3">
+          ✕
+        </div>
+        <h2 class="text-base font-bold text-slate-900">Sertifikat Tidak Ditemukan</h2>
+        <p class="text-xs text-slate-500 mt-1">
+          Tanda tangan digital hash tidak cocok dengan basis data rekognisi resmi kemahasiswaan UII.
+        </p>
+        <a routerLink="/catalog" class="mt-4 inline-block px-4 py-2 bg-uii-blue text-white text-xs font-semibold rounded-xl">
+          Ke Halaman Utama
+        </a>
+      </div>
+    }
+
+  </div>
+</div>

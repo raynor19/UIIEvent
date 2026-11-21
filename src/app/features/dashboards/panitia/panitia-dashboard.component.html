@@ -1,0 +1,1847 @@
+<div class="min-h-screen bg-[#F8FAFC] flex flex-col md:flex-row antialiased font-sans text-slate-800">
+
+  <!-- ================= DESKTOP DEEP NAVY SIDEBAR ================= -->
+  <aside class="hidden md:flex flex-col w-64 bg-[#0B1E3B] text-white shrink-0 min-h-screen sticky top-0 h-screen justify-between border-r border-[#152e54] z-30 select-none">
+    
+    <!-- Top Branding & Navigation -->
+    <div class="p-6">
+      <!-- Brand Logo / Title -->
+      <div class="flex items-center gap-3 mb-8 cursor-pointer" (click)="openDashboard()">
+        <div class="w-9 h-9 rounded-xl bg-white p-1.5 flex items-center justify-center shadow-xs">
+          <img src="/assets/images/logo-uii.png" alt="UII" class="h-full w-auto object-contain" />
+        </div>
+        <span class="text-xl font-bold tracking-tight text-white">UIIEvent</span>
+      </div>
+
+      <!-- Navigation Links -->
+      <nav class="space-y-1.5">
+        <button 
+          type="button" 
+          (click)="openDashboard()"
+          [class.bg-[#1E3A63]]="activeView() === 'DASHBOARD'"
+          [class.text-white]="activeView() === 'DASHBOARD'"
+          [class.text-slate-300]="activeView() !== 'DASHBOARD'"
+          class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-semibold hover:bg-[#183258] hover:text-white transition cursor-pointer text-left">
+          <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+          </svg>
+          <span>Dashboard</span>
+        </button>
+
+        <button 
+          type="button" 
+          (click)="openAcaraSaya()"
+          [class.bg-[#1E3A63]]="activeView() === 'REKAP_PESERTA' || activeView() === 'SELEKSI_OPREC'"
+          [class.text-white]="activeView() === 'REKAP_PESERTA' || activeView() === 'SELEKSI_OPREC'"
+          [class.text-slate-300]="activeView() !== 'REKAP_PESERTA' && activeView() !== 'SELEKSI_OPREC'"
+          class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-semibold hover:bg-[#183258] hover:text-white transition cursor-pointer text-left">
+          <svg class="w-5 h-5" [class.text-blue-400]="activeView() === 'REKAP_PESERTA' || activeView() === 'SELEKSI_OPREC'" [class.text-slate-400]="activeView() !== 'REKAP_PESERTA' && activeView() !== 'SELEKSI_OPREC'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          <span>Acara Saya</span>
+        </button>
+
+        <button 
+          type="button" 
+          (click)="openCreateWizard(false)"
+          [class.bg-[#1E3A63]]="activeView() === 'CREATE'"
+          [class.text-white]="activeView() === 'CREATE'"
+          class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-[#183258] hover:text-white transition cursor-pointer text-left">
+          <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          <span>Buat Acara</span>
+        </button>
+      </nav>
+    </div>
+
+    <!-- Bottom Organization Profile & Logout -->
+    <div class="p-5 border-t border-slate-700/60 bg-[#07152A]">
+      <div class="mb-3">
+        <div class="font-bold text-white text-sm">Panitia UII</div>
+        <div class="text-[11px] text-slate-400 truncate">panitia@uii.ac.id · Panitia</div>
+      </div>
+      <button 
+        type="button" 
+        (click)="logout()" 
+        class="inline-flex items-center gap-2 text-xs text-slate-300 hover:text-rose-400 transition font-medium cursor-pointer">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+        </svg>
+        <span>Keluar</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- ================= MOBILE HEADER FOR HP ================= -->
+  <header class="md:hidden flex items-center justify-between bg-[#0B1E3B] text-white px-4 py-3.5 sticky top-0 z-40 shadow-md">
+    <div class="flex items-center gap-2.5">
+      <div class="w-8 h-8 rounded-lg bg-white p-1 flex items-center justify-center shadow-xs">
+        <img src="/assets/images/logo-uii.png" alt="UII" class="h-full w-auto object-contain" />
+      </div>
+      <span class="font-bold text-base tracking-tight">UIIEvent</span>
+      <span class="text-[11px] px-2 py-0.5 rounded-full bg-blue-900/60 text-blue-200 border border-blue-400/30">Panitia</span>
+    </div>
+
+    <button 
+      type="button" 
+      (click)="mobileMenuOpen.set(!mobileMenuOpen())"
+      class="p-2 rounded-lg bg-[#183258] text-white hover:bg-blue-800 transition">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+      </svg>
+    </button>
+  </header>
+
+  <!-- Mobile Dropdown Drawer -->
+  @if (mobileMenuOpen()) {
+    <div class="md:hidden bg-[#0B1E3B] text-white border-b border-slate-700 p-4 space-y-2 z-40 shadow-xl">
+      <button 
+        type="button" 
+        (click)="openDashboard()"
+        class="w-full text-left px-3 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2"
+        [class.bg-[#1E3A63]]="activeView() === 'DASHBOARD'">
+        <span>⊞ Dashboard Acara</span>
+      </button>
+      <button 
+        type="button" 
+        (click)="openAcaraSaya()"
+        class="w-full text-left px-3 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2 text-blue-300"
+        [class.bg-[#1E3A63]]="activeView() === 'REKAP_PESERTA' || activeView() === 'SELEKSI_OPREC'">
+        <span>📅 Acara Saya (Rekap &amp; Seleksi)</span>
+      </button>
+      <button 
+        type="button" 
+        (click)="openCreateWizard(false)"
+        class="w-full text-left px-3 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2 text-amber-300"
+        [class.bg-[#1E3A63]]="activeView() === 'CREATE'">
+        <span>+ Buat Acara Baru</span>
+      </button>
+      <button 
+        type="button" 
+        (click)="logout()" 
+        class="w-full text-left px-3 py-2 text-xs text-rose-300 hover:text-rose-200 transition font-medium flex items-center gap-1.5 cursor-pointer">
+        <span>🚪 Keluar</span>
+      </button>
+    </div>
+  }
+
+  <!-- ================= MAIN CONTENT VIEWPORT ================= -->
+  <main class="flex-1 min-w-0 p-4 sm:p-6 lg:p-8 overflow-y-auto">
+
+    <!-- Global Toast Alert -->
+    @if (toastMessage()) {
+      <div class="mb-6 p-4 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-900 text-sm font-medium flex items-center justify-between shadow-xs animate-in fade-in duration-200">
+        <div class="flex items-center gap-3">
+          <span class="text-xl">✅</span>
+          <span>{{ toastMessage() }}</span>
+        </div>
+        <button type="button" (click)="toastMessage.set('')" class="text-emerald-700 hover:text-emerald-950 font-bold px-2 py-1">✕</button>
+      </div>
+    }
+
+    <!-- ========================================================= -->
+    <!-- VIEW 1: SCR-PAN-01 DASHBOARD ACARA (NORMAL & EMPTY)       -->
+    <!-- ========================================================= -->
+    @if (activeView() === 'DASHBOARD') {
+      <div class="space-y-6 max-w-7xl mx-auto">
+
+        <!-- Top Header & Action -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">Dashboard Acara</h1>
+          </div>
+
+          <button 
+            type="button" 
+            (click)="openCreateWizard(false)"
+            class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-[#0052CC] hover:bg-blue-700 text-white font-medium text-sm transition shadow-xs cursor-pointer">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            <span>+ Buat Acara Baru</span>
+          </button>
+        </div>
+
+
+
+        <!-- 3 Summary Metric Cards (SCR-PAN-01) -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="bg-white rounded-xl p-5 border border-slate-200/90 shadow-2xs">
+            <div class="text-xs font-medium text-slate-500 uppercase tracking-wider">Total Acara</div>
+            <div class="text-3xl font-bold text-slate-900 mt-2">{{ totalAcara() }}</div>
+            <div class="text-xs text-slate-500 mt-1">
+              {{ publishedCount() }} dipublikasikan · {{ completedCount() }} selesai
+            </div>
+          </div>
+
+          <div class="bg-white rounded-xl p-5 border border-slate-200/90 shadow-2xs">
+            <div class="text-xs font-medium text-slate-500 uppercase tracking-wider">Total Pendaftar</div>
+            <div class="text-3xl font-bold text-[#0052CC] mt-2">{{ totalPendaftar() }}</div>
+            <div class="text-xs text-slate-500 mt-1">
+              Semua acara, termasuk yang selesai
+            </div>
+          </div>
+
+          <div class="bg-white rounded-xl p-5 border border-slate-200/90 shadow-2xs">
+            <div class="text-xs font-medium text-slate-500 uppercase tracking-wider">Sisa Kuota</div>
+            <div class="text-3xl font-bold text-slate-900 mt-2">{{ sisaKuota() }}</div>
+            <div class="text-xs text-slate-500 mt-1">
+              dari {{ totalKuotaPublished() }} kursi acara yang dipublikasikan
+            </div>
+          </div>
+        </div>
+
+        <!-- Section: Acara Saya with Search & Filters -->
+        <div class="bg-white rounded-xl border border-slate-200 shadow-2xs p-5 space-y-4">
+          
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div class="flex items-center gap-4">
+              <h2 class="text-lg font-bold text-slate-900">Acara Saya</h2>
+              
+              <!-- Search Input -->
+              <div class="relative w-64">
+                <input 
+                  type="text" 
+                  [ngModel]="searchQuery()"
+                  (ngModelChange)="searchQuery.set($event)"
+                  placeholder="Cari judul acara" 
+                  class="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-1 focus:ring-blue-500 bg-slate-50/50"
+                />
+                <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+            </div>
+
+            <!-- Filter Tabs Pills -->
+            <div class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+              @for (tab of ['SEMUA', 'DRAF', 'MENUNGGU', 'PERLU_REVISI', 'DIPUBLIKASIKAN', 'DITOLAK', 'SELESAI']; track tab) {
+                <button 
+                  type="button" 
+                  (click)="setFilter(tab)"
+                  [class.bg-[#0052CC]]="selectedFilter() === tab"
+                  [class.text-white]="selectedFilter() === tab"
+                  [class.border-transparent]="selectedFilter() === tab"
+                  [class.border-slate-300]="selectedFilter() !== tab"
+                  [class.text-slate-600]="selectedFilter() !== tab"
+                  class="px-3 py-1.5 rounded-md border font-medium hover:bg-slate-100 transition whitespace-nowrap cursor-pointer capitalize">
+                  {{ tab === 'PERLU_REVISI' ? 'Perlu Revisi' : tab.toLowerCase() }}
+                </button>
+              }
+            </div>
+          </div>
+
+          <!-- TABLE OR EMPTY STATE -->
+          @if (filteredEvents().length > 0) {
+            <div class="overflow-x-auto border border-slate-200 rounded-lg">
+              <table class="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold uppercase tracking-wider text-[11px]">
+                    <th class="py-3 px-4">JUDUL</th>
+                    <th class="py-3 px-4">TANGGAL ↕</th>
+                    <th class="py-3 px-4">TIPE</th>
+                    <th class="py-3 px-4">PENDAFTAR / KUOTA</th>
+                    <th class="py-3 px-4">STATUS</th>
+                    <th class="py-3 px-4 text-right">AKSI</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200">
+                  @for (event of filteredEvents(); track event.id) {
+                    <tr class="hover:bg-slate-50/80 transition duration-150">
+                      <td class="py-3.5 px-4 font-semibold text-slate-900 max-w-xs truncate">
+                        {{ event.title }}
+                      </td>
+                      <td class="py-3.5 px-4 text-slate-600 whitespace-nowrap">
+                        {{ event.dateStr }}
+                      </td>
+                      <td class="py-3.5 px-4 whitespace-nowrap">
+                        @if (event.type === 'Oprec') {
+                          <span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-purple-50 text-purple-700 border border-purple-200">
+                            Oprec
+                          </span>
+                        } @else {
+                          <span class="text-slate-600">Peserta</span>
+                        }
+                      </td>
+                      <td class="py-3.5 px-4 whitespace-nowrap font-medium text-slate-700">
+                        {{ event.registeredCount }} / {{ event.quota }}
+                      </td>
+                      <td class="py-3.5 px-4 whitespace-nowrap">
+                        @switch (event.status) {
+                          @case ('DIPUBLIKASIKAN') {
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                              Dipublikasikan
+                            </span>
+                          }
+                          @case ('PERLU_REVISI') {
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-amber-50 text-amber-700 border border-amber-300">
+                              <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                              Perlu Revisi
+                            </span>
+                          }
+                          @case ('MENUNGGU') {
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-sky-50 text-sky-700 border border-sky-200">
+                              <span class="w-1.5 h-1.5 rounded-full bg-sky-500"></span>
+                              Menunggu Persetujuan
+                            </span>
+                          }
+                          @case ('DRAF') {
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-600 border border-slate-200">
+                              <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                              Draf
+                            </span>
+                          }
+                          @case ('DITOLAK') {
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-rose-50 text-rose-700 border border-rose-200">
+                              <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                              Ditolak
+                            </span>
+                          }
+                          @case ('SELESAI') {
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-300">
+                              ✓ Selesai
+                            </span>
+                          }
+                        }
+                      </td>
+                      <td class="py-3.5 px-4 text-right whitespace-nowrap space-x-2">
+                        <button 
+                          type="button" 
+                          (click)="viewEventDetail(event)"
+                          class="text-[#0052CC] hover:underline font-semibold cursor-pointer">
+                          Lihat Rekap
+                        </button>
+                        <button 
+                          type="button" 
+                          (click)="openCreateWizard(event.status === 'PERLU_REVISI')"
+                          class="inline-flex items-center gap-1 text-slate-600 hover:text-slate-900 font-medium cursor-pointer">
+                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                          </svg>
+                          <span>Edit</span>
+                        </button>
+                        @if (event.hasScanner) {
+                          <a 
+                            routerLink="/scanner" 
+                            class="inline-flex items-center gap-1 px-2.5 py-1 rounded border border-slate-300 text-slate-700 hover:bg-slate-100 text-[11px] font-medium transition cursor-pointer">
+                            <svg class="w-3 h-3 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                            </svg>
+                            <span>Scanner</span>
+                          </a>
+                        }
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Pagination Footer -->
+            <div class="flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 pt-3 gap-3">
+              <div>
+                Menampilkan 1 - {{ filteredEvents().length }} dari {{ filteredEvents().length }} data
+              </div>
+              <div class="flex items-center gap-4">
+                <div class="flex items-center gap-1">
+                  <span>Baris per halaman:</span>
+                  <span class="font-semibold text-slate-700">10 ▾</span>
+                </div>
+                <div class="flex items-center gap-1">
+                  <button class="px-2 py-1 rounded border border-slate-200 text-slate-400 cursor-not-allowed">‹</button>
+                  <span class="px-2.5 py-1 rounded bg-[#0052CC] text-white font-medium">1</span>
+                  <button class="px-2 py-1 rounded border border-slate-200 text-slate-400 cursor-not-allowed">›</button>
+                </div>
+              </div>
+            </div>
+
+          } @else {
+            <!-- EMPTY STATE -->
+            <div class="py-16 px-4 text-center flex flex-col items-center justify-center max-w-md mx-auto">
+              <div class="w-32 h-24 mb-6 relative border-2 border-slate-800 rounded-lg bg-slate-50 flex items-center justify-center shadow-xs">
+                <div class="absolute -top-2 inset-x-2 h-2 bg-slate-800 rounded-t"></div>
+                <div class="flex items-center gap-2">
+                  <div class="w-6 h-10 border border-dashed border-slate-300 rounded"></div>
+                  <div class="w-6 h-10 border border-dashed border-slate-300 rounded"></div>
+                  <div class="w-6 h-10 border border-dashed border-blue-400 bg-blue-50/50 rounded flex items-center justify-center text-blue-600 font-bold text-xs">+</div>
+                </div>
+                <div class="absolute -bottom-3 left-6 w-1 h-3 bg-slate-800 rotate-12"></div>
+                <div class="absolute -bottom-3 right-6 w-1 h-3 bg-slate-800 -rotate-12"></div>
+              </div>
+              <h3 class="text-base font-bold text-slate-900 mb-1.5">Belum ada acara</h3>
+              <p class="text-xs text-slate-500 leading-relaxed mb-6">
+                Buat acara pertama Panitia UII. Draf bisa disimpan dan diajukan ke DPK kapan saja.
+              </p>
+              <button 
+                type="button" 
+                (click)="openCreateWizard(false)"
+                class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[#0052CC] hover:bg-blue-700 text-white font-medium text-xs shadow-xs transition cursor-pointer">
+                <span>+ Buat Acara Baru</span>
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- ========================================================= -->
+    <!-- VIEW 2: SCR-PAN-03 REKAP PESERTA & PRESENSI (ACARA SAYA)  -->
+    <!-- ========================================================= -->
+    @if (activeView() === 'REKAP_PESERTA') {
+      <div class="space-y-6 max-w-7xl mx-auto pb-16">
+
+        <!-- Breadcrumb & Top Bar -->
+        <div class="space-y-2">
+          <nav class="flex items-center gap-2 text-xs text-slate-500">
+            <button type="button" (click)="openDashboard()" class="hover:text-blue-600 cursor-pointer">Dashboard</button>
+            <span>/</span>
+            <span class="text-slate-500">Acara Saya</span>
+            <span>/</span>
+            <span class="text-slate-800 font-medium">Rekap</span>
+          </nav>
+
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">Rekap Peserta &amp; Presensi</h1>
+              <p class="text-xs sm:text-sm text-slate-500 mt-1 flex flex-wrap items-center gap-1.5">
+                <span class="font-bold text-[#002855]">{{ selectedRekapEvent()?.title }}</span>
+                <span class="text-slate-300">•</span>
+                <span>{{ selectedRekapEvent()?.dateStr }}</span>
+                @if (selectedRekapEvent()?.location) {
+                  <span class="text-slate-300">•</span>
+                  <span class="text-slate-600">{{ selectedRekapEvent()?.location }}</span>
+                }
+              </p>
+            </div>
+
+            <!-- Top Right Action CTAs -->
+            <div class="flex items-center gap-3">
+              <button 
+                type="button" 
+                (click)="exportParticipantsExcel()"
+                class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-medium text-xs shadow-2xs transition cursor-pointer">
+                <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                <span>Ekspor ke Excel/CSV</span>
+              </button>
+
+              <a 
+                routerLink="/scanner"
+                class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#002855] hover:bg-[#001f42] text-white font-medium text-xs shadow-xs transition cursor-pointer">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                </svg>
+                <span>Buka Web Scanner</span>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pilihan Acara (Standard Dropdown) -->
+        <div class="bg-white rounded-xl border border-slate-200 p-4 sm:p-5 shadow-2xs">
+          <div class="max-w-md">
+            <label class="block text-xs font-semibold text-slate-700 mb-1.5">Pilih Acara</label>
+
+            <div class="relative">
+              <!-- Left Icon (Standard SVG Calendar) -->
+              <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 z-10">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </span>
+
+              <!-- Dropdown Trigger Button matching standard input styling -->
+              <button 
+                type="button" 
+                (click)="toggleEventDropdown()"
+                class="w-full bg-slate-50 hover:bg-slate-100/60 border border-slate-200 rounded-xl pl-10 pr-10 py-2.5 text-sm font-medium text-slate-800 text-left focus:outline-none focus:border-blue-600 transition flex items-center justify-between cursor-pointer">
+                <span class="truncate">{{ selectedRekapEvent()?.title || 'Pilih Acara' }}</span>
+              </button>
+
+              <!-- Chevron Down Arrow -->
+              <span 
+                class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-[#002855] transition">
+                <svg class="w-4 h-4 transition-transform duration-200" [class.rotate-180]="isEventDropdownOpen()" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+              </span>
+
+              <!-- Floating Options Menu -->
+              @if (isEventDropdownOpen()) {
+                <div class="fixed inset-0 z-40" (click)="closeEventDropdown()"></div>
+
+                <div class="absolute left-0 right-0 top-full mt-1.5 bg-white border border-slate-200 rounded-xl shadow-xl z-50 py-1 max-h-72 overflow-y-auto animate-in fade-in zoom-in-95 duration-150">
+                  @for (ev of eventsWithDynamicCounts(); track ev.id) {
+                    <button 
+                      type="button" 
+                      (click)="selectRekapEvent(ev.id)"
+                      [class.bg-blue-50]="selectedRekapEventId() === ev.id"
+                      [class.text-[#002855]]="selectedRekapEventId() === ev.id"
+                      class="w-full px-4 py-2.5 text-left text-sm font-medium hover:bg-slate-50 transition flex items-center justify-between cursor-pointer">
+                      <div class="truncate pr-2">
+                        <div class="truncate text-slate-800" [class.font-semibold]="selectedRekapEventId() === ev.id">{{ ev.title }}</div>
+                        <div class="text-[11px] text-slate-400 font-normal">{{ ev.dateStr }}</div>
+                      </div>
+                      @if (selectedRekapEventId() === ev.id) {
+                        <span class="text-[#002855] font-bold text-sm shrink-0">✓</span>
+                      }
+                    </button>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- 4 Metric Cards (SCR-PAN-03) -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <!-- Terdaftar aktif -->
+          <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-2xs">
+            <div class="text-xs font-medium text-slate-500">Terdaftar aktif</div>
+            <div class="text-3xl font-bold text-slate-900 mt-2">{{ terdaftarAktifCount() }}</div>
+          </div>
+
+          <!-- Hadir -->
+          <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-2xs">
+            <div class="text-xs font-medium text-slate-500">Hadir</div>
+            <div class="text-3xl font-bold text-slate-900 mt-2">{{ hadirCount() }}</div>
+          </div>
+
+          <!-- Belum Hadir -->
+          <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-2xs">
+            <div class="text-xs font-medium text-slate-500">Belum Hadir</div>
+            <div class="text-3xl font-bold text-slate-900 mt-2">{{ belumHadirCount() }}</div>
+          </div>
+
+          <!-- Batal -->
+          <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-2xs">
+            <div class="text-xs font-medium text-slate-500">Batal</div>
+            <div class="text-3xl font-bold text-slate-900 mt-2">{{ batalCount() }}</div>
+          </div>
+        </div>
+
+        <!-- Search & Filter Controls -->
+        <div class="bg-white rounded-xl border border-slate-200 shadow-2xs p-5 space-y-4">
+          
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <!-- Search input -->
+            <div class="relative w-full sm:w-80">
+              <input 
+                type="text" 
+                [ngModel]="participantSearchQuery()"
+                (ngModelChange)="participantSearchQuery.set($event)"
+                placeholder="Cari NIM atau nama" 
+                class="w-full pl-9 pr-8 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
+              />
+              <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              @if (participantSearchQuery()) {
+                <button 
+                  type="button" 
+                  (click)="clearParticipantSearch()"
+                  class="absolute right-2.5 top-2 text-slate-400 hover:text-slate-700 text-xs font-bold">
+                  ✕
+                </button>
+              }
+            </div>
+
+            <!-- Status Filter Tabs -->
+            <div class="flex items-center gap-1.5 text-xs">
+              <button 
+                type="button" 
+                (click)="setParticipantFilter('SEMUA')"
+                [class.bg-[#0052CC]]="participantFilter() === 'SEMUA'"
+                [class.text-white]="participantFilter() === 'SEMUA'"
+                [class.border-transparent]="participantFilter() === 'SEMUA'"
+                [class.border-slate-300]="participantFilter() !== 'SEMUA'"
+                [class.text-slate-600]="participantFilter() !== 'SEMUA'"
+                class="px-3.5 py-1.5 rounded-md border font-medium hover:bg-slate-100 transition cursor-pointer">
+                Semua
+              </button>
+
+              <button 
+                type="button" 
+                (click)="setParticipantFilter('HADIR')"
+                [class.bg-[#0052CC]]="participantFilter() === 'HADIR'"
+                [class.text-white]="participantFilter() === 'HADIR'"
+                [class.border-transparent]="participantFilter() === 'HADIR'"
+                [class.border-slate-300]="participantFilter() !== 'HADIR'"
+                [class.text-slate-600]="participantFilter() !== 'HADIR'"
+                class="px-3.5 py-1.5 rounded-md border font-medium hover:bg-slate-100 transition cursor-pointer">
+                Hadir
+              </button>
+
+              <button 
+                type="button" 
+                (click)="setParticipantFilter('BELUM_HADIR')"
+                [class.bg-[#0052CC]]="participantFilter() === 'BELUM_HADIR'"
+                [class.text-white]="participantFilter() === 'BELUM_HADIR'"
+                [class.border-transparent]="participantFilter() === 'BELUM_HADIR'"
+                [class.border-slate-300]="participantFilter() !== 'BELUM_HADIR'"
+                [class.text-slate-600]="participantFilter() !== 'BELUM_HADIR'"
+                class="px-3.5 py-1.5 rounded-md border font-medium hover:bg-slate-100 transition cursor-pointer">
+                Belum Hadir
+              </button>
+
+              <button 
+                type="button" 
+                (click)="setParticipantFilter('BATAL')"
+                [class.bg-[#0052CC]]="participantFilter() === 'BATAL'"
+                [class.text-white]="participantFilter() === 'BATAL'"
+                [class.border-transparent]="participantFilter() === 'BATAL'"
+                [class.border-slate-300]="participantFilter() !== 'BATAL'"
+                [class.text-slate-600]="participantFilter() !== 'BATAL'"
+                class="px-3.5 py-1.5 rounded-md border font-medium hover:bg-slate-100 transition cursor-pointer">
+                Batal
+              </button>
+            </div>
+          </div>
+
+          <!-- TABLE OR EMPTY SEARCH -->
+          @if (filteredParticipants().length > 0) {
+            <div class="overflow-x-auto border border-slate-200 rounded-lg">
+              <table class="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold uppercase tracking-wider text-[11px]">
+                    <th class="py-3 px-4 w-12">NO</th>
+                    <th class="py-3 px-4">NIM</th>
+                    <th class="py-3 px-4">NAMA</th>
+                    <th class="py-3 px-4">PRODI</th>
+                    <th class="py-3 px-4">NO. WHATSAPP</th>
+                    <th class="py-3 px-4">WAKTU DAFTAR ↕</th>
+                    <th class="py-3 px-4">STATUS</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200">
+                  @for (p of pagedParticipants(); track p.nim) {
+                    <tr class="hover:bg-slate-50/80 transition">
+                      <td class="py-3.5 px-4 text-slate-500">{{ p.no }}</td>
+                      <td class="py-3.5 px-4 font-mono font-medium text-slate-700">{{ p.nim }}</td>
+                      <td class="py-3.5 px-4 font-semibold text-slate-900">{{ p.name }}</td>
+                      <td class="py-3.5 px-4 text-slate-600">{{ p.prodi }}</td>
+                      <td class="py-3.5 px-4 font-mono text-slate-600">{{ p.whatsapp }}</td>
+                      <td class="py-3.5 px-4 text-slate-500 whitespace-nowrap">{{ p.registeredAt }}</td>
+                      <td class="py-3.5 px-4 whitespace-nowrap">
+                        @switch (p.status) {
+                          @case ('HADIR') {
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                              ✓ Hadir
+                            </span>
+                          }
+                          @case ('BELUM_HADIR') {
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">
+                              🕒 Belum Hadir
+                            </span>
+                          }
+                          @case ('BATAL') {
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-500 border border-slate-200">
+                              ✕ Batal
+                            </span>
+                          }
+                        }
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Table Footer -->
+            <div class="flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 pt-2 gap-3">
+              <div>
+                {{ participantRangeText() }}
+              </div>
+              <div class="flex items-center gap-4">
+                <div class="flex items-center gap-1.5">
+                  <span>Baris per halaman:</span>
+                  <select 
+                    [ngModel]="pageSizeParticipants()" 
+                    (ngModelChange)="onPageSizeParticipantsChange($event)"
+                    class="bg-white border border-slate-200 rounded px-1.5 py-0.5 text-xs font-semibold text-slate-700 focus:outline-none cursor-pointer">
+                    <option [value]="10">10</option>
+                    <option [value]="25">25</option>
+                    <option [value]="50">50</option>
+                  </select>
+                </div>
+                <div class="flex items-center gap-1">
+                  <!-- Previous Button -->
+                  <button 
+                    type="button"
+                    (click)="setPageParticipants(currentPageParticipants() - 1)"
+                    [disabled]="currentPageParticipants() <= 1"
+                    [class.text-slate-300]="currentPageParticipants() <= 1"
+                    [class.cursor-not-allowed]="currentPageParticipants() <= 1"
+                    [class.text-slate-600]="currentPageParticipants() > 1"
+                    [class.hover:bg-slate-50]="currentPageParticipants() > 1"
+                    class="px-2 py-1 rounded border border-slate-200 transition cursor-pointer">
+                    ‹
+                  </button>
+
+                  <!-- Page 1 -->
+                  <button 
+                    type="button"
+                    (click)="setPageParticipants(1)"
+                    [class.bg-[#0052CC]]="currentPageParticipants() === 1"
+                    [class.text-white]="currentPageParticipants() === 1"
+                    [class.font-medium]="currentPageParticipants() === 1"
+                    [class.border]="currentPageParticipants() !== 1"
+                    [class.border-slate-200]="currentPageParticipants() !== 1"
+                    [class.text-slate-600]="currentPageParticipants() !== 1"
+                    [class.hover:bg-slate-50]="currentPageParticipants() !== 1"
+                    class="px-2.5 py-1 rounded transition cursor-pointer">
+                    1
+                  </button>
+
+                  <!-- Page 2 -->
+                  @if (totalPagesParticipants() >= 2) {
+                    <button 
+                      type="button"
+                      (click)="setPageParticipants(2)"
+                      [class.bg-[#0052CC]]="currentPageParticipants() === 2"
+                      [class.text-white]="currentPageParticipants() === 2"
+                      [class.font-medium]="currentPageParticipants() === 2"
+                      [class.border]="currentPageParticipants() !== 2"
+                      [class.border-slate-200]="currentPageParticipants() !== 2"
+                      [class.text-slate-600]="currentPageParticipants() !== 2"
+                      [class.hover:bg-slate-50]="currentPageParticipants() !== 2"
+                      class="px-2 py-1 rounded transition cursor-pointer">
+                      2
+                    </button>
+                  }
+
+                  <!-- Page 3 -->
+                  @if (totalPagesParticipants() >= 3) {
+                    <button 
+                      type="button"
+                      (click)="setPageParticipants(3)"
+                      [class.bg-[#0052CC]]="currentPageParticipants() === 3"
+                      [class.text-white]="currentPageParticipants() === 3"
+                      [class.font-medium]="currentPageParticipants() === 3"
+                      [class.border]="currentPageParticipants() !== 3"
+                      [class.border-slate-200]="currentPageParticipants() !== 3"
+                      [class.text-slate-600]="currentPageParticipants() !== 3"
+                      [class.hover:bg-slate-50]="currentPageParticipants() !== 3"
+                      class="px-2 py-1 rounded transition cursor-pointer">
+                      3
+                    </button>
+                  }
+
+                  <!-- Page 4 -->
+                  @if (totalPagesParticipants() >= 4) {
+                    <button 
+                      type="button"
+                      (click)="setPageParticipants(4)"
+                      [class.bg-[#0052CC]]="currentPageParticipants() === 4"
+                      [class.text-white]="currentPageParticipants() === 4"
+                      [class.font-medium]="currentPageParticipants() === 4"
+                      [class.border]="currentPageParticipants() !== 4"
+                      [class.border-slate-200]="currentPageParticipants() !== 4"
+                      [class.text-slate-600]="currentPageParticipants() !== 4"
+                      [class.hover:bg-slate-50]="currentPageParticipants() !== 4"
+                      class="px-2 py-1 rounded transition cursor-pointer">
+                      4
+                    </button>
+                  }
+
+                  <!-- Ellipsis if > 5 pages -->
+                  @if (totalPagesParticipants() > 5) {
+                    <span class="px-1 text-slate-400">...</span>
+                  }
+
+                  <!-- Last Page (e.g. 22) -->
+                  @if (totalPagesParticipants() >= 5) {
+                    <button 
+                      type="button"
+                      (click)="setPageParticipants(totalPagesParticipants())"
+                      [class.bg-[#0052CC]]="currentPageParticipants() === totalPagesParticipants()"
+                      [class.text-white]="currentPageParticipants() === totalPagesParticipants()"
+                      [class.font-medium]="currentPageParticipants() === totalPagesParticipants()"
+                      [class.border]="currentPageParticipants() !== totalPagesParticipants()"
+                      [class.border-slate-200]="currentPageParticipants() !== totalPagesParticipants()"
+                      [class.text-slate-600]="currentPageParticipants() !== totalPagesParticipants()"
+                      [class.hover:bg-slate-50]="currentPageParticipants() !== totalPagesParticipants()"
+                      class="px-2 py-1 rounded transition cursor-pointer">
+                      {{ totalPagesParticipants() }}
+                    </button>
+                  }
+
+                  <!-- Next Button -->
+                  <button 
+                    type="button"
+                    (click)="setPageParticipants(currentPageParticipants() + 1)"
+                    [disabled]="currentPageParticipants() >= totalPagesParticipants()"
+                    [class.text-slate-300]="currentPageParticipants() >= totalPagesParticipants()"
+                    [class.cursor-not-allowed]="currentPageParticipants() >= totalPagesParticipants()"
+                    [class.text-slate-600]="currentPageParticipants() < totalPagesParticipants()"
+                    [class.hover:bg-slate-50]="currentPageParticipants() < totalPagesParticipants()"
+                    class="px-2 py-1 rounded border border-slate-200 transition cursor-pointer">
+                    ›
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Data Notice Footnote -->
+            <div class="pt-3 border-t border-slate-100 text-[11px] text-slate-400 flex items-center gap-1.5">
+              <span>🔒</span>
+              <span>Data kontak hanya untuk keperluan panitia acara ini</span>
+            </div>
+
+          } @else {
+            <!-- EMPTY RESULT / SEARCH KOSONG -->
+            <div class="py-16 px-4 text-center flex flex-col items-center justify-center max-w-md mx-auto">
+              <div class="w-16 h-16 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center text-3xl mb-4">
+                @if (participantSearchQuery()) {
+                  🔍
+                } @else {
+                  👥
+                }
+              </div>
+              <h3 class="text-sm font-bold text-slate-900 mb-1">
+                @if (participantSearchQuery()) {
+                  Tidak ada peserta dengan kata kunci '{{ participantSearchQuery() }}'
+                } @else {
+                  Belum Ada Peserta Terdaftar
+                }
+              </h3>
+              <p class="text-xs text-slate-500 leading-relaxed mb-5">
+                @if (participantSearchQuery()) {
+                  Periksa kembali NIM atau nama. Peserta yang batal ada di filter Batal.
+                } @else {
+                  Mata acara <strong class="text-slate-700">"{{ selectedRekapEvent()?.title }}"</strong> saat ini belum memiliki pendaftar. Mahasiswa yang mendaftar melalui Katalog Mahasiswa akan otomatis masuk ke rekap acara ini.
+                }
+              </p>
+              @if (participantSearchQuery()) {
+                <button 
+                  type="button" 
+                  (click)="clearParticipantSearch()"
+                  class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-slate-300 text-slate-700 text-xs font-semibold hover:bg-slate-50 transition cursor-pointer">
+                  <span>✕ Hapus pencarian</span>
+                </button>
+              }
+            </div>
+          }
+
+        </div>
+
+      </div>
+    }
+
+    <!-- ========================================================= -->
+    <!-- VIEW 3: SCR-PAN-04 SELEKSI OPREC PANITIA                  -->
+    <!-- ========================================================= -->
+    @if (activeView() === 'SELEKSI_OPREC') {
+      <div class="space-y-6 max-w-7xl mx-auto pb-16">
+
+        <!-- Breadcrumb & Top Bar -->
+        <div class="space-y-2">
+          <nav class="flex items-center gap-2 text-xs text-slate-500">
+            <button type="button" (click)="openDashboard()" class="hover:text-blue-600 cursor-pointer">Dashboard</button>
+            <span>/</span>
+            <span class="text-slate-500">Acara Saya</span>
+            <span>/</span>
+            <span class="text-slate-800 font-medium">Seleksi Oprec</span>
+          </nav>
+
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">Seleksi Oprec Panitia</h1>
+              <p class="text-xs sm:text-sm text-slate-500 mt-1">
+                Open Recruitment Panitia PKKMB 2026 · 46 pelamar · pendaftaran ditutup 7 Desember 2026
+              </p>
+            </div>
+
+            <!-- Top Right Action CTAs -->
+            <div class="flex items-center gap-3">
+              <button 
+                type="button" 
+                (click)="exportApplicantsExcel()"
+                class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-medium text-xs shadow-2xs transition cursor-pointer">
+                <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                <span>Ekspor ke Excel/CSV</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pilihan Acara (Standard Dropdown) -->
+        <div class="bg-white rounded-xl border border-slate-200 p-4 sm:p-5 shadow-2xs">
+          <div class="max-w-md">
+            <label class="block text-xs font-semibold text-slate-700 mb-1.5">Pilih Acara</label>
+
+            <div class="relative">
+              <!-- Left Icon (Standard SVG Calendar) -->
+              <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 z-10">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </span>
+
+              <!-- Dropdown Trigger Button matching standard input styling -->
+              <button 
+                type="button" 
+                (click)="toggleEventDropdown()"
+                class="w-full bg-slate-50 hover:bg-slate-100/60 border border-slate-200 rounded-xl pl-10 pr-10 py-2.5 text-sm font-medium text-slate-800 text-left focus:outline-none focus:border-blue-600 transition flex items-center justify-between cursor-pointer">
+                <span class="truncate">{{ selectedRekapEvent()?.title || 'Pilih Acara' }}</span>
+              </button>
+
+              <!-- Chevron Down Arrow -->
+              <span 
+                class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-[#002855] transition">
+                <svg class="w-4 h-4 transition-transform duration-200" [class.rotate-180]="isEventDropdownOpen()" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+              </span>
+
+              <!-- Floating Options Menu -->
+              @if (isEventDropdownOpen()) {
+                <div class="fixed inset-0 z-40" (click)="closeEventDropdown()"></div>
+
+                <div class="absolute left-0 right-0 top-full mt-1.5 bg-white border border-slate-200 rounded-xl shadow-xl z-50 py-1 max-h-72 overflow-y-auto animate-in fade-in zoom-in-95 duration-150">
+                  @for (ev of eventsWithDynamicCounts(); track ev.id) {
+                    <button 
+                      type="button" 
+                      (click)="selectRekapEvent(ev.id)"
+                      [class.bg-blue-50]="selectedRekapEventId() === ev.id"
+                      [class.text-[#002855]]="selectedRekapEventId() === ev.id"
+                      class="w-full px-4 py-2.5 text-left text-sm font-medium hover:bg-slate-50 transition flex items-center justify-between cursor-pointer">
+                      <div class="truncate pr-2">
+                        <div class="truncate text-slate-800" [class.font-semibold]="selectedRekapEventId() === ev.id">{{ ev.title }}</div>
+                        <div class="text-[11px] text-slate-400 font-normal">{{ ev.dateStr }}</div>
+                      </div>
+                      @if (selectedRekapEventId() === ev.id) {
+                        <span class="text-[#002855] font-bold text-sm shrink-0">✓</span>
+                      }
+                    </button>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- Search & Division Filters -->
+        <div class="bg-white rounded-xl border border-slate-200 shadow-2xs p-5 space-y-4">
+          
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <!-- Search -->
+            <div class="relative w-full sm:w-80">
+              <input 
+                type="text" 
+                [ngModel]="applicantSearchQuery()"
+                (ngModelChange)="applicantSearchQuery.set($event)"
+                placeholder="Cari nama atau NIM" 
+                class="w-full pl-9 pr-8 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
+              />
+              <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              @if (applicantSearchQuery()) {
+                <button 
+                  type="button" 
+                  (click)="clearApplicantSearch()"
+                  class="absolute right-2.5 top-2 text-slate-400 hover:text-slate-700 text-xs font-bold">
+                  ✕
+                </button>
+              }
+            </div>
+
+            <!-- Division Filters -->
+            <div class="flex items-center gap-2 text-xs">
+              <span class="font-semibold text-slate-600">Divisi:</span>
+              <div class="flex items-center gap-1.5 overflow-x-auto pb-1">
+                @for (d of ['SEMUA', 'Acara', 'Humas', 'Logistik', 'Publikasi & Medkraf']; track d) {
+                  <button 
+                    type="button" 
+                    (click)="setApplicantDivisionFilter(d)"
+                    [class.bg-[#0052CC]]="applicantDivisionFilter() === d"
+                    [class.text-white]="applicantDivisionFilter() === d"
+                    [class.border-transparent]="applicantDivisionFilter() === d"
+                    [class.border-slate-300]="applicantDivisionFilter() !== d"
+                    [class.text-slate-600]="applicantDivisionFilter() !== d"
+                    class="px-3.5 py-1.5 rounded-md border font-medium hover:bg-slate-100 transition whitespace-nowrap cursor-pointer">
+                    {{ d === 'SEMUA' ? 'Semua' : d }}
+                  </button>
+                }
+              </div>
+            </div>
+          </div>
+
+          <!-- TABLE OR EMPTY -->
+          @if (filteredApplicants().length > 0) {
+            <div class="overflow-x-auto border border-slate-200 rounded-lg">
+              <table class="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold uppercase tracking-wider text-[11px]">
+                    <th class="py-3 px-4">NAMA</th>
+                    <th class="py-3 px-4">NIM</th>
+                    <th class="py-3 px-4">DIVISI 1 / 2</th>
+                    <th class="py-3 px-4">BERKAS</th>
+                    <th class="py-3 px-4">STATUS</th>
+                    <th class="py-3 px-4 text-right">AKSI</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200">
+                  @for (app of pagedApplicants(); track app.nim) {
+                    <tr class="hover:bg-slate-50/80 transition">
+                      
+                      <!-- Nama -->
+                      <td class="py-3.5 px-4 font-semibold text-slate-900 whitespace-nowrap">
+                        {{ app.name }}
+                      </td>
+
+                      <!-- NIM -->
+                      <td class="py-3.5 px-4 font-mono text-slate-600 whitespace-nowrap">
+                        {{ app.nim }}
+                      </td>
+
+                      <!-- Divisi 1 / 2 -->
+                      <td class="py-3.5 px-4 text-slate-700">
+                        <div class="font-bold">{{ app.division1 }}</div>
+                        <div class="text-[11px] text-slate-400">Divisi 2: {{ app.division2 }}</div>
+                      </td>
+
+                      <!-- Berkas -->
+                      <td class="py-3.5 px-4 whitespace-nowrap">
+                        <a href="javascript:void(0)" class="inline-flex items-center gap-1.5 text-blue-600 hover:underline font-medium">
+                          <svg class="w-3.5 h-3.5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                          <span>CV/KRS.pdf</span>
+                        </a>
+                      </td>
+
+                      <!-- Status Badge -->
+                      <td class="py-3.5 px-4 whitespace-nowrap">
+                        @switch (app.status) {
+                          @case ('MENUNGGU_REVIEW') {
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-sky-50 text-sky-700 border border-sky-200">
+                              <span class="w-1.5 h-1.5 rounded-full bg-sky-500"></span>
+                              Menunggu Review
+                            </span>
+                          }
+                          @case ('WAWANCARA_DIJADWALKAN') {
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-purple-50 text-purple-700 border border-purple-200">
+                              📅 Wawancara Dijadwalkan
+                            </span>
+                          }
+                          @case ('DITERIMA') {
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                              ✓ Diterima
+                            </span>
+                          }
+                          @case ('DITOLAK') {
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-rose-50 text-rose-700 border border-rose-200">
+                              ✕ Ditolak
+                            </span>
+                          }
+                        }
+                      </td>
+
+                      <!-- Aksi -->
+                      <td class="py-3.5 px-4 text-right whitespace-nowrap space-x-2">
+                        @if (app.status === 'DITERIMA' || app.status === 'DITOLAK') {
+                          <span class="text-xs text-slate-400 font-medium">Keputusan final</span>
+                        } @else {
+                          <button 
+                            type="button" 
+                            (click)="openInterviewModal(app)"
+                            class="inline-flex items-center gap-1 px-2.5 py-1 rounded border border-slate-300 text-slate-700 hover:bg-slate-100 text-xs font-semibold transition cursor-pointer">
+                            <span>📅 Jadwalkan</span>
+                          </button>
+                          <button 
+                            type="button" 
+                            (click)="acceptApplicant(app)"
+                            class="text-emerald-700 hover:text-emerald-900 font-semibold cursor-pointer">
+                            ✓ Terima
+                          </button>
+                          <button 
+                            type="button" 
+                            (click)="rejectApplicant(app)"
+                            class="text-rose-600 hover:text-rose-800 font-semibold cursor-pointer">
+                            ✕ Tolak
+                          </button>
+                        }
+                      </td>
+
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Footer Pagination -->
+            <div class="flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 pt-2 gap-3">
+              <div>
+                {{ applicantRangeText() }}
+              </div>
+              <div class="flex items-center gap-4">
+                <div class="flex items-center gap-1.5">
+                  <span>Baris per halaman:</span>
+                  <select 
+                    [ngModel]="pageSizeApplicants()" 
+                    (ngModelChange)="onPageSizeApplicantsChange($event)"
+                    class="bg-white border border-slate-200 rounded px-1.5 py-0.5 text-xs font-semibold text-slate-700 focus:outline-none cursor-pointer">
+                    <option [value]="10">10</option>
+                    <option [value]="25">25</option>
+                    <option [value]="50">50</option>
+                  </select>
+                </div>
+                <div class="flex items-center gap-1">
+                  <!-- Previous Button -->
+                  <button 
+                    type="button"
+                    (click)="setPageApplicants(currentPageApplicants() - 1)"
+                    [disabled]="currentPageApplicants() <= 1"
+                    [class.text-slate-300]="currentPageApplicants() <= 1"
+                    [class.cursor-not-allowed]="currentPageApplicants() <= 1"
+                    [class.text-slate-600]="currentPageApplicants() > 1"
+                    [class.hover:bg-slate-50]="currentPageApplicants() > 1"
+                    class="px-2 py-1 rounded border border-slate-200 transition cursor-pointer">
+                    ‹
+                  </button>
+
+                  @for (pg of [1, 2, 3, 4, 5]; track pg) {
+                    @if (pg <= totalPagesApplicants()) {
+                      <button 
+                        type="button"
+                        (click)="setPageApplicants(pg)"
+                        [class.bg-[#0052CC]]="currentPageApplicants() === pg"
+                        [class.text-white]="currentPageApplicants() === pg"
+                        [class.font-medium]="currentPageApplicants() === pg"
+                        [class.border]="currentPageApplicants() !== pg"
+                        [class.border-slate-200]="currentPageApplicants() !== pg"
+                        [class.text-slate-600]="currentPageApplicants() !== pg"
+                        [class.hover:bg-slate-50]="currentPageApplicants() !== pg"
+                        class="px-2.5 py-1 rounded transition cursor-pointer">
+                        {{ pg }}
+                      </button>
+                    }
+                  }
+
+                  <!-- Next Button -->
+                  <button 
+                    type="button"
+                    (click)="setPageApplicants(currentPageApplicants() + 1)"
+                    [disabled]="currentPageApplicants() >= totalPagesApplicants()"
+                    [class.text-slate-300]="currentPageApplicants() >= totalPagesApplicants()"
+                    [class.cursor-not-allowed]="currentPageApplicants() >= totalPagesApplicants()"
+                    [class.text-slate-600]="currentPageApplicants() < totalPagesApplicants()"
+                    [class.hover:bg-slate-50]="currentPageApplicants() < totalPagesApplicants()"
+                    class="px-2 py-1 rounded border border-slate-200 transition cursor-pointer">
+                    ›
+                  </button>
+                </div>
+              </div>
+            </div>
+
+          } @else {
+            <!-- EMPTY APPLICANTS (SCR-PAN-04 Empty-BelumAdaPelamar) -->
+            <div class="py-16 px-4 text-center flex flex-col items-center justify-center max-w-md mx-auto">
+              <div class="w-16 h-16 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center text-3xl mb-4">
+                📄
+              </div>
+              <h3 class="text-sm font-bold text-slate-900 mb-1">Belum ada pelamar</h3>
+              <p class="text-xs text-slate-500 leading-relaxed mb-5">
+                Lamaran yang masuk lewat formulir pendaftaran akan tampil di sini, lengkap dengan berkas CV &amp; KRS.
+              </p>
+              <button 
+                type="button" 
+                (click)="copyOprecLink()"
+                class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-purple-300 text-purple-700 text-xs font-semibold hover:bg-purple-50 transition cursor-pointer">
+                <span>🔗 Salin tautan oprec</span>
+              </button>
+            </div>
+          }
+
+        </div>
+
+      </div>
+    }
+
+    <!-- ========================================================= -->
+    <!-- VIEW 4: SCR-PAN-02 4-STEP EVENT CREATION WIZARD           -->
+    <!-- ========================================================= -->
+    @if (activeView() === 'CREATE') {
+      <div class="space-y-6 max-w-5xl mx-auto pb-16">
+
+        <!-- Breadcrumb & Top Bar -->
+        <div class="space-y-2">
+          <nav class="flex items-center gap-2 text-xs text-slate-500">
+            <button type="button" (click)="openDashboard()" class="hover:text-blue-600 cursor-pointer">Dashboard</button>
+            <span>/</span>
+            <button type="button" (click)="openDashboard()" class="hover:text-blue-600 cursor-pointer">Acara Saya</button>
+            <span>/</span>
+            <span class="text-slate-800 font-medium">Buat Acara</span>
+          </nav>
+
+          <div class="flex items-center justify-between">
+            <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">Buat Acara Baru</h1>
+            @if (isRevisionMode()) {
+              <span class="px-2.5 py-1 rounded-md text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-300 flex items-center gap-1.5">
+                <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                Perlu Revisi
+              </span>
+            } @else {
+              <span class="px-2.5 py-1 rounded-md text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200">
+                Draf
+              </span>
+            }
+          </div>
+        </div>
+
+        <!-- DPK Revision Alert Box -->
+        @if (isRevisionMode()) {
+          <div class="p-4 sm:p-5 rounded-xl bg-[#FFFBEB] border border-amber-300 flex items-start gap-3 shadow-2xs">
+            <span class="text-amber-600 text-lg mt-0.5">⚠️</span>
+            <div class="text-xs text-amber-900 leading-relaxed">
+              <div class="font-bold mb-0.5">Catatan revisi dari DPK · 18 November 2026, 14.20 WIB</div>
+              <div>"{{ formRevisionNote() }}"</div>
+            </div>
+          </div>
+        }
+
+        <!-- 4-STEPPER PROGRESS BAR -->
+        <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-2xs">
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+            <button 
+              type="button" 
+              (click)="goToStep(1)"
+              class="flex items-center gap-3 p-2 rounded-lg text-left transition cursor-pointer"
+              [class.bg-blue-50]="currentStep() === 1">
+              <div 
+                class="w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0"
+                [class.bg-[#0052CC]]="currentStep() >= 1"
+                [class.text-white]="currentStep() >= 1"
+                [class.bg-slate-100]="currentStep() < 1"
+                [class.text-slate-500]="currentStep() < 1">
+                @if (currentStep() > 1) { ✓ } @else { 1 }
+              </div>
+              <div class="min-w-0">
+                <div class="text-[10px] uppercase font-bold text-slate-400">
+                  Langkah 1 - {{ currentStep() === 1 ? 'Aktif' : (currentStep() > 1 ? 'Selesai' : 'Belum') }}
+                </div>
+                <div class="font-semibold text-slate-800 truncate">Info Dasar</div>
+              </div>
+            </button>
+
+            <button 
+              type="button" 
+              (click)="goToStep(2)"
+              class="flex items-center gap-3 p-2 rounded-lg text-left transition cursor-pointer"
+              [class.bg-blue-50]="currentStep() === 2">
+              <div 
+                class="w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0"
+                [class.bg-[#0052CC]]="currentStep() >= 2"
+                [class.text-white]="currentStep() >= 2"
+                [class.bg-slate-100]="currentStep() < 2"
+                [class.text-slate-500]="currentStep() < 2">
+                @if (currentStep() > 2) { ✓ } @else { 2 }
+              </div>
+              <div class="min-w-0">
+                <div class="text-[10px] uppercase font-bold text-slate-400">
+                  Langkah 2 - {{ currentStep() === 2 ? 'Aktif' : (currentStep() > 2 ? 'Selesai' : 'Belum') }}
+                </div>
+                <div class="font-semibold text-slate-800 truncate">Media</div>
+              </div>
+            </button>
+
+            <button 
+              type="button" 
+              (click)="goToStep(3)"
+              class="flex items-center gap-3 p-2 rounded-lg text-left transition cursor-pointer"
+              [class.bg-blue-50]="currentStep() === 3">
+              <div 
+                class="w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0"
+                [class.bg-[#0052CC]]="currentStep() >= 3"
+                [class.text-white]="currentStep() >= 3"
+                [class.bg-slate-100]="currentStep() < 3"
+                [class.text-slate-500]="currentStep() < 3">
+                @if (currentStep() > 3) { ✓ } @else { 3 }
+              </div>
+              <div class="min-w-0">
+                <div class="text-[10px] uppercase font-bold text-slate-400">
+                  Langkah 3 - {{ currentStep() === 3 ? 'Aktif' : (currentStep() > 3 ? 'Selesai' : 'Belum') }}
+                </div>
+                <div class="font-semibold text-slate-800 truncate">Mode Pendaftaran</div>
+              </div>
+            </button>
+
+            <button 
+              type="button" 
+              (click)="goToStep(4)"
+              class="flex items-center gap-3 p-2 rounded-lg text-left transition cursor-pointer"
+              [class.bg-blue-50]="currentStep() === 4">
+              <div 
+                class="w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0"
+                [class.bg-[#0052CC]]="currentStep() >= 4"
+                [class.text-white]="currentStep() >= 4"
+                [class.bg-slate-100]="currentStep() < 4"
+                [class.text-slate-500]="currentStep() < 4">
+                4
+              </div>
+              <div class="min-w-0">
+                <div class="text-[10px] uppercase font-bold text-slate-400">
+                  Langkah 4 - {{ currentStep() === 4 ? 'Aktif' : 'Belum' }}
+                </div>
+                <div class="font-semibold text-slate-800 truncate">Kuota &amp; Form</div>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <!-- STEP 1: INFO DASAR -->
+        @if (currentStep() === 1) {
+          <div class="bg-white rounded-xl border border-slate-200 p-6 sm:p-8 space-y-6 shadow-2xs">
+            <h2 class="text-xl font-bold text-slate-900 border-b border-slate-100 pb-3">Info Dasar</h2>
+
+            <div class="space-y-1.5">
+              <label class="block text-xs font-semibold text-slate-800">
+                Judul kegiatan <span class="text-rose-500">*</span>
+              </label>
+              <input 
+                type="text" 
+                maxlength="150"
+                [ngModel]="formTitle()"
+                (ngModelChange)="formTitle.set($event)"
+                placeholder="Contoh: Seminar Etika Profesi Informatika"
+                class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+              />
+              <div class="text-[11px] text-slate-400">
+                Maks. 150 karakter · {{ formTitle().length }}/150
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div class="space-y-1.5">
+                <label class="block text-xs font-semibold text-slate-800">
+                  Kategori <span class="text-rose-500">*</span>
+                </label>
+                <select 
+                  [ngModel]="formCategory()"
+                  (ngModelChange)="formCategory.set($event)"
+                  class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white">
+                  <option value="Seminar">Seminar</option>
+                  <option value="Workshop">Workshop</option>
+                  <option value="Lomba">Lomba / Kompetisi</option>
+                  <option value="Konser">Konser / Seni Budaya</option>
+                  <option value="Oprec Kepanitiaan">Oprec Kepanitiaan</option>
+                </select>
+              </div>
+
+              <div class="space-y-1.5">
+                <label class="block text-xs font-semibold text-slate-800">
+                  Tipe pelaksanaan <span class="text-rose-500">*</span>
+                </label>
+                <div class="grid grid-cols-3 gap-1 p-1 rounded-lg border border-slate-300 bg-slate-50">
+                  <button 
+                    type="button" 
+                    (click)="formExecutionType.set('Offline')"
+                    [class.bg-white]="formExecutionType() === 'Offline'"
+                    [class.shadow-2xs]="formExecutionType() === 'Offline'"
+                    [class.font-bold]="formExecutionType() === 'Offline'"
+                    [class.text-blue-600]="formExecutionType() === 'Offline'"
+                    class="py-1.5 text-xs text-center rounded text-slate-600 transition cursor-pointer">
+                    Offline
+                  </button>
+                  <button 
+                    type="button" 
+                    (click)="formExecutionType.set('Online')"
+                    [class.bg-white]="formExecutionType() === 'Online'"
+                    [class.shadow-2xs]="formExecutionType() === 'Online'"
+                    [class.font-bold]="formExecutionType() === 'Online'"
+                    [class.text-blue-600]="formExecutionType() === 'Online'"
+                    class="py-1.5 text-xs text-center rounded text-slate-600 transition cursor-pointer">
+                    Online
+                  </button>
+                  <button 
+                    type="button" 
+                    (click)="formExecutionType.set('Hybrid')"
+                    [class.bg-white]="formExecutionType() === 'Hybrid'"
+                    [class.shadow-2xs]="formExecutionType() === 'Hybrid'"
+                    [class.font-bold]="formExecutionType() === 'Hybrid'"
+                    [class.text-blue-600]="formExecutionType() === 'Hybrid'"
+                    class="py-1.5 text-xs text-center rounded text-slate-600 transition cursor-pointer">
+                    Hybrid
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div class="space-y-1.5">
+                <label class="block text-xs font-semibold text-slate-800">
+                  Lokasi gedung <span class="text-rose-500">*</span>
+                </label>
+                <div class="relative">
+                  <input 
+                    type="text" 
+                    [ngModel]="formLocation()"
+                    (ngModelChange)="formLocation.set($event)"
+                    placeholder="Ruang Audiovisual FTI UII"
+                    class="w-full pl-9 pr-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                  <svg class="w-4 h-4 text-slate-400 absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  </svg>
+                </div>
+                <div class="text-[11px] text-slate-400">
+                  Untuk Online/Hybrid, kolom link Zoom akan muncul
+                </div>
+              </div>
+
+              @if (formExecutionType() === 'Online' || formExecutionType() === 'Hybrid') {
+                <div class="space-y-1.5">
+                  <label class="block text-xs font-semibold text-slate-800">
+                    Link Zoom <span class="text-rose-500">*</span>
+                  </label>
+                  <div class="relative">
+                    <input 
+                      type="text" 
+                      [ngModel]="formZoomLink()"
+                      (ngModelChange)="formZoomLink.set($event)"
+                      placeholder="https://uii-ac-id.zoom.us/j/..."
+                      [class.border-rose-400]="!formZoomLink()"
+                      class="w-full pl-9 pr-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                    <svg class="w-4 h-4 text-slate-400 absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                    </svg>
+                  </div>
+                  @if (!formZoomLink()) {
+                    <div class="text-[11px] text-rose-500 font-medium">Link Zoom belum lengkap</div>
+                  }
+                </div>
+              }
+            </div>
+
+            <!-- Schedule -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div class="space-y-1.5">
+                <label class="block text-xs font-semibold text-slate-800">Tanggal mulai *</label>
+                <input type="date" [ngModel]="formStartDate()" (ngModelChange)="formStartDate.set($event)" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500" />
+              </div>
+              <div class="space-y-1.5">
+                <label class="block text-xs font-semibold text-slate-800">Jam mulai *</label>
+                <input type="time" [ngModel]="formStartTime()" (ngModelChange)="formStartTime.set($event)" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500" />
+              </div>
+              <div class="space-y-1.5">
+                <label class="block text-xs font-semibold text-slate-800">Tanggal selesai *</label>
+                <input type="date" [ngModel]="formEndDate()" (ngModelChange)="formEndDate.set($event)" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500" />
+              </div>
+              <div class="space-y-1.5">
+                <label class="block text-xs font-semibold text-slate-800">Jam selesai *</label>
+                <input type="time" [ngModel]="formEndTime()" (ngModelChange)="formEndTime.set($event)" [class.border-rose-400]="!formEndTime()" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                @if (!formEndTime()) {
+                  <div class="text-[11px] text-rose-500 font-medium">Jam selesai wajib diisi</div>
+                }
+              </div>
+            </div>
+
+            <div class="space-y-1.5">
+              <label class="block text-xs font-semibold text-slate-800">Pembicara / guest star</label>
+              <input type="text" [ngModel]="formSpeaker()" (ngModelChange)="formSpeaker.set($event)" placeholder="Nama pembicara, pisahkan dengan koma" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500" />
+              <div class="text-[11px] text-slate-400">Ditampilkan di halaman detail acara</div>
+            </div>
+
+            <div class="pt-6 border-t border-slate-100 flex items-center justify-between">
+              <button type="button" (click)="openDashboard()" class="text-xs text-slate-500 hover:text-slate-800 font-medium">
+                ← Batal &amp; Kembali ke Dashboard
+              </button>
+              <div class="flex items-center gap-3">
+                <button type="button" (click)="saveAsDraft()" class="px-4 py-2.5 rounded-lg border border-slate-300 text-slate-700 text-xs font-semibold hover:bg-slate-50 transition cursor-pointer">
+                  Simpan Draf
+                </button>
+                <button type="button" (click)="nextStep()" class="px-5 py-2.5 rounded-lg bg-[#0052CC] hover:bg-blue-700 text-white text-xs font-semibold transition shadow-xs cursor-pointer">
+                  Lanjut ke Media &gt;
+                </button>
+              </div>
+            </div>
+          </div>
+        }
+
+        <!-- STEP 2: MEDIA -->
+        @if (currentStep() === 2) {
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div class="lg:col-span-7 bg-white rounded-xl border border-slate-200 p-6 space-y-6 shadow-2xs">
+              <h2 class="text-xl font-bold text-slate-900 border-b border-slate-100 pb-3">Media &amp; Poster</h2>
+
+              <div class="space-y-2">
+                <label class="block text-xs font-semibold text-slate-800">Poster resmi <span class="text-rose-500">*</span></label>
+                <div class="border-2 border-dashed border-slate-300 hover:border-blue-500 rounded-xl p-6 text-center bg-slate-50/50 transition flex flex-col items-center justify-center">
+                  <div class="w-12 h-12 rounded-full bg-blue-50 text-[#0052CC] flex items-center justify-center mb-3">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                  </div>
+                  <div class="text-sm font-semibold text-slate-800">
+                    Tarik file ke sini atau <label for="posterInput" class="text-[#0052CC] hover:underline cursor-pointer">Klik untuk unggah</label>
+                  </div>
+                  <input type="file" id="posterInput" (change)="onPosterFileChange($event)" accept="image/*" class="hidden" />
+                  <p class="text-xs text-slate-400 mt-1">Format JPG, PNG, atau WEBP. Maks 5MB. Rekomendasi rasio 4:5 atau 1:1.</p>
+                </div>
+
+                @if (formPosterUrl()) {
+                  <div class="p-3 rounded-lg border border-slate-200 bg-white flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                      <img [src]="formPosterUrl()" alt="Thumbnail" class="w-12 h-12 object-cover rounded-md border" />
+                      <div>
+                        <div class="text-xs font-bold text-slate-800 truncate max-w-xs">{{ formPosterFileName() }}</div>
+                        <div class="text-[11px] text-emerald-600 font-medium">✓ Terpasang sesuai rasio DPK</div>
+                      </div>
+                    </div>
+                    <label for="posterInput" class="text-xs text-[#0052CC] hover:underline cursor-pointer font-medium">Ganti</label>
+                  </div>
+                }
+              </div>
+
+              <!-- Quick Presets -->
+              <div class="space-y-2 pt-2">
+                <div class="text-xs font-semibold text-slate-700">Pilih dari galeri foto resmi UII:</div>
+                <div class="grid grid-cols-3 gap-2">
+                  <button type="button" (click)="selectPresetPoster('/assets/images/seminar-ai-uii.jpg', 'seminar-ai-uii.jpg')" class="p-2 rounded-lg border text-left hover:border-blue-500 transition text-[11px] bg-slate-50">
+                    <div class="font-bold truncate">Seminar AI UII</div>
+                    <div class="text-slate-400 text-[10px]">Rasio 4:5</div>
+                  </button>
+                  <button type="button" (click)="selectPresetPoster('/assets/images/workshop-ai-uii.jpg', 'workshop-ai-uii.jpg')" class="p-2 rounded-lg border text-left hover:border-blue-500 transition text-[11px] bg-slate-50">
+                    <div class="font-bold truncate">Workshop SEO UII</div>
+                    <div class="text-slate-400 text-[10px]">Rasio 1:1</div>
+                  </button>
+                  <button type="button" (click)="selectPresetPoster('/assets/images/oprec-pesta-uii.jpg', 'oprec-pesta-uii.jpg')" class="p-2 rounded-lg border text-left hover:border-blue-500 transition text-[11px] bg-slate-50">
+                    <div class="font-bold truncate">Oprec PESTA UII</div>
+                    <div class="text-slate-400 text-[10px]">Dokumentasi</div>
+                  </button>
+                </div>
+              </div>
+
+              <div class="pt-6 border-t border-slate-100 flex items-center justify-between">
+                <button type="button" (click)="prevStep()" class="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 text-xs font-semibold hover:bg-slate-50 transition cursor-pointer">
+                  &lt; Kembali ke Info Dasar
+                </button>
+                <div class="flex items-center gap-3">
+                  <button type="button" (click)="saveAsDraft()" class="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 text-xs font-semibold hover:bg-slate-50 transition cursor-pointer">
+                    Simpan Draf
+                  </button>
+                  <button type="button" (click)="nextStep()" class="px-5 py-2 rounded-lg bg-[#0052CC] hover:bg-blue-700 text-white text-xs font-semibold transition shadow-xs cursor-pointer">
+                    Lanjut ke Mode Pendaftaran &gt;
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Live Card Preview -->
+            <div class="lg:col-span-5 bg-white rounded-xl border border-slate-200 p-6 space-y-4 shadow-2xs h-fit">
+              <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 class="text-sm font-bold text-slate-900">Pratinjau Kartu Katalog Mahasiswa</h3>
+                <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Live Preview</span>
+              </div>
+              <div class="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-xs max-w-sm mx-auto">
+                <div class="relative h-44 bg-slate-100 overflow-hidden">
+                  <img [src]="formPosterUrl()" alt="Banner" class="w-full h-full object-cover" />
+                  <span class="absolute top-3 left-3 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wide bg-blue-900/90 text-white">
+                    {{ formCategory() }}
+                  </span>
+                </div>
+                <div class="p-4 space-y-2.5">
+                  <h4 class="font-bold text-slate-900 text-sm line-clamp-2 leading-snug">
+                    {{ formTitle() || 'Judul Acara Mahasiswa' }}
+                  </h4>
+                  <div class="text-xs text-slate-500 space-y-1">
+                    <div class="flex items-center gap-1.5">
+                      <span>📅</span>
+                      <span>{{ formStartDate() }} · {{ formStartTime() }} WIB</span>
+                    </div>
+                    <div class="flex items-center gap-1.5 truncate">
+                      <span>📍</span>
+                      <span>{{ formExecutionType() === 'Online' ? 'Daring (Zoom Meeting)' : formLocation() }}</span>
+                    </div>
+                  </div>
+                  <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
+                    <span>Panitia UII</span>
+                    <span class="text-blue-600 font-semibold">Buka Pendaftaran</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+
+        <!-- STEP 3: MODE PENDAFTARAN -->
+        @if (currentStep() === 3) {
+          <div class="bg-white rounded-xl border border-slate-200 p-6 sm:p-8 space-y-6 shadow-2xs">
+            <h2 class="text-xl font-bold text-slate-900 border-b border-slate-100 pb-3">Pilih Mode Pendaftaran</h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div 
+                (click)="formRegistrationMode.set('PESERTA')"
+                [class.border-blue-600]="formRegistrationMode() === 'PESERTA'"
+                [class.bg-blue-50/40]="formRegistrationMode() === 'PESERTA'"
+                class="p-5 rounded-xl border-2 border-slate-200 hover:border-blue-400 transition cursor-pointer flex items-start gap-4">
+                <input type="radio" name="regMode" [checked]="formRegistrationMode() === 'PESERTA'" class="mt-1 text-blue-600 focus:ring-blue-500" />
+                <div>
+                  <div class="font-bold text-slate-900 text-sm">Peserta Acara</div>
+                  <p class="text-xs text-slate-500 mt-1 leading-relaxed">
+                    Pendaftaran dibuka untuk seluruh mahasiswa yang ingin menghadiri acara ini sebagai audiens/peserta. Tiket QR akan dibuat otomatis.
+                  </p>
+                </div>
+              </div>
+
+              <div 
+                (click)="formRegistrationMode.set('OPREC')"
+                [class.border-blue-600]="formRegistrationMode() === 'OPREC'"
+                [class.bg-blue-50/40]="formRegistrationMode() === 'OPREC'"
+                class="p-5 rounded-xl border-2 border-slate-200 hover:border-blue-400 transition cursor-pointer flex items-start gap-4">
+                <input type="radio" name="regMode" [checked]="formRegistrationMode() === 'OPREC'" class="mt-1 text-blue-600 focus:ring-blue-500" />
+                <div>
+                  <div class="font-bold text-slate-900 text-sm">Open Recruitment Panitia</div>
+                  <p class="text-xs text-slate-500 mt-1 leading-relaxed">
+                    Pendaftaran seleksi kepanitiaan ormawa. Pendaftar wajib memilih divisi dan mengunggah berkas portofolio/CV.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            @if (formRegistrationMode() === 'OPREC') {
+              <div class="p-5 rounded-xl border border-purple-200 bg-purple-50/30 space-y-4">
+                <div class="flex items-center justify-between">
+                  <label class="block text-xs font-bold text-slate-800">
+                    Daftar Divisi yang Dibuka <span class="text-rose-500">*</span>
+                  </label>
+                  <span class="text-[11px] text-purple-700 font-medium">{{ formDivisions().length }} divisi aktif</span>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                  @for (div of formDivisions(); track $index) {
+                    <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white border border-purple-300 text-purple-900 text-xs font-semibold shadow-2xs">
+                      <span>{{ div }}</span>
+                      <button type="button" (click)="removeDivision($index)" class="text-purple-400 hover:text-rose-600 font-bold ml-1 cursor-pointer">✕</button>
+                    </span>
+                  }
+                </div>
+                <div class="flex items-center gap-2 pt-2">
+                  <input type="text" [ngModel]="newDivisionInput()" (ngModelChange)="newDivisionInput.set($event)" (keyup.enter)="addDivision()" placeholder="+ Tambah divisi baru (misal: Divisi Acara, Divisi Kestari)" class="flex-1 px-3.5 py-2 rounded-lg border border-slate-300 text-xs focus:outline-none focus:ring-1 focus:ring-purple-500 bg-white" />
+                  <button type="button" (click)="addDivision()" class="px-4 py-2 rounded-lg bg-purple-700 hover:bg-purple-800 text-white text-xs font-semibold transition cursor-pointer">Tambah</button>
+                </div>
+              </div>
+            }
+
+            <div class="pt-6 border-t border-slate-100 flex items-center justify-between">
+              <button type="button" (click)="prevStep()" class="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 text-xs font-semibold hover:bg-slate-50 transition cursor-pointer">
+                &lt; Kembali ke Media
+              </button>
+              <div class="flex items-center gap-3">
+                <button type="button" (click)="saveAsDraft()" class="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 text-xs font-semibold hover:bg-slate-50 transition cursor-pointer">
+                  Simpan Draf
+                </button>
+                <button type="button" (click)="nextStep()" class="px-5 py-2 rounded-lg bg-[#0052CC] hover:bg-blue-700 text-white text-xs font-semibold transition shadow-xs cursor-pointer">
+                  Lanjut ke Kuota &amp; Form &gt;
+                </button>
+              </div>
+            </div>
+          </div>
+        }
+
+        <!-- STEP 4: KUOTA & FORM -->
+        @if (currentStep() === 4) {
+          <div class="bg-white rounded-xl border border-slate-200 p-6 sm:p-8 space-y-6 shadow-2xs">
+            <h2 class="text-xl font-bold text-slate-900 border-b border-slate-100 pb-3">Kuota &amp; Pengaturan Form</h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+              <div class="space-y-1.5">
+                <label class="block text-xs font-semibold text-slate-800">Batas kuota peserta <span class="text-rose-500">*</span></label>
+                <input type="number" [ngModel]="formQuota()" (ngModelChange)="formQuota.set($event)" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 font-semibold" />
+                <div class="text-[11px] text-slate-400">Pendaftaran akan otomatis ditutup bila kuota tercapai</div>
+              </div>
+              <div class="space-y-1.5">
+                <label class="block text-xs font-semibold text-slate-800">Batas waktu pendaftaran <span class="text-rose-500">*</span></label>
+                <input type="date" [ngModel]="formDeadlineDate()" (ngModelChange)="formDeadlineDate.set($event)" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500" />
+              </div>
+              <div class="space-y-1.5">
+                <label class="block text-xs font-semibold text-slate-800">Poin SKPI (Opsional)</label>
+                <input type="number" [ngModel]="formSkpiPoints()" (ngModelChange)="formSkpiPoints.set($event)" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                <div class="text-[11px] text-slate-400">Poin kemahasiswaan resmi UII</div>
+              </div>
+            </div>
+
+            <div class="space-y-3 pt-4 border-t border-slate-100">
+              <h3 class="text-sm font-bold text-slate-900">Pertanyaan Tambahan untuk Formulir Mahasiswa</h3>
+              <div class="space-y-2.5">
+                @for (q of formCustomQuestions(); track q.id) {
+                  <div class="p-3.5 rounded-lg border border-slate-200 bg-slate-50 flex items-center justify-between">
+                    <div>
+                      <div class="text-xs font-bold text-slate-800">{{ q.title }}</div>
+                      <div class="text-[11px] text-slate-500 mt-0.5">
+                        Tipe: {{ q.type === 'SELECT' ? 'Pilihan Ganda (' + (q.options?.join(', ')) + ')' : 'Isian Teks Singkat' }}
+                      </div>
+                    </div>
+                    <button type="button" (click)="removeCustomQuestion(q.id)" class="text-xs text-rose-600 hover:text-rose-800 font-semibold cursor-pointer">✕ Hapus</button>
+                  </div>
+                }
+              </div>
+
+              <div class="flex flex-col sm:flex-row items-center gap-2 pt-2">
+                <input type="text" [ngModel]="newQuestionTitle()" (ngModelChange)="newQuestionTitle.set($event)" placeholder="Nama pertanyaan (misal: Nomor WA Darurat)" class="flex-1 px-3 py-2 rounded-lg border border-slate-300 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 w-full" />
+                <select [ngModel]="newQuestionType()" (ngModelChange)="newQuestionType.set($event)" class="px-3 py-2 rounded-lg border border-slate-300 text-xs bg-white">
+                  <option value="SELECT">Pilihan Ganda</option>
+                  <option value="TEXT">Teks Bebas</option>
+                </select>
+                <button type="button" (click)="addCustomQuestion()" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold transition cursor-pointer whitespace-nowrap">+ Tambah</button>
+              </div>
+            </div>
+
+            <div class="pt-6 border-t border-slate-100 flex items-center justify-between">
+              <button type="button" (click)="prevStep()" class="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 text-xs font-semibold hover:bg-slate-50 transition cursor-pointer">
+                &lt; Kembali ke Mode Pendaftaran
+              </button>
+              <div class="flex items-center gap-3">
+                <button type="button" (click)="saveAsDraft()" class="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 text-xs font-semibold hover:bg-slate-50 transition cursor-pointer">
+                  Simpan Draf
+                </button>
+                <button type="button" (click)="promptSubmitToDpk()" class="px-6 py-2.5 rounded-lg bg-[#0052CC] hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs cursor-pointer">
+                  Ajukan Persetujuan ke DPK &gt;
+                </button>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- ========================================================= -->
+    <!-- MODAL A: KONFIRMASI AJUKAN KE DPK                         -->
+    <!-- ========================================================= -->
+    @if (showSubmitConfirmationModal()) {
+      <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-150">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+          <div class="w-12 h-12 rounded-full bg-blue-50 text-[#0052CC] flex items-center justify-center text-xl mx-auto">📤</div>
+          <div class="text-center space-y-1.5">
+            <h3 class="text-lg font-bold text-slate-900">Ajukan acara ke DPK?</h3>
+            <p class="text-xs text-slate-500 leading-relaxed">
+              Acara "<span class="font-bold text-slate-800">{{ formTitle() }}</span>" akan dikirim ke Direktorat Pembinaan Kemahasiswaan (DPK UII) untuk peninjauan dan penerbitan izin resmi.
+            </p>
+          </div>
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-2 text-slate-700">
+            <div class="flex justify-between">
+              <span class="text-slate-400">Tanggal:</span>
+              <span class="font-semibold">{{ formStartDate() }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-400">Tipe Pelaksanaan:</span>
+              <span class="font-semibold">{{ formExecutionType() }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-400">Batas Kuota:</span>
+              <span class="font-semibold text-blue-600">{{ formQuota() }} Kursi</span>
+            </div>
+          </div>
+          <div class="flex items-center gap-3 pt-2">
+            <button type="button" (click)="showSubmitConfirmationModal.set(false)" class="flex-1 py-2.5 rounded-lg border border-slate-300 text-slate-700 text-xs font-semibold hover:bg-slate-50 transition cursor-pointer">
+              Periksa lagi
+            </button>
+            <button type="button" (click)="confirmSubmitToDpk()" class="flex-1 py-2.5 rounded-lg bg-[#0052CC] hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs cursor-pointer">
+              Ajukan Sekarang
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- ========================================================= -->
+    <!-- MODAL B: JADWALKAN WAWANCARA OPREC (SCR-PAN-04 Modal)      -->
+    <!-- ========================================================= -->
+    @if (selectedApplicantForInterview()) {
+      <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-150">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+          
+          <div class="flex items-center justify-between border-b pb-3">
+            <h3 class="font-bold text-slate-900 text-base">Jadwalkan Wawancara</h3>
+            <button type="button" (click)="closeInterviewModal()" class="text-slate-400 hover:text-slate-700 font-bold">✕</button>
+          </div>
+
+          <!-- Candidate Info Header -->
+          <div class="p-3.5 rounded-xl border border-slate-200 bg-slate-50 flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-xs shrink-0">
+              {{ selectedApplicantForInterview()?.name?.substring(0, 2)?.toUpperCase() }}
+            </div>
+            <div class="min-w-0">
+              <div class="text-xs font-bold text-slate-900 truncate">
+                {{ selectedApplicantForInterview()?.name }} · {{ selectedApplicantForInterview()?.nim }}
+              </div>
+              <div class="text-[11px] text-slate-500 truncate">
+                Divisi 1: {{ selectedApplicantForInterview()?.division1 }} · WhatsApp {{ selectedApplicantForInterview()?.whatsapp }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Fields -->
+          <div class="grid grid-cols-2 gap-3 text-xs">
+            <div class="space-y-1">
+              <label class="block font-semibold text-slate-800">Tanggal *</label>
+              <input 
+                type="text" 
+                [ngModel]="interviewDate()"
+                (ngModelChange)="interviewDate.set($event)"
+                class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
+              />
+            </div>
+            <div class="space-y-1">
+              <label class="block font-semibold text-slate-800">Jam *</label>
+              <input 
+                type="text" 
+                [ngModel]="interviewTime()"
+                (ngModelChange)="interviewTime.set($event)"
+                class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
+              />
+            </div>
+          </div>
+
+          <div class="space-y-1 text-xs">
+            <label class="block font-semibold text-slate-800">Ruangan atau link Meet *</label>
+            <div class="relative">
+              <input 
+                type="text" 
+                [ngModel]="interviewRoom()"
+                (ngModelChange)="interviewRoom.set($event)"
+                class="w-full pl-8 pr-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
+              />
+              <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              </svg>
+            </div>
+          </div>
+
+          <!-- Pratinjau Pesan WA Box -->
+          <div class="p-3 rounded-lg border border-slate-200 bg-slate-50 text-[11px] space-y-1">
+            <div class="font-bold text-slate-700">Pratinjau pesan WhatsApp</div>
+            <p class="text-slate-600 leading-relaxed italic">
+              "{{ whatsappPreviewMessage() }}"
+            </p>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="flex items-center gap-3 pt-2">
+            <button 
+              type="button" 
+              (click)="closeInterviewModal()"
+              class="flex-1 py-2 rounded-lg border border-slate-300 text-slate-700 text-xs font-semibold hover:bg-slate-50 transition cursor-pointer">
+              Batal
+            </button>
+            <button 
+              type="button" 
+              (click)="sendInterviewSchedule()"
+              class="flex-1 py-2 rounded-lg bg-[#0052CC] hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs cursor-pointer flex items-center justify-center gap-1.5">
+              <span>✈ Kirim Jadwal via WhatsApp</span>
+            </button>
+          </div>
+
+        </div>
+      </div>
+    }
+
+  </main>
+</div>

@@ -1,0 +1,1033 @@
+<div class="min-h-screen bg-slate-50 flex flex-col md:flex-row font-sans text-slate-800 antialiased selection:bg-blue-100">
+
+  <!-- ================= MOBILE HEADER (< 768px) ================= -->
+  <header class="md:hidden bg-[#0B1E3B] text-white px-4 py-3 flex items-center justify-between sticky top-0 z-40 border-b border-slate-800 shadow-md">
+    <div class="flex items-center gap-2.5">
+      <div class="w-8 h-8 rounded-lg bg-white p-1 flex items-center justify-center shadow-xs">
+        <img src="/assets/images/logo-uii.png" alt="UII" class="h-full w-auto object-contain" />
+      </div>
+      <div>
+        <span class="font-extrabold text-base tracking-tight leading-none block">UIIEvent</span>
+        <span class="text-[10px] text-blue-200">DPK Super Admin</span>
+      </div>
+    </div>
+    <button 
+      (click)="isMobileMenuOpen.set(!isMobileMenuOpen())"
+      class="p-2 rounded-lg bg-white/10 text-white hover:bg-white/20 transition cursor-pointer"
+      aria-label="Toggle navigation menu">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        @if (isMobileMenuOpen()) {
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        } @else {
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+        }
+      </svg>
+    </button>
+  </header>
+
+  <!-- ================= SIDEBAR (DESKTOP & MOBILE DRAWER) ================= -->
+  <aside 
+    [class.hidden]="!isMobileMenuOpen()"
+    class="w-full md:w-60 bg-[#0B1E3B] text-white shrink-0 flex flex-col justify-between z-30 transition-all duration-200 md:flex border-r border-[#152B4D]">
+    
+    <!-- Top Brand & Navigation Links -->
+    <div class="p-5">
+      <!-- Brand Logo matching SCR-ADM-01 & SCR-ADM-02 handoffs -->
+      <div class="hidden md:flex items-center gap-3 mb-8">
+        <div class="w-9 h-9 rounded-xl bg-white p-1.5 flex items-center justify-center shadow-xs">
+          <img src="/assets/images/logo-uii.png" alt="UII" class="h-full w-auto object-contain" />
+        </div>
+        <span class="text-xl font-extrabold text-white tracking-tight">UIIEvent</span>
+      </div>
+
+      <!-- Navigation Items -->
+      <nav class="space-y-1.5">
+        <button 
+          type="button"
+          (click)="switchNav('CURATION')"
+          class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm transition cursor-pointer text-left"
+          [class.bg-[#1E3A63]]="activeNav() === 'CURATION'"
+          [class.text-white]="activeNav() === 'CURATION'"
+          [class.text-slate-300]="activeNav() !== 'CURATION'"
+          [class.hover:text-white]="activeNav() !== 'CURATION'"
+          [class.hover:bg-white/5]="activeNav() !== 'CURATION'">
+          <!-- Checkmark Shield Icon -->
+          <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+          </svg>
+          <span>Kurasi & Approval</span>
+        </button>
+
+        <button 
+          type="button"
+          (click)="switchNav('LOGS')"
+          class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm transition cursor-pointer text-left"
+          [class.bg-[#1E3A63]]="activeNav() === 'LOGS'"
+          [class.text-white]="activeNav() === 'LOGS'"
+          [class.text-slate-300]="activeNav() !== 'LOGS'"
+          [class.hover:text-white]="activeNav() !== 'LOGS'"
+          [class.hover:bg-white/5]="activeNav() !== 'LOGS'">
+          <!-- Paper plane / Send telegram icon -->
+          <svg class="w-4 h-4" [class.text-blue-400]="activeNav() === 'LOGS'" [class.text-slate-400]="activeNav() !== 'LOGS'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+          </svg>
+          <span>Log Notifikasi</span>
+        </button>
+      </nav>
+    </div>
+
+    <!-- Bottom User Profile Area -->
+    <div class="p-5 border-t border-[#152B4D]/80">
+      <div class="mb-4">
+        <p class="font-bold text-white text-sm leading-tight">DPK UII</p>
+        <p class="text-[11px] text-slate-400 leading-tight mt-0.5">dpk.admin@uii.ac.id · Super Admin</p>
+      </div>
+
+      <button 
+        type="button" 
+        (click)="logout()"
+        class="w-full flex items-center gap-2.5 text-xs text-slate-300 hover:text-white transition py-1 cursor-pointer">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+        </svg>
+        <span>Keluar</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- ================= MAIN CONTENT AREA ================= -->
+  <main class="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
+    <div class="max-w-[1320px] mx-auto space-y-6">
+
+      <!-- ================= GLOBAL ACTION TOAST NOTIFICATION ================= -->
+      @if (actionToast()) {
+        <div class="p-3.5 rounded-xl bg-slate-900 text-white flex items-center justify-between text-xs font-semibold shadow-lg animate-in slide-in-from-top-2">
+          <div class="flex items-center gap-2.5">
+            <span class="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center font-black text-[11px]">✓</span>
+            <span>{{ actionToast() }}</span>
+          </div>
+          <button (click)="actionToast.set('')" class="text-slate-400 hover:text-white text-sm font-bold ml-4">✕</button>
+        </div>
+      }
+
+      <!-- ========================================================================= -->
+      <!-- VIEW 1: SCR-ADM-01 KURASI & APPROVAL ACARA                                -->
+      <!-- ========================================================================= -->
+      @if (activeNav() === 'CURATION') {
+
+        <!-- TOP HEADER ROW -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">
+              Kurasi & Approval Acara
+            </h1>
+            <p class="text-sm text-slate-500 mt-0.5 font-medium">
+              {{ filteredPendingEvents().length }} pengajuan berstatus Menunggu Persetujuan
+            </p>
+          </div>
+
+          <!-- Search Bar -->
+          <div class="relative w-full sm:w-72 lg:w-80">
+            <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input 
+              type="text" 
+              [(ngModel)]="searchQuery"
+              placeholder="Cari judul atau ormawa"
+              class="w-full pl-10 pr-4 py-2 bg-white rounded-xl border border-slate-200 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition shadow-2xs"
+            />
+          </div>
+        </div>
+
+        <!-- ALERT BANNER: Error Auto-Post IG Gagal -->
+        @if (showIgErrorBanner()) {
+          <div class="p-4 rounded-2xl bg-amber-50 border border-amber-200/90 text-amber-950 flex items-start justify-between gap-3 shadow-xs animate-in fade-in">
+            <div class="flex items-start gap-3">
+              <svg class="w-5 h-5 text-amber-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <div class="text-xs">
+                <p class="font-bold text-amber-950 text-sm">
+                  Acara sudah dipublikasikan, tetapi auto-post Instagram gagal
+                </p>
+                <p class="text-amber-800 mt-1 leading-relaxed">
+                  Malam Apresiasi Seni tayang di katalog. Posting ke &#64;uii.events gagal (URL gambar tidak dapat diakses Meta). Sistem mencoba ulang otomatis; status dipantau di Log Notifikasi.
+                </p>
+                <button 
+                  type="button" 
+                  (click)="switchNav('LOGS'); activeLogTab.set('INSTAGRAM')"
+                  class="mt-2.5 px-3 py-1.5 rounded-lg bg-white border border-amber-300 text-amber-950 font-semibold text-xs shadow-2xs hover:bg-amber-100/50 transition cursor-pointer">
+                  Buka Log Notifikasi
+                </button>
+              </div>
+            </div>
+            <button 
+              type="button" 
+              (click)="showIgErrorBanner.set(false)"
+              class="text-amber-500 hover:text-amber-800 text-sm font-bold p-1 cursor-pointer">
+              ✕
+            </button>
+          </div>
+        }
+
+        <!-- TOAST BANNER: Disetujui -->
+        @if (showToastApproved()) {
+          <div class="p-3.5 rounded-xl bg-emerald-600 text-white flex items-center justify-between text-xs font-semibold shadow-md animate-in slide-in-from-top-2">
+            <div class="flex items-center gap-2.5">
+              <span class="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center font-black text-[11px]">✓</span>
+              <span>{{ toastMessage() }}</span>
+            </div>
+            <button (click)="showToastApproved.set(false)" class="text-emerald-100 hover:text-white text-sm font-bold cursor-pointer">✕</button>
+          </div>
+        }
+
+        <!-- SKELETON LOADING -->
+        @if (isLoadingSkeleton()) {
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 animate-pulse">
+            <div class="lg:col-span-6 bg-white rounded-2xl p-5 border border-slate-200/80 space-y-4">
+              <div class="h-4 bg-slate-200 rounded-md w-1/3"></div>
+              <div class="h-12 bg-slate-100 rounded-xl"></div>
+              <div class="h-12 bg-slate-100 rounded-xl"></div>
+              <div class="h-12 bg-slate-100 rounded-xl"></div>
+            </div>
+            <div class="lg:col-span-6 bg-white rounded-2xl p-6 border border-slate-200/80 space-y-4">
+              <div class="h-6 bg-slate-200 rounded-md w-1/2"></div>
+              <div class="h-48 bg-slate-100 rounded-xl"></div>
+              <div class="h-10 bg-slate-200 rounded-xl"></div>
+            </div>
+          </div>
+        } @else {
+
+          <!-- EMPTY STATE: Semua Pengajuan Sudah Ditinjau -->
+          @if (pendingEvents().length === 0) {
+            <div class="bg-white rounded-2xl border border-slate-200/80 p-12 text-center shadow-xs">
+              <div class="w-40 h-28 mx-auto mb-4 border-2 border-slate-800 rounded-xl bg-slate-50 relative flex items-center justify-center shadow-xs">
+                <div class="w-28 h-18 border-2 border-dashed border-slate-300 rounded-lg flex items-center justify-center">
+                  <span class="w-7 h-7 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-sm shadow-xs">+</span>
+                </div>
+                <div class="absolute -bottom-3 inset-x-8 h-1.5 bg-slate-800 rounded-full"></div>
+              </div>
+              <h3 class="text-base font-bold text-slate-900">Belum Ada Pengajuan Acara Baru</h3>
+              <p class="text-xs text-slate-500 mt-1 max-w-md mx-auto">
+                Saat panitia membuat acara baru di Dashboard Panitia, pengajuan acara akan otomatis muncul di sini untuk dikurasi (ACC / Revisi / Tolak) oleh DPK UII.
+              </p>
+            </div>
+          } @else {
+
+            <!-- TWO-PANEL SPLIT VIEW -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+              
+              <!-- LEFT COLUMN: Table of Submissions -->
+              <div class="lg:col-span-6 xl:col-span-6 bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+                <div class="overflow-x-auto">
+                  <table class="w-full text-left border-collapse text-xs">
+                    <thead>
+                      <tr class="border-b border-slate-200 bg-slate-50/60 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                        <th class="py-3 px-4">JUDUL · ORMAWA</th>
+                        <th class="py-3 px-3">TANGGAL</th>
+                        <th class="py-3 px-3 text-center">KUOTA</th>
+                        <th class="py-3 px-4 text-right">DIAJUKAN PADA</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                      @for (item of filteredPendingEvents(); track item.id) {
+                        <tr 
+                          (click)="selectEvent(item)"
+                          class="cursor-pointer transition duration-150"
+                          [class.bg-blue-50]="selectedEvent()?.id === item.id"
+                          [class.border-l-4]="selectedEvent()?.id === item.id"
+                          [class.border-l-blue-600]="selectedEvent()?.id === item.id"
+                          [class.hover:bg-slate-50]="selectedEvent()?.id !== item.id">
+                          <td class="py-3.5 px-4">
+                            <p class="font-bold text-slate-900 text-xs sm:text-sm leading-snug">{{ item.title }}</p>
+                            <p class="text-[11px] text-slate-500 mt-0.5 font-normal">{{ item.organizer }}</p>
+                          </td>
+                          <td class="py-3.5 px-3 text-slate-700 whitespace-nowrap">{{ formatDateRow(item.date) }}</td>
+                          <td class="py-3.5 px-3 text-center text-slate-700 font-semibold whitespace-nowrap">{{ item.quotaTotal }}</td>
+                          <td class="py-3.5 px-4 text-right text-slate-600 whitespace-nowrap font-medium">{{ formatSubmittedAt(item) }}</td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- RIGHT COLUMN: Detail Panel -->
+              <div class="lg:col-span-6 xl:col-span-6">
+                @if (selectedEvent()) {
+                  <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-6 space-y-6">
+                    <div class="flex items-start justify-between gap-3">
+                      <h2 class="text-lg font-bold text-slate-900 leading-snug">{{ selectedEvent()!.title }}</h2>
+                      <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 shrink-0">
+                        <svg class="w-3 h-3 text-blue-600 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                        </svg>
+                        <span>Menunggu Persetujuan</span>
+                      </span>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-12 gap-5 items-start">
+                      <!-- Poster Preview -->
+                      <div class="sm:col-span-5 flex flex-col">
+                        <div class="relative w-full aspect-[4/5] rounded-xl overflow-hidden border border-slate-200 shadow-xs bg-slate-900 group">
+                          @if (selectedEvent()!.bannerUrl) {
+                            <div class="w-full h-full relative overflow-hidden select-none bg-slate-900">
+                              <img [src]="selectedEvent()!.bannerUrl" [alt]="selectedEvent()!.title" class="w-full h-full object-cover" />
+                            </div>
+                          } @else if (selectedEvent()!.id === 'evt-adm-01') {
+                            <div class="w-full h-full bg-gradient-to-br from-[#E2D9F3] via-[#F4F1FA] to-[#D5E4F9] p-4 flex flex-col justify-between relative overflow-hidden select-none">
+                              <svg class="absolute -right-4 top-10 w-32 h-32 text-indigo-700/80" fill="none" stroke="currentColor" viewBox="0 0 100 100">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="8" d="M10 50 Q 30 10, 60 50 T 110 50" />
+                                <circle cx="75" cy="70" r="12" fill="#1E3A8A" />
+                                <rect x="15" y="20" width="16" height="16" rx="4" fill="#6366F1" />
+                              </svg>
+                              <div><div class="w-6 h-1.5 bg-indigo-700 rounded-full mb-3"></div></div>
+                              <div class="relative z-10">
+                                <p class="font-black text-indigo-950 text-sm tracking-tight leading-tight">{{ selectedEvent()!.title }}</p>
+                                <p class="text-[9px] text-indigo-800 font-medium mt-0.5">{{ formatDateRow(selectedEvent()!.date) }} · {{ selectedEvent()!.time }}</p>
+                              </div>
+                            </div>
+                          } @else {
+                            <div class="w-full h-full bg-gradient-to-br from-[#090D16] via-[#161F33] to-[#0A1120] p-4 flex flex-col justify-between text-white relative overflow-hidden select-none">
+                              <span class="text-[9px] font-black text-cyan-400 tracking-wider uppercase">{{ selectedEvent()!.organizer }}</span>
+                              <div class="text-center my-auto">
+                                <span class="text-3xl">📋</span>
+                                <p class="font-black text-xs text-white mt-1 uppercase tracking-tight">{{ selectedEvent()!.title }}</p>
+                                <p class="text-[9px] text-cyan-300 font-semibold mt-0.5">{{ selectedEvent()!.categoryLabel }}</p>
+                              </div>
+                              <p class="text-[8px] text-slate-400">{{ selectedEvent()!.location }}</p>
+                            </div>
+                          }
+                        </div>
+                        <p class="text-[11px] text-slate-400 font-medium mt-1.5 text-center sm:text-left">4:5 · 1080×1350 · 1,2 MB</p>
+                      </div>
+
+                      <!-- Metadata Details -->
+                      <div class="sm:col-span-7 space-y-3.5 text-xs">
+                        <div>
+                          <span class="text-[11px] text-slate-400 block font-normal">Ormawa penanggung jawab</span>
+                          <p class="font-bold text-slate-900 text-xs sm:text-sm mt-0.5">{{ selectedEvent()!.organizer }}</p>
+                        </div>
+                        <div>
+                          <span class="text-[11px] text-slate-400 block font-normal">Jadwal</span>
+                          <p class="font-semibold text-slate-800 mt-0.5 leading-snug">{{ formatDateDetail(selectedEvent()!.date) }} · {{ selectedEvent()!.time }}</p>
+                        </div>
+                        <div>
+                          <span class="text-[11px] text-slate-400 block font-normal">Lokasi</span>
+                          <p class="font-semibold text-slate-800 mt-0.5">{{ selectedEvent()!.location }}</p>
+                        </div>
+                        <div>
+                          <span class="text-[11px] text-slate-400 block font-normal">Kuota</span>
+                          <p class="font-semibold text-slate-800 mt-0.5">{{ selectedEvent()!.quotaTotal }} peserta · {{ selectedEvent()!.category === 'COMMITTEE_RECRUITMENT' ? 'Open Recruitment' : 'Peserta Acara' }}</p>
+                        </div>
+                        <div>
+                          <span class="text-[11px] text-slate-400 block font-normal">Tujuan acara</span>
+                          <p class="text-slate-600 mt-0.5 leading-relaxed font-normal">{{ selectedEvent()!.description }}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Auto-Post Box -->
+                    <div class="p-3.5 rounded-xl border border-slate-200 bg-slate-50/80 flex items-center justify-between gap-4">
+                      <div class="space-y-0.5">
+                        <p class="font-bold text-slate-900 text-xs">Auto-Post ke Instagram &#64;uii.events</p>
+                        <p class="text-[11px] text-slate-500 leading-tight">Poster dan caption terbit otomatis setelah disetujui (maks. 5 posting/jam)</p>
+                      </div>
+                      <label class="relative inline-flex items-center cursor-pointer shrink-0">
+                        <input type="checkbox" [checked]="autoPostInstagram()" (change)="autoPostInstagram.set(!autoPostInstagram())" class="sr-only peer" />
+                        <div class="w-10 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+                      </label>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="space-y-3 pt-1">
+                      <div class="flex flex-col sm:flex-row items-center gap-2.5">
+                        <button 
+                          type="button"
+                          (click)="approveEvent(selectedEvent())"
+                          class="w-full sm:flex-1 py-2.5 px-5 bg-[#0284C7] hover:bg-[#0369a1] text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center justify-center gap-2 cursor-pointer">
+                          <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                          </svg>
+                          <span>Approve & Publish</span>
+                        </button>
+                        <button 
+                          type="button"
+                          (click)="openRevisionModal()"
+                          class="w-full sm:w-auto py-2.5 px-4 bg-white hover:bg-slate-50 border border-slate-300 text-[#0284C7] font-bold text-xs rounded-xl shadow-2xs transition flex items-center justify-center gap-1.5 cursor-pointer">
+                          <svg class="w-3.5 h-3.5 text-[#0284C7]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                          </svg>
+                          <span>Minta Revisi</span>
+                        </button>
+                      </div>
+                      <div>
+                        <button 
+                          type="button"
+                          (click)="openRejectModal()"
+                          class="w-full sm:w-auto py-2 px-4 bg-red-600 hover:bg-red-700 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer">
+                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                          <span>Tolak</span>
+                        </button>
+                      </div>
+                    </div>
+
+                  </div>
+                }
+              </div>
+
+            </div>
+          }
+        }
+
+      }
+
+      <!-- ========================================================================= -->
+      <!-- VIEW 2: SCR-ADM-02 MONITORING LOG NOTIFIKASI                              -->
+      <!-- ========================================================================= -->
+      @if (activeNav() === 'LOGS') {
+
+        <!-- TOP HEADER ROW -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">
+              Monitoring Log Notifikasi
+            </h1>
+            <p class="text-xs sm:text-sm text-slate-500 mt-0.5 font-medium">
+              Pengingat H-1 (09.00 WIB) & H-3 jam, jadwal wawancara, dan auto-post Instagram
+            </p>
+          </div>
+
+          <!-- Ekspor Log Button -->
+          <div>
+            <button 
+              type="button"
+              (click)="exportLogs()"
+              class="px-4 py-2 bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 font-semibold text-xs rounded-xl shadow-2xs transition flex items-center gap-2 cursor-pointer">
+              <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              <span>Ekspor Log</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- ERROR BANNER: WhatsApp Gateway Tidak Terhubung -->
+        @if (showGatewayError()) {
+          <div class="p-4 rounded-2xl bg-red-50 border border-red-200 text-red-950 flex items-start justify-between gap-3 shadow-xs animate-in fade-in">
+            <div class="flex items-start gap-3">
+              <span class="text-xl">⚠️</span>
+              <div class="text-xs">
+                <p class="font-bold text-red-950 text-sm">WhatsApp Gateway tidak terhubung</p>
+                <p class="text-red-800 mt-0.5 leading-relaxed">
+                  Pengiriman WA dialihkan ke email fallback (D-08) sampai gateway pulih. Terakhir terhubung 12 mnt lalu.
+                </p>
+                <button 
+                  type="button" 
+                  (click)="reconnectGateway()"
+                  class="mt-2.5 px-3 py-1.5 rounded-lg bg-white border border-red-300 text-red-900 font-semibold text-xs shadow-2xs hover:bg-red-50 transition cursor-pointer flex items-center gap-1.5">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  <span>Cek Ulang Koneksi</span>
+                </button>
+              </div>
+            </div>
+            <button (click)="showGatewayError.set(false)" class="text-red-400 hover:text-red-700 font-bold p-1">✕</button>
+          </div>
+        }
+
+        <!-- 3 SUMMARY METRIC CARDS (SCR-ADM-02 Spec) -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+          
+          <!-- Card 1: Kuota WhatsApp Gateway -->
+          <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs">
+            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
+              Kuota WhatsApp Gateway
+            </span>
+            <div class="mt-2.5 flex items-baseline">
+              <span class="text-3xl font-black text-slate-900">1.842</span>
+            </div>
+            <p class="text-[11px] text-slate-400 mt-1">
+              pesan tersisa &bull; contoh angka, sumber data belum ada di skema
+            </p>
+          </div>
+
+          <!-- Card 2: Terkirim Hari Ini -->
+          <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs">
+            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
+              Terkirim hari ini
+            </span>
+            <div class="mt-2.5 flex items-baseline">
+              <span class="text-3xl font-black text-slate-900">1.176</span>
+            </div>
+            <p class="text-[11px] text-slate-500 mt-1">
+              WhatsApp &bull; 97% berhasil
+            </p>
+          </div>
+
+          <!-- Card 3: Gagal Hari Ini -->
+          <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs">
+            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
+              Gagal hari ini
+            </span>
+            <div class="mt-2.5 flex items-baseline">
+              <span class="text-3xl font-black text-slate-900">38</span>
+            </div>
+            <p class="text-[11px] text-slate-500 mt-1">
+              35 berhasil via email fallback
+            </p>
+          </div>
+
+        </div>
+
+        <!-- 3 CHANNEL TABS (SCR-ADM-02 Spec) -->
+        <div class="border-b border-slate-200 flex items-center gap-6 text-sm font-semibold">
+          
+          <!-- Tab 1: WhatsApp -->
+          <button 
+            type="button" 
+            (click)="activeLogTab.set('WHATSAPP')"
+            class="pb-3 border-b-2 flex items-center gap-2 cursor-pointer transition text-xs sm:text-sm"
+            [class.border-blue-600]="activeLogTab() === 'WHATSAPP'"
+            [class.text-blue-600]="activeLogTab() === 'WHATSAPP'"
+            [class.border-transparent]="activeLogTab() !== 'WHATSAPP'"
+            [class.text-slate-500]="activeLogTab() !== 'WHATSAPP'"
+            [class.hover:text-slate-800]="activeLogTab() !== 'WHATSAPP'">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+            <span>WhatsApp</span>
+            <span class="text-xs font-normal" [class.text-blue-600]="activeLogTab() === 'WHATSAPP'" [class.text-slate-400]="activeLogTab() !== 'WHATSAPP'">1.214</span>
+          </button>
+
+          <!-- Tab 2: Email (Fallback) -->
+          <button 
+            type="button" 
+            (click)="activeLogTab.set('EMAIL')"
+            class="pb-3 border-b-2 flex items-center gap-2 cursor-pointer transition text-xs sm:text-sm"
+            [class.border-blue-600]="activeLogTab() === 'EMAIL'"
+            [class.text-blue-600]="activeLogTab() === 'EMAIL'"
+            [class.border-transparent]="activeLogTab() !== 'EMAIL'"
+            [class.text-slate-500]="activeLogTab() !== 'EMAIL'"
+            [class.hover:text-slate-800]="activeLogTab() !== 'EMAIL'">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+            <span>Email (Fallback)</span>
+            <span class="text-xs font-normal" [class.text-blue-600]="activeLogTab() === 'EMAIL'" [class.text-slate-400]="activeLogTab() !== 'EMAIL'">38</span>
+          </button>
+
+          <!-- Tab 3: Instagram -->
+          <button 
+            type="button" 
+            (click)="activeLogTab.set('INSTAGRAM')"
+            class="pb-3 border-b-2 flex items-center gap-2 cursor-pointer transition text-xs sm:text-sm"
+            [class.border-blue-600]="activeLogTab() === 'INSTAGRAM'"
+            [class.text-blue-600]="activeLogTab() === 'INSTAGRAM'"
+            [class.border-transparent]="activeLogTab() !== 'INSTAGRAM'"
+            [class.text-slate-500]="activeLogTab() !== 'INSTAGRAM'"
+            [class.hover:text-slate-800]="activeLogTab() !== 'INSTAGRAM'">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <span>Instagram</span>
+            <span class="text-xs font-normal" [class.text-blue-600]="activeLogTab() === 'INSTAGRAM'" [class.text-slate-400]="activeLogTab() !== 'INSTAGRAM'">12</span>
+          </button>
+
+        </div>
+
+        <!-- SKELETON LOADING IN LOGS -->
+        @if (isLogsLoading()) {
+          <div class="bg-white rounded-2xl p-6 border border-slate-200/80 space-y-4 animate-pulse">
+            <div class="h-4 bg-slate-200 rounded w-1/4"></div>
+            <div class="h-10 bg-slate-100 rounded-xl"></div>
+            <div class="h-10 bg-slate-100 rounded-xl"></div>
+            <div class="h-10 bg-slate-100 rounded-xl"></div>
+          </div>
+        } @else if (isEmptyLogs()) {
+          
+          <!-- EMPTY STATE (Empty-BelumAdaPengiriman) -->
+          <div class="bg-white rounded-2xl border border-slate-200/80 p-12 text-center shadow-xs">
+            <div class="w-20 h-16 mx-auto mb-4 rounded-xl border-2 border-slate-800 bg-slate-50 flex items-center justify-center">
+              <svg class="w-8 h-8 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 19a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1M5 19h14a2 2 0 002-2v-5a2 2 0 00-2-2H9a2 2 0 00-2 2v5a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            <h3 class="text-base font-bold text-slate-900">Belum ada pengiriman hari ini</h3>
+            <p class="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+              Pengingat H-1 berikutnya terjadwal Sabtu, 21 November 2026 pukul 09.00 WIB.
+            </p>
+          </div>
+
+        } @else {
+
+          <!-- ================= TAB CONTENT 1: WHATSAPP ================= -->
+          @if (activeLogTab() === 'WHATSAPP') {
+            <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+              <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr class="border-b border-slate-200 bg-slate-50/60 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                      <th class="py-3 px-4">WAKTU ↕</th>
+                      <th class="py-3 px-3">ACARA</th>
+                      <th class="py-3 px-3">PENERIMA</th>
+                      <th class="py-3 px-3">JENIS</th>
+                      <th class="py-3 px-3">STATUS</th>
+                      <th class="py-3 px-4 text-center">AKSI</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100">
+                    @for (item of displayedWhatsappLogs(); track item.id) {
+                      <tr class="hover:bg-slate-50/70 transition">
+                        <td class="py-3 px-4 text-slate-600 whitespace-nowrap">{{ item.waktu }}</td>
+                        <td class="py-3 px-3 font-medium text-slate-900 whitespace-nowrap">{{ item.acara }}</td>
+                        <td class="py-3 px-3 font-mono text-slate-600 whitespace-nowrap">{{ item.penerima }}</td>
+                        <td class="py-3 px-3 text-slate-700 whitespace-nowrap">{{ item.jenis }}</td>
+                        
+                        <!-- Status Badge -->
+                        <td class="py-3 px-3 whitespace-nowrap">
+                          @if (item.status === 'TERKIRIM') {
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                              <span>✓</span> Terkirim
+                            </span>
+                          } @else if (item.status === 'GAGAL') {
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-50 text-red-700 border border-red-200">
+                              <span>✕</span> Gagal
+                            </span>
+                          } @else {
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                              <span>⏳</span> Menunggu
+                            </span>
+                          }
+                        </td>
+
+                        <!-- Aksi Button -->
+                        <td class="py-3 px-4 text-center whitespace-nowrap">
+                          @if (item.status === 'GAGAL') {
+                            <button 
+                              type="button"
+                              (click)="resendWhatsapp(item)"
+                              class="px-2.5 py-1 bg-white hover:bg-slate-50 border border-slate-300 text-blue-600 font-semibold text-xs rounded-lg shadow-2xs transition inline-flex items-center gap-1 cursor-pointer">
+                              <svg class="w-3 h-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                              </svg>
+                              <span>Kirim Ulang</span>
+                            </button>
+                          } @else {
+                            <span class="text-slate-300">—</span>
+                          }
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Pagination (SCR-ADM-02 Spec) -->
+              <div class="px-4 py-3 bg-slate-50/70 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+                <span>{{ waRangeText() }}</span>
+                <div class="flex items-center gap-3">
+                  <div class="flex items-center gap-1">
+                    <span>Baris per halaman</span>
+                    <select [(ngModel)]="pageSizeWa" class="bg-white border border-slate-300 rounded-lg px-2 py-1 text-xs">
+                      <option [value]="10">10</option>
+                      <option [value]="25">25</option>
+                      <option [value]="50">50</option>
+                    </select>
+                  </div>
+                  <div class="flex items-center gap-1">
+                    <button 
+                      type="button"
+                      (click)="prevPageWa()" 
+                      [disabled]="currentPageWa() === 1" 
+                      class="w-7 h-7 rounded-lg border border-slate-200 bg-white flex items-center justify-center hover:bg-slate-50 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed">
+                      &lt;
+                    </button>
+                    @for (p of [1, 2, 3, 4, 5]; track p) {
+                      <button 
+                        type="button"
+                        (click)="setPageWa(p)"
+                        class="w-7 h-7 rounded-lg font-bold flex items-center justify-center cursor-pointer transition text-xs"
+                        [class.bg-blue-600]="currentPageWa() === p"
+                        [class.text-white]="currentPageWa() === p"
+                        [class.border]="currentPageWa() !== p"
+                        [class.border-slate-200]="currentPageWa() !== p"
+                        [class.bg-white]="currentPageWa() !== p"
+                        [class.text-slate-700]="currentPageWa() !== p"
+                        [class.hover:bg-slate-50]="currentPageWa() !== p">
+                        {{ p }}
+                      </button>
+                    }
+                    <span class="px-1 text-slate-400">...</span>
+                    <button 
+                      type="button"
+                      (click)="setPageWa(122)"
+                      class="w-7 h-7 rounded-lg font-bold flex items-center justify-center cursor-pointer transition text-xs"
+                      [class.bg-blue-600]="currentPageWa() === 122"
+                      [class.text-white]="currentPageWa() === 122"
+                      [class.border]="currentPageWa() !== 122"
+                      [class.border-slate-200]="currentPageWa() !== 122"
+                      [class.bg-white]="currentPageWa() !== 122"
+                      [class.text-slate-700]="currentPageWa() !== 122"
+                      [class.hover:bg-slate-50]="currentPageWa() !== 122">
+                      122
+                    </button>
+                    <button 
+                      type="button"
+                      (click)="nextPageWa()" 
+                      [disabled]="currentPageWa() === 122" 
+                      class="w-7 h-7 rounded-lg border border-slate-200 bg-white flex items-center justify-center hover:bg-slate-50 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed">
+                      &gt;
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          }
+
+          <!-- ================= TAB CONTENT 2: EMAIL FALLBACK (D-08) ================= -->
+          @if (activeLogTab() === 'EMAIL') {
+            
+            <!-- Fallback Info Alert Note -->
+            <div class="p-4 rounded-xl bg-blue-50 border border-blue-200 text-blue-950 flex items-start gap-2.5">
+              <svg class="w-5 h-5 text-blue-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <div class="text-xs">
+                <p class="font-bold text-blue-950">Email hanya dikirim jika WhatsApp gagal atau timeout (D-08)</p>
+                <p class="text-blue-800 mt-0.5">Setiap baris di tab ini adalah fallback dari pesan WhatsApp yang gagal.</p>
+              </div>
+            </div>
+
+            <!-- Email Table -->
+            <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+              <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr class="border-b border-slate-200 bg-slate-50/60 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                      <th class="py-3 px-4">WAKTU</th>
+                      <th class="py-3 px-3">ACARA</th>
+                      <th class="py-3 px-3">PENERIMA</th>
+                      <th class="py-3 px-3">PEMICU (WA GAGAL)</th>
+                      <th class="py-3 px-3">STATUS</th>
+                      <th class="py-3 px-4 text-center">AKSI</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100">
+                    @for (item of displayedEmailLogs(); track item.id) {
+                      <tr class="hover:bg-slate-50/70 transition">
+                        <td class="py-3 px-4 text-slate-600 whitespace-nowrap">{{ item.waktu }}</td>
+                        <td class="py-3 px-3 font-medium text-slate-900 whitespace-nowrap">{{ item.acara }}</td>
+                        <td class="py-3 px-3 font-mono text-slate-600 whitespace-nowrap">{{ item.penerima }}</td>
+                        
+                        <!-- Pemicu (WA Gagal) Badge -->
+                        <td class="py-3 px-3 whitespace-nowrap">
+                          <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-amber-100 text-amber-900 border border-amber-200">
+                            {{ item.pemicu }}
+                          </span>
+                        </td>
+
+                        <!-- Status Badge -->
+                        <td class="py-3 px-3 whitespace-nowrap">
+                          @if (item.status === 'TERKIRIM') {
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                              <span>✓</span> Terkirim
+                            </span>
+                          } @else {
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-50 text-red-700 border border-red-200">
+                              <span>✕</span> Gagal
+                            </span>
+                          }
+                        </td>
+
+                        <!-- Aksi Button -->
+                        <td class="py-3 px-4 text-center whitespace-nowrap">
+                          @if (item.status === 'GAGAL') {
+                            <button 
+                              type="button"
+                              (click)="resendEmail(item)"
+                              class="px-2.5 py-1 bg-white hover:bg-slate-50 border border-slate-300 text-blue-600 font-semibold text-xs rounded-lg shadow-2xs transition inline-flex items-center gap-1 cursor-pointer">
+                              <svg class="w-3 h-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                              </svg>
+                              <span>Kirim Ulang</span>
+                            </button>
+                          } @else {
+                            <span class="text-slate-300">—</span>
+                          }
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Pagination -->
+              <div class="px-4 py-3 bg-slate-50/70 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+                <span>{{ emailRangeText() }}</span>
+                <div class="flex items-center gap-3">
+                  <div class="flex items-center gap-1">
+                    <span>Baris per halaman</span>
+                    <select [(ngModel)]="pageSizeEmail" class="bg-white border border-slate-300 rounded-lg px-2 py-1 text-xs">
+                      <option [value]="10">10</option>
+                      <option [value]="25">25</option>
+                    </select>
+                  </div>
+                  <div class="flex items-center gap-1">
+                    <button 
+                      type="button"
+                      (click)="prevPageEmail()" 
+                      [disabled]="currentPageEmail() === 1" 
+                      class="w-7 h-7 rounded-lg border border-slate-200 bg-white flex items-center justify-center hover:bg-slate-50 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed">
+                      &lt;
+                    </button>
+                    @for (p of [1, 2, 3, 4]; track p) {
+                      <button 
+                        type="button"
+                        (click)="setPageEmail(p)"
+                        class="w-7 h-7 rounded-lg font-bold flex items-center justify-center cursor-pointer transition text-xs"
+                        [class.bg-blue-600]="currentPageEmail() === p"
+                        [class.text-white]="currentPageEmail() === p"
+                        [class.border]="currentPageEmail() !== p"
+                        [class.border-slate-200]="currentPageEmail() !== p"
+                        [class.bg-white]="currentPageEmail() !== p"
+                        [class.text-slate-700]="currentPageEmail() !== p"
+                        [class.hover:bg-slate-50]="currentPageEmail() !== p">
+                        {{ p }}
+                      </button>
+                    }
+                    <button 
+                      type="button"
+                      (click)="nextPageEmail()" 
+                      [disabled]="currentPageEmail() === 4" 
+                      class="w-7 h-7 rounded-lg border border-slate-200 bg-white flex items-center justify-center hover:bg-slate-50 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed">
+                      &gt;
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          }
+
+          <!-- ================= TAB CONTENT 3: INSTAGRAM ================= -->
+          @if (activeLogTab() === 'INSTAGRAM') {
+            <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+              <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr class="border-b border-slate-200 bg-slate-50/60 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                      <th class="py-3 px-4">WAKTU</th>
+                      <th class="py-3 px-3">ACARA</th>
+                      <th class="py-3 px-3">URL POSTING</th>
+                      <th class="py-3 px-3">STATUS</th>
+                      <th class="py-3 px-4 text-center">AKSI</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100">
+                    @for (item of displayedInstagramLogs(); track item.id) {
+                      <tr class="hover:bg-slate-50/70 transition">
+                        <td class="py-3 px-4 text-slate-600 whitespace-nowrap">{{ item.waktu }}</td>
+                        <td class="py-3 px-3 font-medium text-slate-900 whitespace-nowrap">{{ item.acara }}</td>
+                        
+                        <!-- URL Posting -->
+                        <td class="py-3 px-3 whitespace-nowrap">
+                          @if (item.isError) {
+                            <span class="text-red-500 italic text-[11px]">{{ item.urlPosting }}</span>
+                          } @else {
+                            <a href="https://{{ item.urlPosting }}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline font-mono">
+                              {{ item.urlPosting }}
+                            </a>
+                          }
+                        </td>
+
+                        <!-- Status Badge -->
+                        <td class="py-3 px-3 whitespace-nowrap">
+                          @if (item.status === 'TERKIRIM') {
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                              <span>✓</span> Terkirim
+                            </span>
+                          } @else {
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-50 text-red-700 border border-red-200">
+                              <span>✕</span> Gagal
+                            </span>
+                          }
+                        </td>
+
+                        <!-- Aksi Button -->
+                        <td class="py-3 px-4 text-center whitespace-nowrap">
+                          @if (item.status === 'GAGAL') {
+                            <button 
+                              type="button"
+                              (click)="resendInstagram(item)"
+                              class="px-2.5 py-1 bg-white hover:bg-slate-50 border border-slate-300 text-blue-600 font-semibold text-xs rounded-lg shadow-2xs transition inline-flex items-center gap-1 cursor-pointer">
+                              <svg class="w-3 h-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                              </svg>
+                              <span>Kirim Ulang</span>
+                            </button>
+                          } @else {
+                            <a 
+                              href="https://{{ item.urlPosting }}" 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              class="px-2.5 py-1 bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 font-semibold text-xs rounded-lg shadow-2xs transition inline-flex items-center gap-1 cursor-pointer">
+                              <svg class="w-3 h-3 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                              </svg>
+                              <span>Buka</span>
+                            </a>
+                          }
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Pagination -->
+              <div class="px-4 py-3 bg-slate-50/70 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+                <span>{{ igRangeText() }}</span>
+                <div class="flex items-center gap-3">
+                  <div class="flex items-center gap-1">
+                    <span>Baris per halaman</span>
+                    <select [(ngModel)]="pageSizeIg" class="bg-white border border-slate-300 rounded-lg px-2 py-1 text-xs">
+                      <option [value]="10">10</option>
+                      <option [value]="25">25</option>
+                    </select>
+                  </div>
+                  <div class="flex items-center gap-1">
+                    <button 
+                      type="button"
+                      (click)="prevPageIg()" 
+                      [disabled]="currentPageIg() === 1" 
+                      class="w-7 h-7 rounded-lg border border-slate-200 bg-white flex items-center justify-center hover:bg-slate-50 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed">
+                      &lt;
+                    </button>
+                    @for (p of [1, 2]; track p) {
+                      <button 
+                        type="button"
+                        (click)="setPageIg(p)"
+                        class="w-7 h-7 rounded-lg font-bold flex items-center justify-center cursor-pointer transition text-xs"
+                        [class.bg-blue-600]="currentPageIg() === p"
+                        [class.text-white]="currentPageIg() === p"
+                        [class.border]="currentPageIg() !== p"
+                        [class.border-slate-200]="currentPageIg() !== p"
+                        [class.bg-white]="currentPageIg() !== p"
+                        [class.text-slate-700]="currentPageIg() !== p"
+                        [class.hover:bg-slate-50]="currentPageIg() !== p">
+                        {{ p }}
+                      </button>
+                    }
+                    <button 
+                      type="button"
+                      (click)="nextPageIg()" 
+                      [disabled]="currentPageIg() === 2" 
+                      class="w-7 h-7 rounded-lg border border-slate-200 bg-white flex items-center justify-center hover:bg-slate-50 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed">
+                      &gt;
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          }
+
+        }
+
+      }
+
+
+
+    </div>
+  </main>
+
+  <!-- ================= MODAL: MINTA REVISI ================= -->
+  @if (showRevisionModal()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in">
+      <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl border border-slate-200 overflow-hidden">
+        <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+          <h3 class="font-bold text-slate-900 text-sm">Minta revisi ke {{ selectedEvent()?.organizer || 'Panitia' }}</h3>
+          <button type="button" (click)="closeRevisionModal()" class="text-slate-400 hover:text-slate-600 p-1 cursor-pointer">✕</button>
+        </div>
+        <div class="p-5 space-y-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">
+              Catatan revisi untuk panitia <span class="text-red-500">*</span>
+            </label>
+            <textarea 
+              [(ngModel)]="revisionNotes"
+              rows="4"
+              placeholder="Tulis bagian yang perlu diperbaiki"
+              class="w-full p-3 rounded-xl border text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition resize-none"
+              [class.border-red-400]="revisionError()"
+              [class.border-slate-200]="!revisionError()">
+            </textarea>
+            @if (revisionError()) {
+              <p class="text-[11px] text-red-500 mt-1 font-medium flex items-center gap-1">
+                <span>⚠️</span> Catatan revisi wajib diisi
+              </p>
+            }
+          </div>
+          <p class="text-[11px] text-slate-400 leading-tight">Acara kembali ke panitia dengan status Perlu Revisi (D-03).</p>
+        </div>
+        <div class="px-5 py-3.5 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2.5">
+          <button type="button" (click)="closeRevisionModal()" class="px-4 py-2 rounded-xl bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 font-semibold text-xs cursor-pointer">Batal</button>
+          <button type="button" (click)="submitRevision()" class="px-5 py-2 rounded-xl bg-[#0284C7] hover:bg-[#0369a1] text-white font-bold text-xs shadow-xs transition flex items-center gap-1.5 cursor-pointer">
+            <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+            </svg>
+            <span>Kirim Permintaan Revisi</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ================= MODAL: TOLAK PENGAJUAN ================= -->
+  @if (showRejectModal()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in">
+      <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl border border-slate-200 overflow-hidden">
+        <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+          <h3 class="font-bold text-slate-900 text-sm">Tolak pengajuan acara?</h3>
+          <button type="button" (click)="closeRejectModal()" class="text-slate-400 hover:text-slate-600 p-1 cursor-pointer">✕</button>
+        </div>
+        <div class="p-5 space-y-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">
+              Alasan penolakan resmi <span class="text-red-500">*</span>
+            </label>
+            <textarea 
+              [(ngModel)]="rejectionReason"
+              rows="3"
+              placeholder="Alasan penolakan resmi"
+              class="w-full p-3 rounded-xl border text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500/20 transition resize-none"
+              [class.border-red-400]="rejectionError()"
+              [class.border-slate-200]="!rejectionError()">
+            </textarea>
+            @if (rejectionError()) {
+              <p class="text-[11px] text-red-500 mt-1 font-medium flex items-center gap-1">
+                <span>⚠️</span> Alasan penolakan wajib diisi
+              </p>
+            }
+          </div>
+          <p class="text-[11px] text-slate-500 leading-tight">Alasan dikirim ke panitia dan tercatat di riwayat.</p>
+          <p class="text-[11px] text-red-600 font-semibold leading-tight">Status acara menjadi Ditolak. Tindakan ini tidak bisa dibatalkan.</p>
+        </div>
+        <div class="px-5 py-3.5 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2.5">
+          <button type="button" (click)="closeRejectModal()" class="px-4 py-2 rounded-xl bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 font-semibold text-xs cursor-pointer">Batal</button>
+          <button type="button" (click)="submitReject()" class="px-5 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs shadow-xs transition flex items-center gap-1.5 cursor-pointer">
+            <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            <span>Tolak Acara</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+</div>

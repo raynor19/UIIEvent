@@ -1,0 +1,78 @@
+/* Ken Burns & Multi-slide Background Carousel matching StayJogja reference */
+.bg-slideshow-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.bg-slide {
+  position: absolute;
+  top: -4%;
+  left: -4%;
+  width: 108%;
+  height: 108%;
+  background-size: cover;
+  background-position: center center;
+  opacity: 1;
+  animation: kenBurnsSubtle 24s infinite alternate ease-in-out;
+}
+
+@keyframes kenBurnsSubtle {
+  0% {
+    transform: scale(1) translate(0, 0);
+  }
+  100% {
+    transform: scale(1.06) translate(-1%, -0.6%);
+  }
+}
+
+/* Traditional Batik Watermark Pattern */
+.batik-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1;
+  pointer-events: none;
+  background-image: radial-gradient(rgba(217, 119, 6, 0.12) 1.2px, transparent 1.2px);
+  background-size: 24px 24px;
+  mix-blend-mode: overlay;
+}
+
+/* Atmospheric Warm Vignette & Contrast Overlay */
+.vignette-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 2;
+  pointer-events: none;
+  background: radial-gradient(circle at center, rgba(15, 23, 42, 0.45) 0%, rgba(10, 16, 26, 0.82) 65%, rgba(3, 7, 18, 0.96) 100%);
+}
+
+/* UII Official Blue Button Gradient */
+.btn-gold {
+  background: linear-gradient(135deg, #002855 0%, #004c99 100%);
+  color: #ffffff;
+}
+.btn-gold:hover {
+  background: linear-gradient(135deg, #001a38 0%, #002855 100%);
+}
+
+/* Custom Select styling to eliminate default OS drop-down button */
+.role-select {
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  background-image: none !important;
+}
+.role-select::-ms-expand {
+  display: none !important;
+}

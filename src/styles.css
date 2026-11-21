@@ -1,0 +1,181 @@
+/* Global Styles for UII Event Management Platform */
+@keyframes laserScan {
+  0% {
+    top: 5%;
+    opacity: 0.8;
+  }
+  50% {
+    top: 90%;
+    opacity: 1;
+  }
+  100% {
+    top: 5%;
+    opacity: 0.8;
+  }
+}
+
+.animate-laser {
+  animation: laserScan 2.2s ease-in-out infinite;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Cutout effect for tickets */
+.ticket-edge-cutout {
+  position: relative;
+  overflow: hidden;
+}
+.ticket-edge-cutout::before, .ticket-edge-cutout::after {
+  content: '';
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: #f8fafc;
+  top: 65%;
+  z-index: 10;
+}
+
+/* ========================================================
+   CERTIFICATE PRINT & PDF OPTIMIZATION (1-PAGE LANDSCAPE)
+   ======================================================== */
+@page {
+  size: A4 landscape;
+  margin: 0;
+}
+
+@media print {
+  /* 1. Global Reset & Hide Website Chrome */
+  *, *::before, *::after {
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  html, body {
+    width: 297mm !important;
+    height: 210mm !important;
+    max-width: 297mm !important;
+    max-height: 210mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    overflow: hidden !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Completely remove top navbar, bottom nav, footer, breadcrumb, sidebar, and non-print UI */
+  header,
+  app-navbar,
+  app-bottom-nav,
+  footer,
+  nav,
+  .no-print,
+  .print-hidden {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    max-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    overflow: hidden !important;
+  }
+
+  /* 2. Container resets */
+  .certificates-page-container {
+    padding: 0 !important;
+    margin: 0 !important;
+    min-height: 0 !important;
+    height: 100vh !important;
+    background: #ffffff !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+    page-break-inside: avoid !important;
+    page-break-after: avoid !important;
+    page-break-before: avoid !important;
+  }
+
+  .certificates-main-grid {
+    display: block !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    gap: 0 !important;
+  }
+
+  .certificate-print-wrapper {
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    max-width: none !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+    page-break-inside: avoid !important;
+    page-break-after: avoid !important;
+    page-break-before: avoid !important;
+  }
+
+  /* 3. Certificate Canvas: Exactly 1 Page A4 Landscape */
+  .certificate-print-canvas {
+    width: 277mm !important;
+    height: 190mm !important;
+    max-width: 277mm !important;
+    max-height: 190mm !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    margin: auto !important;
+    padding: 6mm !important;
+    border: 2px solid #002855 !important;
+    position: relative !important;
+    background-color: #ffffff !important;
+    box-shadow: none !important;
+    page-break-inside: avoid !important;
+    page-break-after: avoid !important;
+    page-break-before: avoid !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .certificate-print-inner {
+    height: 100% !important;
+    min-height: 0 !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    padding: 6mm 10mm !important;
+    border: 1px solid rgba(224, 159, 0, 0.45) !important;
+  }
+}
+.ticket-edge-cutout::before {
+  left: -12px;
+}
+.ticket-edge-cutout::after {
+  right: -12px;
+}

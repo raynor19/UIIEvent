@@ -1,0 +1,310 @@
+<div class="min-h-screen bg-slate-50/70 pt-6 pb-28 sm:pb-12 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-4xl mx-auto space-y-6">
+
+    <!-- ================= BREADCRUMB ================= -->
+    <div>
+      <a routerLink="/catalog" 
+         class="inline-flex items-center gap-1.5 text-xs font-bold text-uii-blue hover:text-blue-900 transition mb-3">
+        <span>&larr;</span>
+        <span>Kembali ke Katalog Acara</span>
+      </a>
+    </div>
+
+    <!-- ================= STATE 3: SCR-REG-03 SUKSES PENDAFTARAN ================= -->
+    @if (registrationSuccess()) {
+      <div class="bg-white rounded-3xl p-8 sm:p-12 text-center border border-slate-200/90 shadow-lg max-w-xl mx-auto space-y-6 animate-in zoom-in-95 duration-200">
+        
+        <!-- Big Green Circle Checkmark -->
+        <div class="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-4xl font-black shadow-inner">
+          ✓
+        </div>
+
+        <div class="space-y-1">
+          <h2 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+            Pendaftaran Berhasil!
+          </h2>
+          <p class="text-xs sm:text-sm text-slate-500 max-w-md mx-auto">
+            E-Tiket resmi Anda telah dibuat dan siap digunakan di meja registrasi
+          </p>
+        </div>
+
+        <!-- Ticket Summary Preview Card (SCR-REG-03) -->
+        <div class="p-5 bg-slate-50 border border-slate-200 rounded-2xl text-left space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-bold uppercase text-slate-400 tracking-wider">KODE E-TIKET DIGITAL</span>
+            <span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-bold">TERDAFTAR</span>
+          </div>
+
+          <div class="font-mono text-xl font-black text-uii-blue">
+            {{ createdTicket()?.ticketCode || 'TKT-UII-AI-891' }}
+          </div>
+
+          <div class="pt-2 border-t border-slate-200 space-y-1 text-xs text-slate-600">
+            <div class="font-bold text-slate-900 text-sm">{{ event()?.title }}</div>
+            <div>📅 {{ event()?.date }} &bull; {{ event()?.time }}</div>
+            <div>📍 {{ event()?.room }} ({{ event()?.location }})</div>
+          </div>
+
+          <div class="p-3 bg-blue-50 border border-blue-200 rounded-xl text-[11px] text-blue-900 flex items-center gap-2">
+            <span>📱</span>
+            <span>Tunjukkan E-Tiket pada ponsel Anda saat tiba di lokasi pintu masuk acara.</span>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="space-y-2 pt-2">
+          <a routerLink="/tickets" 
+             class="w-full py-3 px-5 rounded-xl bg-uii-blue hover:bg-blue-900 text-white font-bold text-xs transition flex items-center justify-center gap-2 shadow-sm">
+            <span>Lihat E-Tiket Saya &rarr;</span>
+          </a>
+
+          <button 
+            type="button" 
+            (click)="addToGoogleCalendar()"
+            class="w-full py-2.5 px-4 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-bold text-xs transition flex items-center justify-center gap-2 cursor-pointer">
+            <span>📅 Tambahkan ke Google Calendar</span>
+          </button>
+        </div>
+
+      </div>
+    } @else if (event()) {
+
+      <!-- ================= HTTP 409 CONFLICT WARNING BANNER ================= -->
+      @if (conflictError()) {
+        <div class="bg-red-50 border-2 border-red-500/80 rounded-2xl p-5 shadow-sm text-xs space-y-3 animate-in shake">
+          <div class="flex items-center gap-2 text-red-900 font-black text-sm">
+            <span>⚠️</span>
+            <span>Anda Sudah Terdaftar di Acara Ini (HTTP 409 Conflict Protection)</span>
+          </div>
+          <p class="text-red-700 leading-relaxed">
+            Sistem mendeteksi bahwa akun SSO mahasiswa Anda (NIM {{ authService.currentUser().nim }}) telah memiliki tiket resmi untuk kegiatan ini. Pendaftaran ganda dicegah agar kuota peserta tetap adil bagi mahasiswa lain.
+          </p>
+          <div class="flex items-center gap-3 pt-1">
+            <a routerLink="/tickets" class="px-4 py-2 bg-red-600 text-white font-bold text-xs rounded-xl shadow-xs hover:bg-red-700 transition">
+              Buka E-Tiket Saya
+            </a>
+            <button type="button" (click)="conflictError.set(false)" class="text-red-700 hover:underline font-bold">
+              Tutup Pesan
+            </button>
+          </div>
+        </div>
+      }
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        
+        <!-- Left: Form Body (8 cols on lg) -->
+        <div class="lg:col-span-8 bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-2xs space-y-6">
+          
+          <div>
+            <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+              @if (isOprecEvent) {
+                Formulir Oprec Panitia (SCR-REG-02)
+              } @else {
+                Formulir Pendaftaran Peserta (SCR-REG-01)
+              }
+            </h1>
+            <p class="text-xs text-slate-500 mt-1">
+              Data identitas ditarik otomatis dari akun Single Sign-On (SSO) UII Anda tanpa perlu mengetik ulang.
+            </p>
+          </div>
+
+          <!-- Auto-Filled Identity Box -->
+          <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200 text-xs space-y-3">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-200">
+              <span class="font-bold text-slate-700 uppercase tracking-wider text-[11px]">IDENTITAS MAHASISWA UII</span>
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                ✓ SSO TERVERIFIKASI
+              </span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <span class="text-slate-400 block text-[10px] uppercase font-bold">NAMA LENGKAP:</span>
+                <span class="font-bold text-slate-900 text-xs sm:text-sm">{{ authService.currentUser().name }}</span>
+              </div>
+              <div>
+                <span class="text-slate-400 block text-[10px] uppercase font-bold">NIM MAHASISWA:</span>
+                <span class="font-mono font-bold text-slate-900 text-xs sm:text-sm">{{ authService.currentUser().nim }}</span>
+              </div>
+              <div>
+                <span class="text-slate-400 block text-[10px] uppercase font-bold">PROGRAM STUDI:</span>
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <span class="font-bold text-slate-800 text-xs sm:text-sm">{{ userStudyProgram }}</span>
+                  <span class="text-[9px] font-mono text-uii-blue font-bold px-1.5 py-0.5 rounded bg-blue-50 border border-blue-200">Kode {{ userDeptInfo.code }}</span>
+                </div>
+              </div>
+              <div>
+                <span class="text-slate-400 block text-[10px] uppercase font-bold">FAKULTAS:</span>
+                <span class="font-bold text-slate-800 text-xs sm:text-sm truncate block">{{ userFaculty }}</span>
+              </div>
+              <div>
+                <span class="text-slate-400 block text-[10px] uppercase font-bold">EMAIL RESMI STUDENTS:</span>
+                <span class="font-medium text-slate-700 font-mono">{{ authService.currentUser().email }}</span>
+              </div>
+              <div>
+                <span class="text-slate-400 block text-[10px] uppercase font-bold">NOMOR WHATSAPP:</span>
+                <input 
+                  type="text" 
+                  [(ngModel)]="phoneInput" 
+                  class="w-full mt-0.5 p-1.5 bg-white border border-slate-200 rounded-lg text-xs font-medium focus:border-uii-blue focus:outline-none"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- ================= SCR-REG-02: OPREC PANITIA SPECIFIC FIELDS ================= -->
+          @if (isOprecEvent) {
+            <div class="space-y-4 pt-2">
+              <h3 class="text-sm font-black text-slate-900 uppercase tracking-wider">
+                Preferensi Divisi Kepanitiaan & Berkas
+              </h3>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">Pilihan Divisi 1 (Prioritas):</label>
+                  <select 
+                    [(ngModel)]="divisionChoice1"
+                    class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:border-uii-blue">
+                    @for (div of activeDivisions; track div) {
+                      <option [value]="div">{{ div }}</option>
+                    }
+                  </select>
+                </div>
+
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">Pilihan Divisi 2 (Cadangan):</label>
+                  <select 
+                    [(ngModel)]="divisionChoice2"
+                    class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:border-uii-blue">
+                    @for (div of activeDivisions; track div) {
+                      <option [value]="div">{{ div }}</option>
+                    }
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Motivasi & Pengalaman Organisasi:</label>
+                <textarea 
+                  [(ngModel)]="motivation"
+                  rows="3"
+                  placeholder="Ceritakan mengapa Anda tertarik bergabung di kepanitiaan ini dan pengalaman relevan..."
+                  class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-uii-blue"></textarea>
+              </div>
+
+              <!-- Upload Berkas CV & KRS -->
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Unggah Berkas CV & KRS (PDF):</label>
+                <div class="border-2 border-dashed border-slate-300 rounded-2xl p-5 text-center bg-slate-50 hover:bg-slate-100 transition">
+                  <input type="file" id="cvUpload" (change)="onFileSelected($event)" accept=".pdf" class="hidden" />
+                  <label for="cvUpload" class="cursor-pointer block">
+                    <span class="text-2xl block mb-1">📄</span>
+                    <span class="text-xs font-bold text-uii-blue block">Klik untuk memilih file CV (PDF)</span>
+                    <span class="text-[10px] text-slate-400 block mt-0.5">Maksimal ukuran 5 MB &bull; Format .pdf</span>
+                  </label>
+                  @if (uploadedFileName) {
+                    <div class="mt-2 text-xs font-bold text-emerald-700 bg-emerald-50 py-1 px-3 rounded-lg border border-emerald-200 inline-block">
+                      ✓ {{ uploadedFileName }} ({{ uploadedFileSize }})
+                    </div>
+                  }
+                </div>
+              </div>
+            </div>
+          } @else {
+            <!-- ================= SCR-REG-01: GENERAL EVENT FIELDS ================= -->
+            <div class="space-y-4 pt-2">
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Catatan Tambahan / Dietary (Opsional):</label>
+                <input 
+                  type="text" 
+                  [(ngModel)]="dietaryOrNotes"
+                  placeholder="Contoh: Vegetarian, alergi udang, butuh akses kursi roda..."
+                  class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-uii-blue"
+                />
+              </div>
+            </div>
+          }
+
+          <!-- Agreement Checkbox -->
+          <div class="pt-4 border-t border-slate-100">
+            <label class="flex items-start gap-2.5 cursor-pointer">
+              <input 
+                type="checkbox" 
+                [(ngModel)]="agreeTerms" 
+                class="mt-0.5 rounded text-uii-blue focus:ring-uii-blue w-4 h-4 cursor-pointer"
+              />
+              <span class="text-xs text-slate-600 leading-relaxed">
+                Saya menyatakan data diri di atas adalah sah, dan saya berkomitmen hadir tepat waktu di lokasi acara serta mematuhi norma kampus islami UII.
+              </span>
+            </label>
+          </div>
+
+          <!-- Submit Button -->
+          <div class="pt-2">
+            <button 
+              type="button" 
+              (click)="onSubmitRegistration()"
+              [disabled]="!agreeTerms || isSubmitting()"
+              class="w-full py-3 px-6 rounded-xl bg-uii-blue hover:bg-blue-900 disabled:bg-slate-300 text-white font-black text-xs transition duration-200 shadow-md flex items-center justify-center gap-2 cursor-pointer">
+              @if (isSubmitting()) {
+                <span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                <span>Menghubungkan ke Gateway Universitas...</span>
+              } @else if (isOprecEvent) {
+                <span>Kirim Berkas Pendaftaran Oprec &rarr;</span>
+              } @else {
+                <span>Kirim Pendaftaran & Dapatkan E-Tiket &rarr;</span>
+              }
+            </button>
+          </div>
+
+        </div>
+
+        <!-- Right: Event Summary Sidebar (4 cols on lg) -->
+        <div class="lg:col-span-4 bg-white rounded-3xl p-6 border border-slate-200/90 shadow-2xs space-y-4">
+          <div class="aspect-16/9 w-full bg-slate-900 rounded-2xl overflow-hidden relative">
+            <img 
+              [src]="event()?.title?.toLowerCase()?.includes('dies natalis') ? '/assets/images/dies-natalis-uii.jpg' : (event()?.bannerUrl || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=600&q=80')" 
+              [alt]="event()?.title" 
+              class="w-full h-full object-cover"
+            />
+            <div class="absolute bottom-2 left-2 px-2 py-0.5 rounded bg-black/60 backdrop-blur-xs text-[10px] font-bold text-amber-300">
+              +{{ event()?.skpiPoints }} SKPI
+            </div>
+          </div>
+
+          <div>
+            <span class="text-[10px] font-bold uppercase text-uii-blue tracking-wider block">
+              {{ event()?.categoryLabel }}
+            </span>
+            <h3 class="font-bold text-slate-900 text-base leading-snug mt-0.5">
+              {{ event()?.title }}
+            </h3>
+            <p class="text-xs text-slate-500 mt-1">Ormawa: {{ event()?.organizer }}</p>
+          </div>
+
+          <div class="space-y-2 text-xs text-slate-600 pt-3 border-t border-slate-100">
+            <div class="flex items-center gap-2">
+              <span>📅</span>
+              <span>{{ event()?.date }} &bull; {{ event()?.time }}</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span>📍</span>
+              <span>{{ event()?.room }} ({{ event()?.location }})</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span>👥</span>
+              <span>Sisa kuota: <strong>{{ event()?.quotaRemaining }}</strong> orang</span>
+            </div>
+          </div>
+
+          <div class="p-3 bg-emerald-50 rounded-xl text-[11px] text-emerald-900 border border-emerald-200">
+            ✓ Pendaftaran bebas biaya (Gratis) didukung oleh DPK Universitas Islam Indonesia.
+          </div>
+        </div>
+
+      </div>
+
+    }
+
+  </div>
+</div>

@@ -1,0 +1,484 @@
+<div class="min-h-screen bg-slate-50/70 pt-6 pb-28 sm:pb-12 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-6xl mx-auto space-y-6">
+
+    <!-- ================= TOP HEADER (SCR-MHS-01) ================= -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
+      <div>
+        <h1 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+          <span>Event Saya</span>
+        </h1>
+        <p class="text-xs sm:text-sm text-slate-500 mt-0.5">
+          Kelola tiket, presensi kehadiran, & brankas sertifikat kegiatan UII Anda
+        </p>
+      </div>
+
+      <div class="flex items-center gap-2.5">
+        <a routerLink="/catalog" 
+           class="w-full sm:w-auto px-4 py-2.5 rounded-xl border-2 border-uii-blue text-uii-blue hover:bg-uii-blue hover:text-white font-bold text-xs transition duration-200 flex items-center justify-center gap-2 shadow-xs cursor-pointer">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+          </svg>
+          <span>+ Cari Event Baru</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- ================= SEARCH BAR & SEGMENTED TABS ================= -->
+    <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-2xs space-y-4">
+      
+      <!-- Search Input -->
+      <div class="relative w-full">
+        <input 
+          type="text" 
+          [ngModel]="searchQuery()" 
+          (ngModelChange)="searchQuery.set($event)"
+          placeholder="Cari kegiatan, kategori, atau nomor tiket Anda..."
+          class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-uii-blue focus:bg-white transition"
+        />
+        <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+        </svg>
+      </div>
+
+      <!-- Segmented Tab Navigation -->
+      <div class="flex items-center gap-2 border-b border-slate-100 pb-1 overflow-x-auto">
+        <button 
+          type="button" 
+          (click)="activeTab.set('TERDAFTAR')"
+          [class.border-b-2]="activeTab() === 'TERDAFTAR'"
+          [class.border-uii-blue]="activeTab() === 'TERDAFTAR'"
+          [class.text-uii-blue]="activeTab() === 'TERDAFTAR'"
+          [class.font-black]="activeTab() === 'TERDAFTAR'"
+          [class.text-slate-500]="activeTab() !== 'TERDAFTAR'"
+          class="pb-2.5 px-3 text-xs sm:text-sm transition flex items-center gap-1.5 cursor-pointer shrink-0">
+          <span>Terdaftar</span>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold" 
+                [class.bg-blue-100]="activeTab() === 'TERDAFTAR'" 
+                [class.text-uii-blue]="activeTab() === 'TERDAFTAR'"
+                [class.bg-slate-100]="activeTab() !== 'TERDAFTAR'" 
+                [class.text-slate-600]="activeTab() !== 'TERDAFTAR'">
+            {{ terdaftarTickets().length }}
+          </span>
+        </button>
+
+        <button 
+          type="button" 
+          (click)="activeTab.set('RIWAYAT')"
+          [class.border-b-2]="activeTab() === 'RIWAYAT'"
+          [class.border-uii-blue]="activeTab() === 'RIWAYAT'"
+          [class.text-uii-blue]="activeTab() === 'RIWAYAT'"
+          [class.font-black]="activeTab() === 'RIWAYAT'"
+          [class.text-slate-500]="activeTab() !== 'RIWAYAT'"
+          class="pb-2.5 px-3 text-xs sm:text-sm transition flex items-center gap-1.5 cursor-pointer shrink-0">
+          <span>Riwayat Selesai</span>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold" 
+                [class.bg-blue-100]="activeTab() === 'RIWAYAT'" 
+                [class.text-uii-blue]="activeTab() === 'RIWAYAT'"
+                [class.bg-slate-100]="activeTab() !== 'RIWAYAT'" 
+                [class.text-slate-600]="activeTab() !== 'RIWAYAT'">
+            {{ riwayatCertificates().length }}
+          </span>
+        </button>
+
+        <button 
+          type="button" 
+          (click)="activeTab.set('OPREC')"
+          [class.border-b-2]="activeTab() === 'OPREC'"
+          [class.border-uii-blue]="activeTab() === 'OPREC'"
+          [class.text-uii-blue]="activeTab() === 'OPREC'"
+          [class.font-black]="activeTab() === 'OPREC'"
+          [class.text-slate-500]="activeTab() !== 'OPREC'"
+          class="pb-2.5 px-3 text-xs sm:text-sm transition flex items-center gap-1.5 cursor-pointer shrink-0">
+          <span>Oprec Kepanitiaan</span>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold" 
+                [class.bg-blue-100]="activeTab() === 'OPREC'" 
+                [class.text-uii-blue]="activeTab() === 'OPREC'"
+                [class.bg-slate-100]="activeTab() !== 'OPREC'" 
+                [class.text-slate-600]="activeTab() !== 'OPREC'">
+            {{ oprecRegistrations().length }}
+          </span>
+        </button>
+      </div>
+
+    </div>
+
+    <!-- ================= TAB 1: ACARA TERDAFTAR (E-TIKET AKTIF) ================= -->
+    @if (activeTab() === 'TERDAFTAR') {
+      <div class="space-y-4">
+        @if (terdaftarTickets().length === 0) {
+          <div class="bg-white rounded-3xl p-8 sm:p-12 text-center border border-slate-200/90 shadow-2xs">
+            <div class="w-16 h-16 rounded-2xl bg-blue-50 text-uii-blue flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
+              🎫
+            </div>
+            <h3 class="text-base font-bold text-slate-800">Belum Ada Event Terdaftar</h3>
+            <p class="text-xs text-slate-500 max-w-sm mx-auto mt-1 mb-6">
+              Anda belum memiliki tiket kegiatan aktif. Cari seminar, workshop, atau kompetisi kampus untuk mendapatkan poin SKPI.
+            </p>
+            <a routerLink="/catalog" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-uii-blue hover:bg-blue-900 text-white font-bold text-xs transition shadow-sm">
+              Jelajahi Katalog Event
+            </a>
+          </div>
+        } @else {
+          <div class="grid grid-cols-1 gap-4">
+            @for (ticket of terdaftarTickets(); track ticket.id) {
+              <div class="bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-5 hover:border-uii-blue/50 hover:shadow-md transition flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                
+                <div class="flex items-start gap-4">
+                  <!-- Date Badge Emblem -->
+                  <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-blue-50 border border-blue-100 flex flex-col items-center justify-center shrink-0 text-center p-1">
+                    <span class="text-[10px] font-black uppercase text-uii-blue tracking-wider">EVENT</span>
+                    <span class="text-base sm:text-lg font-black text-slate-900 leading-tight">UII</span>
+                    <span class="text-[9px] text-slate-500">2026</span>
+                  </div>
+
+                  <!-- Details -->
+                  <div class="space-y-1.5 min-w-0">
+                    <div class="flex flex-wrap items-center gap-2">
+                      <span class="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-blue-100 text-uii-blue">
+                        {{ ticket.eventCategory }}
+                      </span>
+                      @if (ticket.isCheckedIn) {
+                        <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                          ✓ Terverifikasi Hadir
+                        </span>
+                      } @else {
+                        <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          ● Terdaftar
+                        </span>
+                      }
+                    </div>
+
+                    <h3 class="font-bold text-slate-900 text-sm sm:text-base leading-snug">
+                      {{ ticket.eventTitle }}
+                    </h3>
+
+                    <div class="flex flex-wrap items-center gap-y-1 gap-x-4 text-xs text-slate-500">
+                      <div class="flex items-center gap-1">
+                        <span>📅</span>
+                        <span>{{ ticket.eventDate }} &bull; {{ ticket.eventTime }}</span>
+                      </div>
+                      <div class="flex items-center gap-1">
+                        <span>📍</span>
+                        <span>{{ ticket.eventRoom }} ({{ ticket.eventLocation }})</span>
+                      </div>
+                      <div class="font-mono text-uii-blue font-semibold text-[11px]">
+                        <span>Kode: {{ ticket.ticketCode }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Action Button -->
+                <div class="sm:shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100 flex items-center justify-end">
+                  <button 
+                    type="button" 
+                    (click)="openTicketQrModal(ticket)"
+                    class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-uii-blue hover:bg-blue-900 text-white font-bold text-xs transition flex items-center justify-center gap-2 shadow-xs cursor-pointer">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
+                    </svg>
+                    <span>Lihat E-Tiket</span>
+                  </button>
+                </div>
+
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    <!-- ================= TAB 2: RIWAYAT SELESAI (SERTIFIKAT SKPI) ================= -->
+    @if (activeTab() === 'RIWAYAT') {
+      <div class="space-y-4">
+        @if (riwayatCertificates().length === 0) {
+          <div class="bg-white rounded-3xl p-8 sm:p-12 text-center border border-slate-200/90 shadow-2xs">
+            <div class="w-16 h-16 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
+              📜
+            </div>
+            <h3 class="text-base font-bold text-slate-800">Belum Ada Riwayat Selesai</h3>
+            <p class="text-xs text-slate-500 max-w-sm mx-auto mt-1 mb-4">
+              Sertifikat resmi dan poin SKPI akan terbit otomatis di sini setelah panitia memindai kehadiran QR Anda di meja registrasi hari-H.
+            </p>
+          </div>
+        } @else {
+          <div class="grid grid-cols-1 gap-4">
+            @for (cert of riwayatCertificates(); track cert.id) {
+              <div class="bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-5 hover:border-emerald-500/50 hover:shadow-md transition flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                
+                <div class="flex items-start gap-4">
+                  <!-- Cert Emblem -->
+                  <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-emerald-50 border border-emerald-200 flex flex-col items-center justify-center shrink-0 text-center p-1">
+                    <span class="text-lg">📜</span>
+                    <span class="text-[9px] font-black uppercase text-emerald-800 tracking-wider">SKPI</span>
+                  </div>
+
+                  <!-- Details -->
+                  <div class="space-y-1.5 min-w-0">
+                    <div class="flex flex-wrap items-center gap-2">
+                      <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                        ✓ Hadir & Selesai
+                      </span>
+                      <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300">
+                        +{{ cert.skpiPoints }} Poin SKPI
+                      </span>
+                    </div>
+
+                    <h3 class="font-bold text-slate-900 text-sm sm:text-base leading-snug">
+                      {{ cert.eventTitle }}
+                    </h3>
+
+                    <div class="flex flex-wrap items-center gap-y-1 gap-x-4 text-xs text-slate-500">
+                      <div>Terbit: {{ cert.issueDate }}</div>
+                      <div class="font-mono text-slate-700">No. Seri: {{ cert.certificateNumber }}</div>
+                      <div class="text-emerald-700 font-semibold">Status: Sah Rektorat UII</div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Action Button -->
+                <div class="sm:shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100 flex items-center justify-end">
+                  <a routerLink="/certificates" 
+                     class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-uii-blue hover:bg-blue-900 text-white font-bold text-xs transition flex items-center justify-center gap-2 shadow-xs cursor-pointer">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    <span>Buka E-Sertifikat</span>
+                  </a>
+                </div>
+
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    <!-- ================= TAB 3: OPREC KEPANITIAAN ================= -->
+    @if (activeTab() === 'OPREC') {
+      <div class="space-y-4">
+        @if (oprecRegistrations().length === 0) {
+          <div class="bg-white rounded-3xl p-8 sm:p-12 text-center border border-slate-200/90 shadow-2xs">
+            <div class="w-16 h-16 rounded-2xl bg-purple-50 text-purple-700 flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
+              👥
+            </div>
+            <h3 class="text-base font-bold text-slate-800">Belum Ada Pendaftaran Oprec Panitia</h3>
+            <p class="text-xs text-slate-500 max-w-sm mx-auto mt-1 mb-4">
+              Daftar rekrutmen panitia LEM / UKM dapat dipantau status seleksi berkasnya (CV & KRS) secara transparan di sini.
+            </p>
+            <a routerLink="/catalog" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-uii-blue text-white font-bold text-xs hover:bg-blue-900 transition">
+              Lihat Lowongan Oprec
+            </a>
+          </div>
+        } @else {
+          <div class="grid grid-cols-1 gap-4">
+            @for (item of oprecRegistrations(); track item.id) {
+              <div class="bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-5 hover:border-purple-300 hover:shadow-md transition flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div class="space-y-1.5">
+                  <div class="flex items-center gap-2">
+                    <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-purple-100 text-purple-800 uppercase">
+                      Open Recruitment
+                    </span>
+                    @if (item.selectionStatus === 'ACCEPTED') {
+                      <span class="px-2.5 py-0.5 rounded-md text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300">
+                        ✓ DITERIMA PANITIA
+                      </span>
+                    } @else if (item.selectionStatus === 'REJECTED') {
+                      <span class="px-2.5 py-0.5 rounded-md text-[10px] font-bold bg-red-100 text-red-800 border border-red-200">
+                        Belum Lolos
+                      </span>
+                    } @else {
+                      <span class="px-2.5 py-0.5 rounded-md text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300">
+                        ⏳ Menunggu Seleksi Berkas
+                      </span>
+                    }
+                  </div>
+
+                  <h3 class="font-bold text-slate-900 text-base">{{ item.eventTitle }}</h3>
+                  <p class="text-xs text-slate-500">Pendaftar: {{ item.userName }} ({{ item.userNim }}) &bull; Waktu Daftar: {{ item.createdAt }}</p>
+                </div>
+
+                <div class="sm:shrink-0 text-right">
+                  <span class="text-xs text-slate-400">Diproses oleh Ormawa Penyelenggara</span>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    <!-- ================= CATALOG EVENTS PREVIEW SECTION ================= -->
+    <div class="mt-10 pt-8 border-t border-slate-200/80 space-y-4">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div>
+          <h2 class="text-lg sm:text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+            <span>🏛️</span>
+            <span>Katalog Kegiatan Mahasiswa UII</span>
+          </h2>
+          <p class="text-xs text-slate-500">
+            Daftar kegiatan kampus terverifikasi DPK UII yang dapat Anda ikuti untuk menambah poin SKPI
+          </p>
+        </div>
+        <a routerLink="/catalog" class="inline-flex items-center gap-1.5 text-xs font-bold text-uii-blue hover:text-blue-900 transition">
+          <span>Lihat Seluruh Katalog</span>
+          <span>&rarr;</span>
+        </a>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        @for (ev of allCatalogEvents(); track ev.id) {
+          <div class="bg-white rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-uii-blue/50 transition overflow-hidden flex flex-col justify-between group">
+            <div>
+              <div class="aspect-16/10 w-full bg-slate-900 relative overflow-hidden">
+                <img [src]="ev.title.toLowerCase().includes('dies natalis') ? '/assets/images/dies-natalis-uii.jpg' : ev.bannerUrl" [alt]="ev.title" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" />
+                <div class="absolute top-2 left-2">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider" 
+                        [class.bg-emerald-600]="ev.category === 'COMMITTEE_RECRUITMENT'"
+                        [class.text-white]="ev.category === 'COMMITTEE_RECRUITMENT'"
+                        [class.bg-blue-600]="ev.category === 'SEMINAR'"
+                        [class.bg-purple-600]="ev.category === 'WORKSHOP'"
+                        [class.bg-amber-500]="ev.category === 'LOMBA'"
+                        [class.text-slate-950]="ev.category === 'LOMBA'"
+                        [class.bg-pink-600]="ev.category === 'KONSER'">
+                    {{ ev.categoryLabel }}
+                  </span>
+                </div>
+                <div class="absolute top-2 right-2">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-black/60 backdrop-blur-xs text-amber-300">
+                    +{{ ev.skpiPoints }} SKPI
+                  </span>
+                </div>
+              </div>
+
+              <div class="p-3.5 space-y-1.5">
+                <div class="text-[10px] font-medium text-slate-400 truncate">{{ ev.organizer }}</div>
+                <h3 class="font-bold text-slate-900 text-xs sm:text-sm leading-snug line-clamp-2 group-hover:text-uii-blue transition">
+                  {{ ev.title }}
+                </h3>
+                <div class="text-[11px] text-slate-500 space-y-0.5 pt-1">
+                  <div class="flex items-center gap-1 truncate">
+                    <span>📅</span>
+                    <span>{{ ev.date }} &bull; {{ ev.time }}</span>
+                  </div>
+                  <div class="flex items-center gap-1 truncate">
+                    <span>📍</span>
+                    <span>{{ ev.room }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="p-3.5 pt-0">
+              @if (isUserRegisteredForEvent(ev.id)) {
+                <a routerLink="/tickets" class="w-full py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition flex items-center justify-center gap-1.5 shadow-xs">
+                  <span>✓ Terdaftar &bull; Buka Tiket</span>
+                </a>
+              } @else {
+                <a [routerLink]="['/register', ev.id]" class="w-full py-2 px-3 rounded-xl bg-uii-blue hover:bg-blue-900 text-white font-bold text-xs transition flex items-center justify-center gap-1.5 shadow-xs">
+                  <span>Daftar Sekarang &rarr;</span>
+                </a>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ================= MODAL: E-TIKET DIGITAL (SCR-MHS-02 MODAL) ================= -->
+@if (selectedTicketForQr()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-xs animate-in fade-in duration-200">
+    <div class="bg-white rounded-3xl max-w-sm sm:max-w-md w-full shadow-2xl relative border border-slate-100 overflow-hidden animate-in zoom-in-95 duration-200">
+      
+      <!-- Close Button -->
+      <button 
+        type="button" 
+        (click)="closeTicketQrModal()" 
+        class="absolute top-4 right-4 z-10 w-8 h-8 rounded-full bg-white/20 hover:bg-white/40 text-white flex items-center justify-center transition cursor-pointer">
+        ✕
+      </button>
+
+      <!-- Ticket Top (Deep Blue) -->
+      <div class="bg-gradient-to-r from-uii-blue to-blue-950 p-6 text-white relative">
+        <div class="flex items-center gap-2 mb-2">
+          <span class="px-2 py-0.5 rounded bg-white/20 text-[10px] font-bold tracking-wider uppercase">
+            {{ selectedTicketForQr()?.eventCategory }}
+          </span>
+          @if (selectedTicketForQr()?.isCheckedIn) {
+            <span class="px-2 py-0.5 rounded bg-emerald-400 text-slate-950 text-[10px] font-black uppercase">
+              ✓ SUDAH CHECK-IN
+            </span>
+          } @else {
+            <span class="px-2 py-0.5 rounded bg-amber-400 text-slate-950 text-[10px] font-black uppercase">
+              SIAP HADIR HARI-H
+            </span>
+          }
+        </div>
+
+        <h3 class="text-lg font-black leading-snug text-white">
+          {{ selectedTicketForQr()?.eventTitle }}
+        </h3>
+        <p class="text-xs text-blue-200 mt-1">
+          {{ selectedTicketForQr()?.userName }} &bull; NIM {{ selectedTicketForQr()?.userNim }}
+        </p>
+      </div>
+
+      <!-- Ticket Perforation Cutout effect -->
+      <div class="relative bg-white flex items-center justify-between px-3 -my-3 z-10">
+        <div class="w-6 h-6 rounded-full bg-slate-950/75 -ml-6"></div>
+        <div class="flex-1 border-b-2 border-dashed border-slate-200 mx-2"></div>
+        <div class="w-6 h-6 rounded-full bg-slate-950/75 -mr-6"></div>
+      </div>
+
+      <!-- Ticket Body with High-Contrast QR Code -->
+      <div class="p-6 bg-white space-y-4 text-center">
+        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 inline-block shadow-inner mx-auto">
+          @if (ticketQrDataUrl()) {
+            <img [src]="ticketQrDataUrl()" alt="QR Code E-Tiket" class="w-52 h-52 mx-auto rounded-lg" />
+          }
+        </div>
+
+        <div>
+          <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">KODE E-TIKET DIGITAL</div>
+          <div class="text-base font-mono font-black text-uii-blue tracking-wider">{{ selectedTicketForQr()?.ticketCode }}</div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2 p-3 bg-slate-50 rounded-xl text-left text-xs text-slate-600">
+          <div>
+            <div class="text-[10px] font-bold text-slate-400 uppercase">Jadwal:</div>
+            <div class="font-bold text-slate-800">{{ selectedTicketForQr()?.eventDate }}</div>
+            <div class="text-[11px]">{{ selectedTicketForQr()?.eventTime }}</div>
+          </div>
+          <div>
+            <div class="text-[10px] font-bold text-slate-400 uppercase">Lokasi:</div>
+            <div class="font-bold text-slate-800 truncate">{{ selectedTicketForQr()?.eventRoom }}</div>
+            <div class="text-[11px] truncate">{{ selectedTicketForQr()?.eventLocation }}</div>
+          </div>
+        </div>
+
+        <p class="text-[11px] text-slate-500 italic">
+          Tunjukkan kode QR ini kepada panitia di pintu masuk hari-H acara untuk presensi otomatis dan klaim poin SKPI.
+        </p>
+
+        <div class="flex gap-2">
+          <a routerLink="/tickets" 
+             (click)="closeTicketQrModal()"
+             class="flex-1 py-2.5 px-3 rounded-xl border border-uii-blue text-uii-blue font-bold text-xs hover:bg-blue-50 transition text-center">
+            Kelola di Halaman E-Tiket
+          </a>
+          <button 
+            type="button" 
+            (click)="closeTicketQrModal()"
+            class="flex-1 py-2.5 px-3 rounded-xl bg-uii-blue text-white font-bold text-xs hover:bg-blue-900 transition">
+            Tutup
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+}
