@@ -38,6 +38,15 @@ export class ScannerComponent implements OnInit, OnDestroy {
   audioService = inject(AudioService);
   authService = inject(AuthService);
 
+  // Active event being scanned (defaults to NITC evt-004 or query param)
+  currentEventId = signal<string>('evt-004');
+  currentEvent = computed(() => {
+    const id = this.currentEventId();
+    const list = this.eventService.events();
+    const found = list.find(e => e.id === id);
+    return found || list[0] || null;
+  });
+
   // Sound configuration
   soundActive = signal<boolean>(true);
 
@@ -53,7 +62,7 @@ export class ScannerComponent implements OnInit, OnDestroy {
   // Real-time counter metrics (SCR-PAN-05)
   hadirCount = signal<number>(0);
   totalCount = signal<number>(0);
-  unattendedCount = computed(() => this.totalCount() - this.hadirCount());
+  unattendedCount = computed(() => Math.max(0, this.totalCount() - this.hadirCount()));
 
   // Online / Offline mode
   isOnline = signal<boolean>(true);
@@ -75,14 +84,8 @@ export class ScannerComponent implements OnInit, OnDestroy {
 
   // Presensi Manual state
   showManualSearch = signal<boolean>(false);
-  manualSearchInput = signal<string>('budi santos');
-  manualParticipants = signal<ManualParticipant[]>([
-    { nim: '21523002', name: 'Budi Santoso', prodi: 'Teknik Industri', isCheckedIn: false },
-    { nim: '21523114', name: 'Budi Santoso', prodi: 'Teknik Sipil', isCheckedIn: false },
-    { nim: '21511045', name: 'Aulia Rahmawati', prodi: 'Manajemen', isCheckedIn: false },
-    { nim: '21521012', name: 'Farah Azzahra', prodi: 'Teknik Kimia', isCheckedIn: false },
-    { nim: '21512031', name: 'Intan Permatasari', prodi: 'Akuntansi', isCheckedIn: false }
-  ]);
+  manualSearchInput = signal<string>('');
+  manualParticipants = signal<ManualParticipant[]>([]);
 
   filteredManualParticipants = computed(() => {
     const q = this.manualSearchInput().trim().toLowerCase();
@@ -95,8 +98,47 @@ export class ScannerComponent implements OnInit, OnDestroy {
   autoDismissTimeout: any = null;
 
   ngOnInit(): void {
+    this.route.queryParams.subscribe(params => {
+      const id = params['eventId'] || this.route.snapshot.paramMap.get('id');
+      if (id) {
+        this.currentEventId.set(id);
+      }
+      this.syncEventMetrics();
+    });
+
     // Attempt auto-start camera
     this.startCamera();
+  }
+
+  syncEventMetrics(): void {
+    const evId = this.currentEventId();
+    const tickets = this.eventService.tickets().filter(t => t.eventId === evId);
+    const regs = this.eventService.registrations().filter(r => r.eventId === evId && r.status !== 'CANCELLED');
+
+    this.totalCount.set(Math.max(tickets.length, regs.length));
+    const attended = tickets.filter(t => t.isCheckedIn).length || regs.filter(r => r.status === 'ATTENDED').length;
+    this.hadirCount.set(attended);
+
+    if (regs.length > 0) {
+      const mapped: ManualParticipant[] = regs.map(r => {
+        const t = tickets.find(tick => tick.registrationId === r.id);
+        return {
+          nim: r.userNim,
+          name: r.userName,
+          prodi: r.userStudyProgram || 'Teknik Mesin',
+          isCheckedIn: r.status === 'ATTENDED' || !!t?.isCheckedIn
+        };
+      });
+      this.manualParticipants.set(mapped);
+      if (mapped.length > 0) {
+        this.manualSearchInput.set(mapped[0].name.toLowerCase());
+      }
+    } else {
+      this.manualParticipants.set([
+        { nim: '23525055', name: 'Muhammad Raynor Athaillah', prodi: 'Teknik Mesin', isCheckedIn: false }
+      ]);
+      this.manualSearchInput.set('raynor');
+    }
   }
 
   ngOnDestroy(): void {
@@ -225,6 +267,8 @@ export class ScannerComponent implements OnInit, OnDestroy {
         status: 'HADIR'
       });
 
+      this.syncEventMetrics();
+
       if (this.soundActive()) {
         this.audioService.playSuccessBeep();
       }
@@ -349,6 +393,22 @@ export class ScannerComponent implements OnInit, OnDestroy {
     p.isCheckedIn = true;
     this.hadirCount.update(c => c + 1);
 
+    // Also update ticket & registration in eventService if matching
+    const matchTicket = this.eventService.tickets().find(t => t.userNim === p.nim && t.eventId === this.currentEventId());
+    if (matchTicket && !matchTicket.isCheckedIn) {
+      const nowFormatted = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB';
+      matchTicket.isCheckedIn = true;
+      matchTicket.checkedInAt = nowFormatted;
+      matchTicket.checkedInBy = this.authService.currentUser().name;
+      this.eventService.registrations.update(regs => 
+        regs.map(r => r.id === matchTicket.registrationId ? { ...r, status: 'ATTENDED', attendedAt: new Date().toISOString() } : r)
+      );
+      this.eventService.tickets.update(ticks => 
+        ticks.map(t => t.id === matchTicket.id ? { ...matchTicket } : t)
+      );
+      this.eventService.saveToStorage();
+    }
+
     const nowStr = new Date().toTimeString().substring(0, 8);
     this.scanResultState.set('VALID');
     this.scanResultData.set({
@@ -374,6 +434,11 @@ export class ScannerComponent implements OnInit, OnDestroy {
   }
 
   goBack(): void {
-    this.router.navigate(['/dashboard/panitia']);
+    const evId = this.currentEventId();
+    if (evId) {
+      this.router.navigate(['/dashboard/panitia'], { queryParams: { eventId: evId } });
+    } else {
+      this.router.navigate(['/dashboard/panitia']);
+    }
   }
 }

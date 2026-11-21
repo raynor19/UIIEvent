@@ -12,10 +12,10 @@
 
       <div>
         <div class="text-[11px] text-slate-400 font-medium">
-          Web Scanner Meja Registrasi · LEM FTI UII
+          Web Scanner Meja Registrasi · {{ currentEvent()?.organizer || 'Panitia Acara UII' }}
         </div>
         <h1 class="text-base sm:text-lg font-bold text-white tracking-tight">
-          Seminar Nasional AI &amp; Karir Teknologi 2026
+          {{ currentEvent()?.title || 'Scanner Meja Registrasi' }}
         </h1>
       </div>
     </div>

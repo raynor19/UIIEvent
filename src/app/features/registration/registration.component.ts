@@ -2,6 +2,7 @@ import { Component, inject, OnInit, signal, ChangeDetectorRef } from '@angular/c
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import * as QRCode from 'qrcode';
 import { EventService, RegistrationResult } from '../../core/services/event.service';
 import { AuthService, getUiiProdiFromNim } from '../../core/services/auth.service';
 import { EventItem } from '../../core/models/event.model';
@@ -38,6 +39,7 @@ export class RegistrationComponent implements OnInit {
   registrationSuccess = signal<boolean>(false);
   successMessage = '';
   createdTicket = signal<TicketItem | null>(null);
+  qrDataUrl = signal<string>('');
 
   divisions = [
     'Divisi Acara & Kreatif',
@@ -157,7 +159,18 @@ export class RegistrationComponent implements OnInit {
           t.eventId === evt.id
         );
         if (userTickets.length > 0) {
-          this.createdTicket.set(userTickets[userTickets.length - 1]);
+          const t = userTickets[userTickets.length - 1];
+          this.createdTicket.set(t);
+          if (t && t.qrPayload) {
+            QRCode.toDataURL(t.qrPayload, {
+              margin: 1,
+              width: 240,
+              color: { dark: '#002B66', light: '#FFFFFF' }
+            }).then(url => {
+              this.qrDataUrl.set(url);
+              this.cdr.detectChanges();
+            }).catch(err => console.error('Failed to generate registration QR code', err));
+          }
         }
       }
       this.cdr.detectChanges();

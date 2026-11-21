@@ -162,17 +162,6 @@ export class EventService {
         currentTickets = currentTickets.filter(t => !t.userName?.toLowerCase().includes('ahmad fikri') && t.userId !== 'usr-rian-001');
         currentRegs = currentRegs.filter(r => !r.userName?.toLowerCase().includes('ahmad fikri') && r.userId !== 'usr-rian-001');
 
-        // Reconcile Raynor's tickets: keep Porsematik HMIF UII 2026 as the active ticket,
-        // and remove temporary automated verification tickets (e.g. evt-001 or evt-002) for Raynor
-        currentTickets = currentTickets.filter(t => 
-          (t.eventId === 'evt-008' && (t.userId === 'usr-raynor-001' || t.userNim === '23525055')) ||
-          (t.userId !== 'usr-raynor-001' && t.userNim !== '23525055')
-        );
-        currentRegs = currentRegs.filter(r => 
-          (r.eventId === 'evt-008' && (r.userId === 'usr-raynor-001' || r.userNim === '23525055')) ||
-          (r.userId !== 'usr-raynor-001' && r.userNim !== '23525055')
-        );
-
         if (!hasPorsematikTicket) {
           currentTickets.unshift(porsematikTicket);
         }
@@ -197,6 +186,68 @@ export class EventService {
             status: 'REGISTERED',
             createdAt: '2026-11-20T14:15:00.000Z'
           });
+        }
+
+        // Check if National Islamic Technology Competition (evt-004) ticket is present, if not present restore it
+        const hasNitcTicket = currentTickets.some(t => 
+          t.eventId === 'evt-004' || t.eventTitle?.toLowerCase().includes('national islamic')
+        );
+
+        const nitcTicketCode = 'UII-TIK-2026-7721';
+        const nitcHash = this.generateHashSignature('23525055', 'evt-004', nitcTicketCode);
+        const nitcQrPayload = JSON.stringify({
+          ticketCode: nitcTicketCode,
+          nim: '23525055',
+          name: 'Muhammad Raynor Athaillah',
+          eventId: 'evt-004',
+          hash: nitcHash,
+          timestamp: 1763640000000
+        });
+
+        const nitcTicket: TicketItem = {
+          id: 'tck-nitc-raynor-001',
+          registrationId: 'reg-nitc-raynor-001',
+          ticketCode: nitcTicketCode,
+          eventId: 'evt-004',
+          eventTitle: 'National Islamic Technology Competition (NITC 2026): Sharia FinTech & GovTech',
+          eventCategory: 'LOMBA',
+          eventDate: '2026-12-10',
+          eventTime: '08:00 - 16:00 WIB',
+          eventLocation: 'Auditorium FMIPA UII, Kampus Terpadu',
+          eventRoom: 'Hall K.H. Mas Mansyur Lt. 3',
+          userId: 'usr-raynor-001',
+          userName: 'Muhammad Raynor Athaillah',
+          userNim: '23525055',
+          userStudyProgram: 'Teknik Mesin - Fakultas Teknologi Industri',
+          qrPayload: nitcQrPayload,
+          hashSignature: nitcHash,
+          timestampIssued: '21 November 2026, 09:30 WIB',
+          isCheckedIn: false
+        };
+
+        const hasNitcReg = currentRegs.some(r => 
+          r.eventId === 'evt-004' || r.eventTitle?.toLowerCase().includes('national islamic')
+        );
+        if (!hasNitcReg) {
+          currentRegs.push({
+            id: 'reg-nitc-raynor-001',
+            userId: 'usr-raynor-001',
+            userNim: '23525055',
+            userName: 'Muhammad Raynor Athaillah',
+            userEmail: '23525055@students.uii.ac.id',
+            userPhone: '081234567890',
+            userFaculty: 'Fakultas Teknologi Industri',
+            userStudyProgram: 'Teknik Mesin',
+            eventId: 'evt-004',
+            eventTitle: 'National Islamic Technology Competition (NITC 2026): Sharia FinTech & GovTech',
+            eventDate: '2026-12-10',
+            eventLocation: 'Hall K.H. Mas Mansyur Lt. 3, Auditorium FMIPA UII, Kampus Terpadu',
+            status: 'REGISTERED',
+            createdAt: '2026-11-21T09:30:00.000Z'
+          });
+        }
+        if (!hasNitcTicket) {
+          currentTickets.push(nitcTicket);
         }
 
         // Sanitize tickets data to guarantee correct department mapping
@@ -540,6 +591,38 @@ export class EventService {
       isCheckedIn: false
     };
 
+    const nitcTicketCode = 'UII-TIK-2026-7721';
+    const nitcHash = this.generateHashSignature('23525055', 'evt-004', nitcTicketCode);
+    const nitcQrPayload = JSON.stringify({
+      ticketCode: nitcTicketCode,
+      nim: '23525055',
+      name: 'Muhammad Raynor Athaillah',
+      eventId: 'evt-004',
+      hash: nitcHash,
+      timestamp: 1763640000000
+    });
+
+    const nitcTicket: TicketItem = {
+      id: 'tck-nitc-raynor-001',
+      registrationId: 'reg-nitc-raynor-001',
+      ticketCode: nitcTicketCode,
+      eventId: 'evt-004',
+      eventTitle: 'National Islamic Technology Competition (NITC 2026): Sharia FinTech & GovTech',
+      eventCategory: 'LOMBA',
+      eventDate: '2026-12-10',
+      eventTime: '08:00 - 16:00 WIB',
+      eventLocation: 'Auditorium FMIPA UII, Kampus Terpadu',
+      eventRoom: 'Hall K.H. Mas Mansyur Lt. 3',
+      userId: 'usr-raynor-001',
+      userName: 'Muhammad Raynor Athaillah',
+      userNim: '23525055',
+      userStudyProgram: 'Teknik Mesin - Fakultas Teknologi Industri',
+      qrPayload: nitcQrPayload,
+      hashSignature: nitcHash,
+      timestampIssued: '21 November 2026, 09:30 WIB',
+      isCheckedIn: false
+    };
+
     const seedRegistrations: RegistrationItem[] = [
       {
         id: 'reg-porsematik-raynor-001',
@@ -556,10 +639,27 @@ export class EventService {
         eventLocation: 'GOR Utama Kampus Terpadu UII, GOR Ki Bagoes Hadikoesoemo & Hall FTI UII',
         status: 'REGISTERED',
         createdAt: '2026-11-20T14:15:00.000Z'
+      },
+      {
+        id: 'reg-nitc-raynor-001',
+        userId: 'usr-raynor-001',
+        userNim: '23525055',
+        userName: 'Muhammad Raynor Athaillah',
+        userEmail: '23525055@students.uii.ac.id',
+        userPhone: '081234567890',
+        userFaculty: 'Fakultas Teknologi Industri',
+        userStudyProgram: 'Teknik Mesin',
+        eventId: 'evt-004',
+        eventTitle: 'National Islamic Technology Competition (NITC 2026): Sharia FinTech & GovTech',
+        eventDate: '2026-12-10',
+        eventLocation: 'Hall K.H. Mas Mansyur Lt. 3, Auditorium FMIPA UII, Kampus Terpadu',
+        status: 'REGISTERED',
+        createdAt: '2026-11-21T09:30:00.000Z'
       }
     ];
     const seedTickets: TicketItem[] = [
-      porsematikTicket
+      porsematikTicket,
+      nitcTicket
     ];
     const attendedRegId = 'reg-rian-attended-099';
     const attendedTicketId = 'tck-rian-attended-099';
@@ -638,7 +738,7 @@ export class EventService {
     this.saveToStorage();
   }
 
-  private saveToStorage(): void {
+  saveToStorage(): void {
     if (typeof localStorage === 'undefined') return;
     localStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(this.events()));
     localStorage.setItem(STORAGE_KEYS.REGISTRATIONS, JSON.stringify(this.registrations()));

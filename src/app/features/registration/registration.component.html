@@ -29,14 +29,40 @@
         </div>
 
         <!-- Ticket Summary Preview Card (SCR-REG-03) -->
-        <div class="p-5 bg-slate-50 border border-slate-200 rounded-2xl text-left space-y-3">
+        <div class="p-5 bg-slate-50 border border-slate-200 rounded-2xl text-left space-y-4">
           <div class="flex items-center justify-between">
             <span class="text-[10px] font-bold uppercase text-slate-400 tracking-wider">KODE E-TIKET DIGITAL</span>
             <span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-bold">TERDAFTAR</span>
           </div>
 
           <div class="font-mono text-xl font-black text-uii-blue">
-            {{ createdTicket()?.ticketCode || 'TKT-UII-AI-891' }}
+            {{ createdTicket()?.ticketCode || 'UII-TIK-2026-7721' }}
+          </div>
+
+          <!-- Barcode / QR Code Preview -->
+          <div class="bg-white p-4 rounded-2xl border-2 border-dashed border-slate-300 text-center shadow-2xs">
+            @if (qrDataUrl()) {
+              <img [src]="qrDataUrl()" alt="Barcode QR E-Tiket" class="w-44 h-44 sm:w-48 sm:h-48 object-contain mx-auto" />
+            } @else {
+              <div class="w-44 h-44 flex items-center justify-center mx-auto text-slate-400 text-xs">Memuat Barcode E-Tiket...</div>
+            }
+            <div class="text-[10px] font-mono font-bold text-slate-500 mt-2">KODE: {{ createdTicket()?.ticketCode || 'UII-TIK-2026-7721' }}</div>
+          </div>
+
+          <!-- Peserta Info Box -->
+          <div class="p-3.5 bg-white rounded-xl border border-slate-200 text-xs space-y-1.5">
+            <div class="flex items-center justify-between">
+              <span class="text-slate-500">Nama Terdaftar:</span>
+              <span class="font-bold text-slate-900">{{ createdTicket()?.userName || authService.currentUser().name }}</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-slate-500">NIM Mahasiswa:</span>
+              <span class="font-bold text-slate-900 font-mono">{{ createdTicket()?.userNim || authService.currentUser().nim }}</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-slate-500">Program Studi:</span>
+              <span class="font-medium text-slate-700">{{ createdTicket()?.userStudyProgram || authService.currentUser().studyProgram }}</span>
+            </div>
           </div>
 
           <div class="pt-2 border-t border-slate-200 space-y-1 text-xs text-slate-600">
@@ -47,7 +73,7 @@
 
           <div class="p-3 bg-blue-50 border border-blue-200 rounded-xl text-[11px] text-blue-900 flex items-center gap-2">
             <span>📱</span>
-            <span>Tunjukkan E-Tiket pada ponsel Anda saat tiba di lokasi pintu masuk acara.</span>
+            <span>Tunjukkan Barcode QR E-Tiket ini di ponsel Anda kepada panitia di meja registrasi pintu masuk.</span>
           </div>
         </div>
 

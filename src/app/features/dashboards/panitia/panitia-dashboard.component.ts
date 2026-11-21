@@ -507,6 +507,19 @@ export class PanitiaDashboardComponent implements OnInit {
 
     // Sync all events from eventService (including newly created & approved events like Porsematik)
     this.syncEventsFromService();
+
+    // Check query params (e.g. returning from /scanner?eventId=...)
+    this.route.queryParams.subscribe(params => {
+      if (params['eventId']) {
+        this.selectedRekapEventId.set(params['eventId']);
+        const ev = this.events().find(e => e.id === params['eventId']);
+        if (ev?.type === 'Oprec') {
+          this.activeView.set('SELEKSI_OPREC');
+        } else {
+          this.activeView.set('REKAP_PESERTA');
+        }
+      }
+    });
   }
 
   syncEventsFromService(allSvcEvents = this.eventService.events()): void {
