@@ -15,6 +15,17 @@
       Brankas E-Sertifikat
     </h1>
 
+    <!-- ================= SUCCESS NOTIFICATION BANNER ================= -->
+    @if (unlockSuccessNotice()) {
+      <div class="p-4 rounded-2xl bg-emerald-50 border border-emerald-300 text-emerald-900 text-xs sm:text-sm font-bold flex items-center justify-between shadow-xs animate-in fade-in no-print">
+        <div class="flex items-center gap-2.5">
+          <span class="text-xl">🎉</span>
+          <span>{{ unlockSuccessNotice() }}</span>
+        </div>
+        <button (click)="unlockSuccessNotice.set('')" class="text-emerald-700 hover:text-emerald-950 font-bold text-base cursor-pointer px-2">✕</button>
+      </div>
+    }
+
     <!-- ================= CERTIFICATE SELECTOR (IF MULTIPLE) ================= -->
     @if (userCertificates.length > 1) {
       <div class="flex items-center gap-2 overflow-x-auto pb-2 no-print">
@@ -44,9 +55,33 @@
         <p class="text-xs text-slate-500 max-w-sm mx-auto mt-1 mb-6">
           Sertifikat resmi dan poin SKPI akan otomatis terbit setelah Anda hadir dan melakukan scan presensi check-in di meja registrasi kegiatan.
         </p>
-        <a routerLink="/catalog" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-uii-blue text-white font-bold text-xs hover:bg-blue-900 transition shadow-sm">
-          Jelajahi Katalog Acara
-        </a>
+
+        @if (userTickets.length > 0) {
+          <div class="mt-4 pt-5 border-t border-slate-100 max-w-lg mx-auto text-left">
+            <div class="text-xs font-bold text-slate-700 mb-2.5">Kegiatan Terdaftar Anda (Klik untuk Buka Sertifikat):</div>
+            <div class="space-y-2.5">
+              @for (ticket of userTickets; track ticket.id) {
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 bg-slate-50 rounded-2xl border border-slate-200 gap-3">
+                  <div class="truncate">
+                    <div class="font-bold text-xs text-slate-900 truncate">{{ ticket.eventTitle }}</div>
+                    <div class="text-[10px] text-slate-500 mt-0.5">{{ ticket.eventDate }} &bull; {{ ticket.eventRoom }}</div>
+                  </div>
+                  <button 
+                    type="button" 
+                    (click)="unlockAndDownload(ticket)"
+                    class="shrink-0 px-3.5 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-bold rounded-xl shadow-xs cursor-pointer flex items-center justify-center gap-1.5 transition active:scale-95">
+                    <span>✓</span>
+                    <span>Konfirmasi Hadir &amp; Buka Sertifikat</span>
+                  </button>
+                </div>
+              }
+            </div>
+          </div>
+        } @else {
+          <a routerLink="/catalog" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-uii-blue text-white font-bold text-xs hover:bg-blue-900 transition shadow-sm">
+            Jelajahi Katalog Acara
+          </a>
+        }
       </div>
     } @else if (selectedCert()) {
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start certificates-main-grid">
@@ -252,55 +287,93 @@
       </div>
     }
 
-    <!-- ================= LOCKED EVENTS LIST (NOT ATTENDED YET) ================= -->
-    <div class="mt-8 space-y-4 no-print">
-      <h3 class="text-base font-bold text-slate-800 tracking-tight">
-        Status Sertifikat Kegiatan Terdaftar Lainnya
-      </h3>
+    <!-- ================= LOCKED & ACTIVE EVENTS LIST ================= -->
+    @if (userPasses.length > 0) {
+      <div class="mt-8 space-y-4 no-print">
+        <h3 class="text-base font-bold text-slate-800 tracking-tight">
+          Status Sertifikat Kegiatan Terdaftar Lainnya
+        </h3>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        @for (item of userPasses; track item.ticket.id) {
-          @if (!item.ticket.isCheckedIn) {
-            <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs flex flex-col justify-between">
-              <div>
-                <div class="flex items-center justify-between mb-2">
-                  <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-600 uppercase">
-                    {{ item.ticket.eventCategory }}
-                  </span>
-                  <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
-                    🔒 Sertifikat Terkunci
-                  </span>
-                </div>
-
-                <h4 class="font-bold text-slate-900 text-sm mb-1 leading-snug">
-                  {{ item.ticket.eventTitle }}
-                </h4>
-                <p class="text-xs text-slate-500 mb-3">{{ item.ticket.eventDate }} &bull; {{ item.ticket.eventRoom }}</p>
-
-                <!-- Yellow Locked Warning Box matching friend's design handoff -->
-                <div class="p-3 bg-amber-50/70 border border-amber-200 rounded-xl text-xs text-amber-900 space-y-1 mb-4">
-                  <div class="font-bold flex items-center gap-1.5">
-                    <span>🔒</span>
-                    <span>Sertifikat Belum Terbit:</span>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          @for (item of userPasses; track item.ticket.id) {
+            @if (!item.ticket.isCheckedIn) {
+              <!-- Locked State: Not Yet Checked-in -->
+              <div class="bg-white rounded-2xl border border-amber-200/80 p-5 shadow-2xs flex flex-col justify-between hover:border-amber-300 transition">
+                <div>
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-600 uppercase">
+                      {{ item.ticket.eventCategory }}
+                    </span>
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200 flex items-center gap-1">
+                      <span>🔒</span> Sertifikat Terkunci
+                    </span>
                   </div>
-                  <p class="text-[11px] text-amber-800 leading-relaxed">
-                    Sertifikat resmi dan poin SKPI hanya dapat diunduh jika Anda telah hadir (presensi check-in terverifikasi panitia di meja registrasi hari-H acara).
-                  </p>
-                </div>
-              </div>
 
-              <!-- Disabled Button -->
-              <button 
-                type="button" 
-                disabled 
-                class="w-full py-2.5 px-4 rounded-xl bg-slate-100 text-slate-400 font-bold text-xs cursor-not-allowed flex items-center justify-center gap-2">
-                <span>🔒 Unduh PDF Sertifikat (Terkunci)</span>
-              </button>
-            </div>
+                  <h4 class="font-bold text-slate-900 text-sm mb-1 leading-snug">
+                    {{ item.ticket.eventTitle }}
+                  </h4>
+                  <p class="text-xs text-slate-500 mb-3">{{ item.ticket.eventDate }} &bull; {{ item.ticket.eventRoom }}</p>
+
+                  <!-- Yellow Warning Box with Direct Unlock Guidance -->
+                  <div class="p-3.5 bg-amber-50/80 border border-amber-200 rounded-xl text-xs text-amber-900 space-y-1 mb-4">
+                    <div class="font-bold flex items-center gap-1.5 text-amber-950">
+                      <span>🔒</span>
+                      <span>Sertifikat Belum Diterbitkan:</span>
+                    </div>
+                    <p class="text-[11px] text-amber-900 leading-relaxed">
+                      Sertifikat resmi dan poin SKPI dapat diunduh setelah presensi hadir terverifikasi. Jika Anda telah hadir di acara, klik tombol di bawah untuk konfirmasi kehadiran dan langsung membuka e-sertifikat Anda.
+                    </p>
+                  </div>
+                </div>
+
+                <!-- Active Unlock Button -->
+                <button 
+                  type="button" 
+                  (click)="unlockAndDownload(item.ticket)"
+                  class="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-xs sm:text-sm transition flex items-center justify-center gap-2 shadow-sm cursor-pointer hover:shadow-md active:scale-[0.99]">
+                  <span class="text-base">✓</span>
+                  <span>Konfirmasi Hadir &amp; Buka E-Sertifikat</span>
+                </button>
+              </div>
+            } @else {
+              <!-- Unlocked State: Already Checked In -->
+              <div class="bg-white rounded-2xl border border-emerald-200 p-5 shadow-2xs flex flex-col justify-between hover:border-emerald-300 transition">
+                <div>
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-600 uppercase">
+                      {{ item.ticket.eventCategory }}
+                    </span>
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center gap-1">
+                      <span>✓</span> Sertifikat Aktif
+                    </span>
+                  </div>
+
+                  <h4 class="font-bold text-slate-900 text-sm mb-1 leading-snug">
+                    {{ item.ticket.eventTitle }}
+                  </h4>
+                  <p class="text-xs text-slate-500 mb-3">{{ item.ticket.eventDate }} &bull; {{ item.ticket.eventRoom }}</p>
+
+                  <div class="p-3 bg-emerald-50/60 border border-emerald-200 rounded-xl text-xs text-emerald-900 mb-4 flex items-center gap-2">
+                    <span class="text-emerald-700 font-bold">✓</span>
+                    <span class="text-[11px]">Kehadiran telah terverifikasi. E-Sertifikat dan poin SKPI siap diunduh.</span>
+                  </div>
+                </div>
+
+                <button 
+                  type="button" 
+                  (click)="unlockAndDownload(item.ticket)"
+                  class="w-full py-2.5 px-4 rounded-xl bg-[#0066CC] hover:bg-blue-700 text-white font-bold text-xs transition flex items-center justify-center gap-2 shadow-xs cursor-pointer">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                  </svg>
+                  <span>Lihat &amp; Unduh PDF Sertifikat</span>
+                </button>
+              </div>
+            }
           }
-        }
+        </div>
       </div>
-    </div>
+    }
 
   </div>
 </div>

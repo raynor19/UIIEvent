@@ -419,6 +419,7 @@ export class ScannerComponent implements OnInit, OnDestroy {
       this.eventService.tickets.update(ticks => 
         ticks.map(t => t.id === matchTicket.id ? { ...matchTicket } : t)
       );
+      this.eventService.issueCertificateForTicket(matchTicket);
       this.eventService.saveToStorage();
     }
 

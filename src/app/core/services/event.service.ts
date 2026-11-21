@@ -608,18 +608,61 @@ export class EventService {
               userName: 'Muhammad Raynor Athaillah',
               userNim: '23525055',
               userStudyProgram: 'Teknik Mesin',
-              userFaculty: 'Fakultas Teknologi Industri'
+              userFaculty: 'Fakultas Teknologi Industri',
+              isUnlocked: true
             };
           } else if (c.userNim) {
             const info = getUiiProdiFromNim(c.userNim);
             return {
               ...c,
               userStudyProgram: info.studyProgram,
-              userFaculty: info.faculty
+              userFaculty: info.faculty,
+              isUnlocked: true
             };
           }
-          return c;
+          return { ...c, isUnlocked: true };
         });
+
+        // Ensure any attended ticket has a valid active certificate
+        for (const t of currentTickets) {
+          if (t.isCheckedIn && !certList.some(c => c.ticketId === t.id || (c.eventId === t.eventId && (c.userNim === t.userNim || c.userId === t.userId)))) {
+            const prodiInfo = getUiiProdiFromNim(t.userNim);
+            const facShort = prodiInfo.faculty.includes('Teknologi Industri') ? 'FTI' :
+                             prodiInfo.faculty.includes('Sipil') ? 'FTSP' :
+                             prodiInfo.faculty.includes('Matematika') ? 'FMIPA' :
+                             prodiInfo.faculty.includes('Ekonomika') ? 'FBE' :
+                             prodiInfo.faculty.includes('Hukum') ? 'FH' :
+                             prodiInfo.faculty.includes('Agama') ? 'FIAI' :
+                             prodiInfo.faculty.includes('Psikologi') ? 'FPSB' :
+                             prodiInfo.faculty.includes('Kedokteran') ? 'FK' : 'UII';
+            const certNum = `UII/SKPI/2026/${facShort}-${Math.floor(1000 + Math.random() * 9000)}`;
+            const ev = eventsList.find((e: EventItem) => e.id === t.eventId);
+            const cHash = this.generateHashSignature(t.userNim, t.eventId, certNum);
+            certList.push({
+              id: 'cert-' + Math.random().toString(36).substring(2, 9),
+              registrationId: t.registrationId,
+              ticketId: t.id,
+              eventId: t.eventId,
+              eventTitle: t.eventTitle,
+              eventDate: t.eventDate,
+              organizer: ev?.organizer || 'Panitia UII',
+              eventRoom: t.eventRoom || ev?.room || 'Kampus Terpadu UII',
+              publishedAtFormatted: `${t.eventDate} · ${t.checkedInAt || '08:15 WIB'} (saat presensi)`,
+              userId: t.userId,
+              userName: t.userName,
+              userNim: t.userNim,
+              userFaculty: prodiInfo.faculty,
+              userStudyProgram: prodiInfo.studyProgram,
+              certificateNumber: certNum,
+              skpiPoints: ev ? ev.skpiPoints : 15,
+              issueDate: '25 November 2026',
+              verificationHash: cHash,
+              issuerName: 'Dr. Ir. Budi Hartono, M.T.',
+              issuerRole: 'Direktur Pembinaan Kemahasiswaan UII',
+              isUnlocked: true
+            });
+          }
+        }
 
         this.certificates.set(certList);
         this.notificationLogs.set(savedLogs ? JSON.parse(savedLogs) : []);
@@ -1576,6 +1619,7 @@ export class EventService {
         // Add to active database
         this.registrations.update(prev => [adoptedReg, ...prev.filter(r => !(r.userNim === studentNim && r.eventId === event.id))]);
         this.tickets.update(prev => [adoptedTicket, ...prev.filter(t => !(t.userNim === studentNim && t.eventId === event.id))]);
+        this.issueCertificateForTicket(adoptedTicket);
         this.saveToStorage();
 
         return {
@@ -1628,6 +1672,37 @@ export class EventService {
     );
 
     // Auto-generate SKPI Certificate (FR-CRT-01 & FR-CRT-02)
+    const newCert = this.issueCertificateForTicket(ticket);
+
+    this.saveToStorage();
+
+    return {
+      status: 'SUCCESS',
+      message: 'Presensi Berhasil: Hadir Terverifikasi di Meja Registrasi!',
+      participantName: ticket.userName,
+      nim: ticket.userNim,
+      eventTitle: ticket.eventTitle,
+      ticketCode: ticket.ticketCode,
+      certificateNumber: newCert.certificateNumber
+    };
+  }
+
+  /**
+   * Generates or retrieves an official SKPI Certificate for a given ticket
+   */
+  issueCertificateForTicket(ticket: TicketItem): CertificateItem {
+    const existing = this.certificates().find(c => 
+      c.ticketId === ticket.id || 
+      (c.eventId === ticket.eventId && (c.userNim === ticket.userNim || c.userId === ticket.userId))
+    );
+    if (existing) {
+      if (!existing.isUnlocked) {
+        existing.isUnlocked = true;
+        this.saveToStorage();
+      }
+      return existing;
+    }
+
     const prodiInfo = getUiiProdiFromNim(ticket.userNim);
     const facShort = prodiInfo.faculty.includes('Teknologi Industri') ? 'FTI' :
                      prodiInfo.faculty.includes('Sipil') ? 'FTSP' :
@@ -1637,9 +1712,11 @@ export class EventService {
                      prodiInfo.faculty.includes('Agama') ? 'FIAI' :
                      prodiInfo.faculty.includes('Psikologi') ? 'FPSB' :
                      prodiInfo.faculty.includes('Kedokteran') ? 'FK' : 'UII';
-    const certNumber = `UII/SKPI/2026/${facShort}-${Math.floor(1000 + Math.random() * 9000)}`;
-    const event = this.getEventById(ticket.eventId);
+    const randNum = Math.floor(1000 + Math.random() * 9000);
+    const certNumber = `UII/SKPI/2026/${facShort}-${randNum}`;
+    const event = this.getEventById(ticket.eventId) || this.events().find(e => e.id === ticket.eventId);
     const certHash = this.generateHashSignature(ticket.userNim, ticket.eventId, certNumber);
+    const checkInTime = ticket.checkedInAt || (new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB');
 
     const newCert: CertificateItem = {
       id: 'cert-' + Math.random().toString(36).substring(2, 9),
@@ -1648,6 +1725,9 @@ export class EventService {
       eventId: ticket.eventId,
       eventTitle: ticket.eventTitle,
       eventDate: ticket.eventDate,
+      organizer: event?.organizer || 'Panitia UII',
+      eventRoom: ticket.eventRoom || event?.room || 'Kampus Terpadu UII',
+      publishedAtFormatted: `${ticket.eventDate} · ${checkInTime} (saat presensi)`,
       userId: ticket.userId,
       userName: ticket.userName,
       userNim: ticket.userNim,
@@ -1662,23 +1742,40 @@ export class EventService {
       isUnlocked: true
     };
 
-    // Avoid duplicate cert creation
-    const exists = this.certificates().some(c => c.ticketId === ticket.id);
-    if (!exists) {
-      this.certificates.update(prev => [newCert, ...prev]);
-    }
-
+    this.certificates.update(prev => [newCert, ...prev]);
     this.saveToStorage();
+    return newCert;
+  }
 
-    return {
-      status: 'SUCCESS',
-      message: 'Presensi Berhasil: Hadir Terverifikasi di Meja Registrasi!',
-      participantName: ticket.userName,
-      nim: ticket.userNim,
-      eventTitle: ticket.eventTitle,
-      ticketCode: ticket.ticketCode,
-      certificateNumber: certNumber
-    };
+  /**
+   * Check in a participant ticket and instantly unlock their certificate
+   */
+  checkInAndUnlockCertificate(ticketId: string, operatorName = 'Meja Registrasi UII'): CertificateItem | null {
+    const ticket = this.tickets().find(t => t.id === ticketId);
+    if (!ticket) return null;
+
+    const checkInTime = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB';
+    ticket.isCheckedIn = true;
+    ticket.checkedInAt = ticket.checkedInAt || checkInTime;
+    ticket.checkedInBy = operatorName;
+
+    // Update registration status to ATTENDED
+    this.registrations.update(regs =>
+      regs.map(r => (r.id === ticket.registrationId || (r.userNim === ticket.userNim && r.eventId === ticket.eventId))
+        ? { ...r, status: 'ATTENDED', attendedAt: new Date().toISOString() }
+        : r
+      )
+    );
+
+    // Update ticket state
+    this.tickets.update(ticks =>
+      ticks.map(t => t.id === ticket.id ? { ...ticket } : t)
+    );
+
+    // Generate & unlock certificate
+    const cert = this.issueCertificateForTicket(ticket);
+    this.saveToStorage();
+    return cert;
   }
 
   /**

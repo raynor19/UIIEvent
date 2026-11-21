@@ -87,6 +87,14 @@ export class TicketsComponent implements OnInit {
     }
   }
 
+  checkInTicket(ticket: TicketItem): void {
+    const cert = this.eventService.checkInAndUnlockCertificate(ticket.id);
+    if (cert) {
+      this.cancelSuccessNotice.set(`✓ Presensi Berhasil! Anda tercatat HADIR dan E-Sertifikat resmi serta ${cert.skpiPoints} Poin SKPI telah aktif.`);
+      setTimeout(() => this.cancelSuccessNotice.set(''), 6000);
+    }
+  }
+
   downloadTicketPdf(ticket: TicketItem): void {
     window.print();
   }

@@ -149,6 +149,23 @@
 
                 <!-- Action Buttons matching SCR-MHS-02 -->
                 <div class="w-full space-y-2 mt-6">
+                  @if (!ticket.isCheckedIn) {
+                    <button 
+                      type="button" 
+                      (click)="checkInTicket(ticket)"
+                      class="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-xs transition flex items-center justify-center gap-2 shadow-sm cursor-pointer active:scale-[0.99]">
+                      <span>✓</span>
+                      <span>Konfirmasi Hadir (Check-In)</span>
+                    </button>
+                  } @else {
+                    <a 
+                      routerLink="/certificates" 
+                      class="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold text-xs transition flex items-center justify-center gap-2 shadow-sm cursor-pointer">
+                      <span>🎓</span>
+                      <span>Lihat E-Sertifikat &amp; Poin SKPI &rarr;</span>
+                    </a>
+                  }
+
                   <button 
                     type="button" 
                     (click)="downloadTicketPdf(ticket)"
