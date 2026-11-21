@@ -398,19 +398,9 @@
 
           <!-- NIM / NIP -->
           <div>
-            <div class="flex items-center justify-between mb-1">
-              <label class="block font-semibold text-slate-700">
-                {{ regRole === 'DPK_ADMIN' ? 'NIP (Nomor Induk Pegawai)' : (regRole === 'PANITIA' ? 'NIM Panitia / Ormawa ID' : 'NIM (Nomor Induk Mahasiswa)') }}
-              </label>
-              @if (regRole === 'MAHASISWA') {
-                <button 
-                  type="button" 
-                  (click)="toggleDirectoryModal()"
-                  class="text-[11px] font-bold text-uii-blue hover:text-blue-900 transition underline cursor-pointer flex items-center gap-1">
-                  <span>🏛️ Kode Jurusan & Fakultas UII</span>
-                </button>
-              }
-            </div>
+            <label class="block font-semibold text-slate-700 mb-1">
+              {{ regRole === 'DPK_ADMIN' ? 'NIP (Nomor Induk Pegawai)' : (regRole === 'PANITIA' ? 'NIM Panitia / Ormawa ID' : 'NIM (Nomor Induk Mahasiswa)') }}
+            </label>
             <input 
               type="text" 
               [(ngModel)]="regNim" 
@@ -423,56 +413,6 @@
               <div class="mt-2 p-2 rounded-xl bg-blue-50 border border-blue-200/80 text-[11px] text-uii-blue flex items-center gap-1.5 font-medium animate-in fade-in">
                 <span>🎓</span>
                 <span>Program Studi: <strong class="text-blue-900">{{ detectedProdiInfo.studyProgram }}</strong> &bull; {{ detectedProdiInfo.faculty }}</span>
-              </div>
-            }
-
-            <!-- Expandable UII Faculties & Departments Directory Reference -->
-            @if (showDirectoryModal && regRole === 'MAHASISWA') {
-              <div class="mt-3 p-3 bg-slate-50 border border-slate-200 rounded-2xl space-y-3 animate-in fade-in text-xs shadow-xs">
-                <div class="flex items-center justify-between border-b border-slate-200 pb-2">
-                  <div class="flex items-center gap-1.5 font-bold text-slate-800">
-                    <span>🏛️</span>
-                    <span>Direktori Resmi Fakultas & Jurusan UII</span>
-                  </div>
-                  <button type="button" (click)="showDirectoryModal = false" class="text-slate-400 hover:text-slate-600 font-bold text-sm cursor-pointer">✕</button>
-                </div>
-                <p class="text-[11px] text-slate-500">
-                  Pilih atau klik jurusan di bawah ini untuk mengisi kode otomatis ke NIM Anda:
-                </p>
-
-                <!-- Faculty Tabs (Pills) -->
-                <div class="flex flex-wrap gap-1.5">
-                  @for (fac of uiiFacultyList; track fac.facultyShort) {
-                    <button 
-                      type="button" 
-                      (click)="selectDirectoryFaculty(fac)"
-                      [class.bg-uii-blue]="selectedDirectoryFaculty.facultyShort === fac.facultyShort"
-                      [class.text-white]="selectedDirectoryFaculty.facultyShort === fac.facultyShort"
-                      [class.bg-white]="selectedDirectoryFaculty.facultyShort !== fac.facultyShort"
-                      [class.text-slate-700]="selectedDirectoryFaculty.facultyShort !== fac.facultyShort"
-                      class="px-2.5 py-1 rounded-lg font-bold border border-slate-200 text-[10px] transition cursor-pointer hover:border-uii-blue">
-                      {{ fac.facultyShort }}
-                    </button>
-                  }
-                </div>
-
-                <!-- Active Faculty Departments List -->
-                <div class="bg-white p-2.5 rounded-xl border border-slate-200 space-y-2">
-                  <div class="font-bold text-uii-blue text-[11px]">
-                    {{ selectedDirectoryFaculty.facultyName }} ({{ selectedDirectoryFaculty.facultyShort }})
-                  </div>
-                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                    @for (dept of selectedDirectoryFaculty.departments; track dept.code) {
-                      <button 
-                        type="button" 
-                        (click)="pickDepartmentCode(dept.code)"
-                        class="p-1.5 rounded-lg border border-slate-100 hover:border-uii-blue hover:bg-blue-50/50 text-left transition flex items-center justify-between cursor-pointer group">
-                        <span class="text-slate-800 group-hover:text-uii-blue font-medium text-[11px]">{{ dept.name }}</span>
-                        <span class="px-1.5 py-0.5 rounded font-mono font-bold text-[10px] bg-slate-100 text-slate-600 group-hover:bg-blue-100 group-hover:text-uii-blue">{{ dept.code }}</span>
-                      </button>
-                    }
-                  </div>
-                </div>
               </div>
             }
           </div>
