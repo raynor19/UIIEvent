@@ -201,7 +201,7 @@ export class PanitiaDashboardComponent implements OnInit {
     });
 
     const mappedFromService: ParticipantItem[] = serviceMatching.map((reg, idx) => {
-      const ticket = allTickets.find(t => t.registrationId === reg.id || t.eventId === reg.eventId);
+      const ticket = allTickets.find(t => t.registrationId === reg.id || (t.eventId === reg.eventId && (t.userNim === reg.userNim || t.userId === reg.userId)));
       let status: 'HADIR' | 'BELUM_HADIR' | 'BATAL' = 'BELUM_HADIR';
       if (reg.status === 'CANCELLED') {
         status = 'BATAL';

@@ -329,7 +329,19 @@ export class ScannerComponent implements OnInit, OnDestroy {
 
   // Quick prototype simulator actions as seen in SCR-PAN-05
   simulateScanValid(): void {
-    this.processDecodedQr('VALID_TICKET_TEST');
+    const evId = this.currentEventId();
+    const t = this.eventService.tickets().find(tick => tick.eventId === evId);
+    if (t) {
+      this.processDecodedQr(t.qrPayload || t.ticketCode);
+    } else {
+      this.processDecodedQr(JSON.stringify({
+        ticketCode: `UII-TIK-2026-5522`,
+        nim: '23525055',
+        name: 'Muhammad Raynor Athaillah',
+        eventId: evId,
+        hash: 'valid_test_hash'
+      }));
+    }
   }
 
   simulateScanDuplicate(): void {

@@ -250,6 +250,130 @@ export class EventService {
           currentTickets.push(nitcTicket);
         }
 
+        // Check if Workshop Pengelola Website (evt-002) ticket is present, if not present restore it
+        const hasWorkshopTicket = currentTickets.some(t => 
+          t.eventId === 'evt-002' || t.eventTitle?.toLowerCase().includes('pengelola website')
+        );
+
+        const workshopTicketCode = 'UII-TIK-2026-5522';
+        const workshopHash = this.generateHashSignature('23525055', 'evt-002', workshopTicketCode);
+        const workshopQrPayload = JSON.stringify({
+          ticketCode: workshopTicketCode,
+          nim: '23525055',
+          name: 'Muhammad Raynor Athaillah',
+          eventId: 'evt-002',
+          hash: workshopHash,
+          timestamp: 1763640000000
+        });
+
+        const workshopTicket: TicketItem = {
+          id: 'tck-workshop-raynor-001',
+          registrationId: 'reg-workshop-raynor-001',
+          ticketCode: workshopTicketCode,
+          eventId: 'evt-002',
+          eventTitle: 'Workshop Pengelola Website: Pengelolaan Konten Berbasis SEO dan AI',
+          eventCategory: 'WORKSHOP',
+          eventDate: '2026-11-25',
+          eventTime: '09:00 - 15:30 WIB',
+          eventLocation: 'Gedung Prof. Dr. Sardjito UII, Kampus Terpadu',
+          eventRoom: 'Ruang Teatrikal Gedung Prof. Dr. Sardjito',
+          userId: 'usr-raynor-001',
+          userName: 'Muhammad Raynor Athaillah',
+          userNim: '23525055',
+          userStudyProgram: 'Teknik Mesin - Fakultas Teknologi Industri',
+          qrPayload: workshopQrPayload,
+          hashSignature: workshopHash,
+          timestampIssued: '21 November 2026, 10:00 WIB',
+          isCheckedIn: false
+        };
+
+        const hasWorkshopReg = currentRegs.some(r => 
+          r.eventId === 'evt-002' || r.eventTitle?.toLowerCase().includes('pengelola website')
+        );
+        if (!hasWorkshopReg) {
+          currentRegs.push({
+            id: 'reg-workshop-raynor-001',
+            userId: 'usr-raynor-001',
+            userNim: '23525055',
+            userName: 'Muhammad Raynor Athaillah',
+            userEmail: '23525055@students.uii.ac.id',
+            userPhone: '081234567890',
+            userFaculty: 'Fakultas Teknologi Industri',
+            userStudyProgram: 'Teknik Mesin',
+            eventId: 'evt-002',
+            eventTitle: 'Workshop Pengelola Website: Pengelolaan Konten Berbasis SEO dan AI',
+            eventDate: '2026-11-25',
+            eventLocation: 'Ruang Teatrikal Gedung Prof. Dr. Sardjito, Gedung Prof. Dr. Sardjito UII, Kampus Terpadu',
+            status: 'REGISTERED',
+            createdAt: '2026-11-21T10:00:00.000Z'
+          });
+        }
+        if (!hasWorkshopTicket) {
+          currentTickets.push(workshopTicket);
+        }
+
+        // Check if Seminar AI (evt-001) ticket is present, if not present restore it
+        const hasSeminarAiTicket = currentTickets.some(t => 
+          t.eventId === 'evt-001' || t.eventTitle?.toLowerCase().includes('seminar nasional ai')
+        );
+
+        const seminarAiTicketCode = 'UII-TIK-2026-1100';
+        const seminarAiHash = this.generateHashSignature('23525055', 'evt-001', seminarAiTicketCode);
+        const seminarAiQrPayload = JSON.stringify({
+          ticketCode: seminarAiTicketCode,
+          nim: '23525055',
+          name: 'Muhammad Raynor Athaillah',
+          eventId: 'evt-001',
+          hash: seminarAiHash,
+          timestamp: 1763640000000
+        });
+
+        const seminarAiTicket: TicketItem = {
+          id: 'tck-seminarai-raynor-001',
+          registrationId: 'reg-seminarai-raynor-001',
+          ticketCode: seminarAiTicketCode,
+          eventId: 'evt-001',
+          eventTitle: 'Seminar Nasional AI 2026: Generative Intelligence for Industrial Application',
+          eventCategory: 'SEMINAR',
+          eventDate: '2026-11-22',
+          eventTime: '08:30 - 12:30 WIB',
+          eventLocation: 'Auditorium Prof. K.H. Abdul Kahar Mudzakkir, Kampus Terpadu UII',
+          eventRoom: 'Auditorium Prof. K.H. Abdul Kahar Mudzakkir',
+          userId: 'usr-raynor-001',
+          userName: 'Muhammad Raynor Athaillah',
+          userNim: '23525055',
+          userStudyProgram: 'Teknik Mesin - Fakultas Teknologi Industri',
+          qrPayload: seminarAiQrPayload,
+          hashSignature: seminarAiHash,
+          timestampIssued: '21 November 2026, 08:30 WIB',
+          isCheckedIn: false
+        };
+
+        const hasSeminarAiReg = currentRegs.some(r => 
+          r.eventId === 'evt-001' || r.eventTitle?.toLowerCase().includes('seminar nasional ai')
+        );
+        if (!hasSeminarAiReg) {
+          currentRegs.push({
+            id: 'reg-seminarai-raynor-001',
+            userId: 'usr-raynor-001',
+            userNim: '23525055',
+            userName: 'Muhammad Raynor Athaillah',
+            userEmail: '23525055@students.uii.ac.id',
+            userPhone: '081234567890',
+            userFaculty: 'Fakultas Teknologi Industri',
+            userStudyProgram: 'Teknik Mesin',
+            eventId: 'evt-001',
+            eventTitle: 'Seminar Nasional AI 2026: Generative Intelligence for Industrial Application',
+            eventDate: '2026-11-22',
+            eventLocation: 'Auditorium Prof. K.H. Abdul Kahar Mudzakkir, Kampus Terpadu UII',
+            status: 'REGISTERED',
+            createdAt: '2026-11-21T08:30:00.000Z'
+          });
+        }
+        if (!hasSeminarAiTicket) {
+          currentTickets.push(seminarAiTicket);
+        }
+
         // Sanitize tickets data to guarantee correct department mapping
         currentTickets = currentTickets.map(t => {
           if (t.userId === 'usr-raynor-001' || t.userNim === '23525055' || t.userNim === '23523055') {
@@ -655,11 +779,108 @@ export class EventService {
         eventLocation: 'Hall K.H. Mas Mansyur Lt. 3, Auditorium FMIPA UII, Kampus Terpadu',
         status: 'REGISTERED',
         createdAt: '2026-11-21T09:30:00.000Z'
+      },
+      {
+        id: 'reg-workshop-raynor-001',
+        userId: 'usr-raynor-001',
+        userNim: '23525055',
+        userName: 'Muhammad Raynor Athaillah',
+        userEmail: '23525055@students.uii.ac.id',
+        userPhone: '081234567890',
+        userFaculty: 'Fakultas Teknologi Industri',
+        userStudyProgram: 'Teknik Mesin',
+        eventId: 'evt-002',
+        eventTitle: 'Workshop Pengelola Website: Pengelolaan Konten Berbasis SEO dan AI',
+        eventDate: '2026-11-25',
+        eventLocation: 'Ruang Teatrikal Gedung Prof. Dr. Sardjito, Gedung Prof. Dr. Sardjito UII, Kampus Terpadu',
+        status: 'REGISTERED',
+        createdAt: '2026-11-21T10:00:00.000Z'
+      },
+      {
+        id: 'reg-seminarai-raynor-001',
+        userId: 'usr-raynor-001',
+        userNim: '23525055',
+        userName: 'Muhammad Raynor Athaillah',
+        userEmail: '23525055@students.uii.ac.id',
+        userPhone: '081234567890',
+        userFaculty: 'Fakultas Teknologi Industri',
+        userStudyProgram: 'Teknik Mesin',
+        eventId: 'evt-001',
+        eventTitle: 'Seminar Nasional AI 2026: Generative Intelligence for Industrial Application',
+        eventDate: '2026-11-22',
+        eventLocation: 'Auditorium Prof. K.H. Abdul Kahar Mudzakkir, Kampus Terpadu UII',
+        status: 'REGISTERED',
+        createdAt: '2026-11-21T08:30:00.000Z'
       }
     ];
+
+    const workshopTicketCode = 'UII-TIK-2026-5522';
+    const workshopHash = this.generateHashSignature('23525055', 'evt-002', workshopTicketCode);
+    const workshopQrPayload = JSON.stringify({
+      ticketCode: workshopTicketCode,
+      nim: '23525055',
+      name: 'Muhammad Raynor Athaillah',
+      eventId: 'evt-002',
+      hash: workshopHash,
+      timestamp: 1763640000000
+    });
+    const workshopTicket: TicketItem = {
+      id: 'tck-workshop-raynor-001',
+      registrationId: 'reg-workshop-raynor-001',
+      ticketCode: workshopTicketCode,
+      eventId: 'evt-002',
+      eventTitle: 'Workshop Pengelola Website: Pengelolaan Konten Berbasis SEO dan AI',
+      eventCategory: 'WORKSHOP',
+      eventDate: '2026-11-25',
+      eventTime: '09:00 - 15:30 WIB',
+      eventLocation: 'Gedung Prof. Dr. Sardjito UII, Kampus Terpadu',
+      eventRoom: 'Ruang Teatrikal Gedung Prof. Dr. Sardjito',
+      userId: 'usr-raynor-001',
+      userName: 'Muhammad Raynor Athaillah',
+      userNim: '23525055',
+      userStudyProgram: 'Teknik Mesin - Fakultas Teknologi Industri',
+      qrPayload: workshopQrPayload,
+      hashSignature: workshopHash,
+      timestampIssued: '21 November 2026, 10:00 WIB',
+      isCheckedIn: false
+    };
+
+    const seminarAiTicketCode = 'UII-TIK-2026-1100';
+    const seminarAiHash = this.generateHashSignature('23525055', 'evt-001', seminarAiTicketCode);
+    const seminarAiQrPayload = JSON.stringify({
+      ticketCode: seminarAiTicketCode,
+      nim: '23525055',
+      name: 'Muhammad Raynor Athaillah',
+      eventId: 'evt-001',
+      hash: seminarAiHash,
+      timestamp: 1763640000000
+    });
+    const seminarAiTicket: TicketItem = {
+      id: 'tck-seminarai-raynor-001',
+      registrationId: 'reg-seminarai-raynor-001',
+      ticketCode: seminarAiTicketCode,
+      eventId: 'evt-001',
+      eventTitle: 'Seminar Nasional AI 2026: Generative Intelligence for Industrial Application',
+      eventCategory: 'SEMINAR',
+      eventDate: '2026-11-22',
+      eventTime: '08:30 - 12:30 WIB',
+      eventLocation: 'Auditorium Prof. K.H. Abdul Kahar Mudzakkir, Kampus Terpadu UII',
+      eventRoom: 'Auditorium Prof. K.H. Abdul Kahar Mudzakkir',
+      userId: 'usr-raynor-001',
+      userName: 'Muhammad Raynor Athaillah',
+      userNim: '23525055',
+      userStudyProgram: 'Teknik Mesin - Fakultas Teknologi Industri',
+      qrPayload: seminarAiQrPayload,
+      hashSignature: seminarAiHash,
+      timestampIssued: '21 November 2026, 08:30 WIB',
+      isCheckedIn: false
+    };
+
     const seedTickets: TicketItem[] = [
       porsematikTicket,
-      nitcTicket
+      nitcTicket,
+      workshopTicket,
+      seminarAiTicket
     ];
     const attendedRegId = 'reg-rian-attended-099';
     const attendedTicketId = 'tck-rian-attended-099';
@@ -937,12 +1158,13 @@ export class EventService {
   processScan(scannedPayload: string, operatorName: string = 'Panitia Meja Registrasi 1'): CheckInResult {
     let ticketCode = '';
     let hash = '';
+    let parsedObj: any = null;
 
     try {
       if (scannedPayload.startsWith('{')) {
-        const parsed = JSON.parse(scannedPayload);
-        ticketCode = parsed.ticketCode || '';
-        hash = parsed.hash || '';
+        parsedObj = JSON.parse(scannedPayload);
+        ticketCode = parsedObj.ticketCode || '';
+        hash = parsedObj.hash || '';
       } else {
         ticketCode = scannedPayload.trim();
       }
@@ -951,10 +1173,77 @@ export class EventService {
     }
 
     // Match ticket in database
-    const ticket = this.tickets().find(
+    let ticket = this.tickets().find(
       t => t.ticketCode.toUpperCase() === ticketCode.toUpperCase() ||
            (hash && t.hashSignature === hash)
     );
+
+    // Cross-device automatic ticket sync (e.g. registered on phone, scanned on laptop):
+    if (!ticket && parsedObj && (parsedObj.eventId || parsedObj.ticketCode)) {
+      const targetEventId = parsedObj.eventId || 'evt-002';
+      const event = this.getEventById(targetEventId) || this.events().find(e => e.id === targetEventId);
+      if (event) {
+        const checkInTime = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB';
+        const code = parsedObj.ticketCode || ticketCode || `UII-TIK-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+        const studentNim = parsedObj.nim || '23525055';
+        const studentName = parsedObj.name || 'Muhammad Raynor Athaillah';
+
+        const adoptedTicket: TicketItem = {
+          id: 'tck-' + Math.random().toString(36).substring(2, 9),
+          registrationId: 'reg-' + Math.random().toString(36).substring(2, 9),
+          ticketCode: code,
+          eventId: event.id,
+          eventTitle: event.title,
+          eventCategory: event.category,
+          eventDate: event.date,
+          eventTime: event.time,
+          eventLocation: event.location,
+          eventRoom: event.room,
+          userId: 'usr-' + studentNim,
+          userName: studentName,
+          userNim: studentNim,
+          userStudyProgram: 'Teknik Mesin - Fakultas Teknologi Industri',
+          qrPayload: scannedPayload,
+          hashSignature: hash || this.generateHashSignature(studentNim, event.id, code),
+          timestampIssued: new Date().toLocaleDateString('id-ID') + ' WIB',
+          isCheckedIn: true,
+          checkedInAt: checkInTime,
+          checkedInBy: operatorName
+        };
+
+        const adoptedReg: RegistrationItem = {
+          id: adoptedTicket.registrationId,
+          userId: adoptedTicket.userId,
+          userNim: adoptedTicket.userNim,
+          userName: adoptedTicket.userName,
+          userEmail: `${studentNim}@students.uii.ac.id`,
+          userPhone: '081234567890',
+          userFaculty: 'Fakultas Teknologi Industri',
+          userStudyProgram: 'Teknik Mesin',
+          eventId: event.id,
+          eventTitle: event.title,
+          eventDate: event.date,
+          eventLocation: `${event.room}, ${event.location}`,
+          status: 'ATTENDED',
+          createdAt: new Date().toISOString(),
+          attendedAt: new Date().toISOString()
+        };
+
+        // Add to active database
+        this.registrations.update(prev => [adoptedReg, ...prev.filter(r => !(r.userNim === studentNim && r.eventId === event.id))]);
+        this.tickets.update(prev => [adoptedTicket, ...prev.filter(t => !(t.userNim === studentNim && t.eventId === event.id))]);
+        this.saveToStorage();
+
+        return {
+          status: 'SUCCESS',
+          message: 'Presensi Berhasil: E-Tiket Digital Terverifikasi',
+          participantName: adoptedTicket.userName,
+          nim: adoptedTicket.userNim,
+          eventTitle: event.title,
+          ticketCode: adoptedTicket.ticketCode
+        };
+      }
+    }
 
     if (!ticket) {
       return {
