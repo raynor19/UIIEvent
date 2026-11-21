@@ -153,7 +153,11 @@ export class PanitiaDashboardComponent implements OnInit {
   // ========================================================
   // SCR-PAN-03: REKAP PESERTA & PRESENSI DATA & STATE
   // ========================================================
-  selectedRekapEventId = signal<string>('evt-008');
+  selectedRekapEventId = signal<string>(
+    (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('eventId')) ||
+    (typeof localStorage !== 'undefined' && localStorage.getItem('uii_panitia_selected_event')) ||
+    'evt-008'
+  );
   isEventDropdownOpen = signal<boolean>(false);
 
   toggleEventDropdown(): void {
@@ -173,9 +177,13 @@ export class PanitiaDashboardComponent implements OnInit {
 
   selectRekapEvent(eventId: string): void {
     this.selectedRekapEventId.set(eventId);
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('uii_panitia_selected_event', eventId);
+    }
     this.currentPageParticipants.set(1);
     this.participantSearchQuery.set('');
     this.isEventDropdownOpen.set(false);
+    this.router.navigate([], { queryParams: { eventId }, queryParamsHandling: 'merge' });
     const ev = this.events().find(e => e.id === eventId);
     if (ev?.type === 'Oprec') {
       this.activeView.set('SELEKSI_OPREC');
@@ -330,7 +338,38 @@ export class PanitiaDashboardComponent implements OnInit {
   applicantDivisionFilter = signal<string>('SEMUA');
 
   filteredApplicants = computed(() => {
-    let list = this.applicants();
+    const currentEv = this.selectedRekapEvent();
+    const evId = currentEv?.id;
+    const allRegs = this.eventService.registrations();
+    const matchingRegs = allRegs.filter(r => r.eventId === evId || (currentEv && r.eventTitle?.toLowerCase().trim() === currentEv.title.toLowerCase().trim()));
+
+    // Map real registrations for this oprec event
+    const registeredApplicants: ApplicantItem[] = matchingRegs.map((r, idx) => ({
+      id: r.id,
+      no: idx + 1,
+      nim: r.userNim,
+      name: r.userName,
+      prodi: r.userStudyProgram || 'Teknik Mesin',
+      ipk: 3.85,
+      division1: r.divisionChoice1 || 'Divisi Acara & Manajemen Panggung',
+      division2: r.divisionChoice2 || 'Divisi IT & Presensi Web Scanner',
+      status: (r.status === 'ATTENDED' ? 'LOLOS_BERKAS' : 'MENUNGGU') as any,
+      cvUrl: r.cvFileName || 'CV_Mahasiswa_UII.pdf',
+      krsUrl: r.krsFileName || 'KRS_Aktif.pdf',
+      fileUrl: r.cvFileName || 'CV_Mahasiswa_UII.pdf',
+      appliedAt: r.createdAt
+    }));
+
+    // Local dummy applicants
+    const localList = this.applicants();
+    const combined = [...registeredApplicants];
+    for (const a of localList) {
+      if (!combined.some(c => c.nim === a.nim)) {
+        combined.push(a);
+      }
+    }
+
+    let list = combined.map((item, idx) => ({ ...item, no: idx + 1 }));
     const div = this.applicantDivisionFilter();
     const query = this.applicantSearchQuery().trim().toLowerCase();
 
@@ -508,11 +547,13 @@ export class PanitiaDashboardComponent implements OnInit {
     // Sync all events from eventService (including newly created & approved events like Porsematik)
     this.syncEventsFromService();
 
-    // Check query params (e.g. returning from /scanner?eventId=...)
+    // Check query params or remembered event in localStorage (survives browser refresh!)
     this.route.queryParams.subscribe(params => {
-      if (params['eventId']) {
-        this.selectedRekapEventId.set(params['eventId']);
-        const ev = this.events().find(e => e.id === params['eventId']);
+      const targetId = params['eventId'] || 
+        (typeof localStorage !== 'undefined' ? localStorage.getItem('uii_panitia_selected_event') : null);
+      if (targetId) {
+        this.selectedRekapEventId.set(targetId);
+        const ev = this.events().find(e => e.id === targetId);
         if (ev?.type === 'Oprec') {
           this.activeView.set('SELEKSI_OPREC');
         } else {

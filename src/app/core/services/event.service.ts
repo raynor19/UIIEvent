@@ -374,6 +374,186 @@ export class EventService {
           currentTickets.push(seminarAiTicket);
         }
 
+        // Check if Oprec PESTA UII 2027 (evt-003) ticket is present, if not present restore it
+        const hasPestaTicket = currentTickets.some(t => 
+          t.eventId === 'evt-003' || t.eventTitle?.toLowerCase().includes('pesta uii')
+        );
+        const pestaTicketCode = 'UII-TIK-2026-3399';
+        const pestaHash = this.generateHashSignature('23525055', 'evt-003', pestaTicketCode);
+        const pestaQrPayload = JSON.stringify({
+          ticketCode: pestaTicketCode,
+          nim: '23525055',
+          name: 'Muhammad Raynor Athaillah',
+          eventId: 'evt-003',
+          hash: pestaHash,
+          timestamp: 1763640000000
+        });
+        const pestaTicket: TicketItem = {
+          id: 'tck-pesta-raynor-001',
+          registrationId: 'reg-pesta-raynor-001',
+          ticketCode: pestaTicketCode,
+          eventId: 'evt-003',
+          eventTitle: 'Open Recruitment Panitia PESTA UII 2027 (Pekan Seni & Ta\'aruf Mahasiswa)',
+          eventCategory: 'COMMITTEE_RECRUITMENT',
+          eventDate: '2026-12-01',
+          eventTime: '09:00 - 17:00 WIB (Wawancara)',
+          eventLocation: 'Student Center UII',
+          eventRoom: 'Ruang Sidang Utama LEM UII Lt. 2',
+          userId: 'usr-raynor-001',
+          userName: 'Muhammad Raynor Athaillah',
+          userNim: '23525055',
+          userStudyProgram: 'Teknik Mesin - Fakultas Teknologi Industri',
+          qrPayload: pestaQrPayload,
+          hashSignature: pestaHash,
+          timestampIssued: '21 November 2026, 08:00 WIB',
+          isCheckedIn: false
+        };
+        const hasPestaReg = currentRegs.some(r => 
+          r.eventId === 'evt-003' || r.eventTitle?.toLowerCase().includes('pesta uii')
+        );
+        if (!hasPestaReg) {
+          currentRegs.push({
+            id: 'reg-pesta-raynor-001',
+            userId: 'usr-raynor-001',
+            userNim: '23525055',
+            userName: 'Muhammad Raynor Athaillah',
+            userEmail: '23525055@students.uii.ac.id',
+            userPhone: '081234567890',
+            userFaculty: 'Fakultas Teknologi Industri',
+            userStudyProgram: 'Teknik Mesin',
+            eventId: 'evt-003',
+            eventTitle: 'Open Recruitment Panitia PESTA UII 2027 (Pekan Seni & Ta\'aruf Mahasiswa)',
+            eventDate: '2026-12-01',
+            eventLocation: 'Ruang Sidang Utama LEM UII Lt. 2, Student Center UII',
+            divisionChoice1: 'Divisi Acara & Manajemen Panggung',
+            divisionChoice2: 'Divisi IT & Presensi Web Scanner',
+            motivation: 'Ingin berkontribusi aktif dalam kepanitiaan universitas dan mengoptimalkan sistem registrasi digital.',
+            status: 'REGISTERED',
+            createdAt: '2026-11-21T08:00:00.000Z'
+          });
+        }
+        if (!hasPestaTicket) {
+          currentTickets.push(pestaTicket);
+        }
+
+        // Check if Gala Budaya (evt-005) ticket is present, if not present restore it
+        const hasGalaTicket = currentTickets.some(t => 
+          t.eventId === 'evt-005' || t.eventTitle?.toLowerCase().includes('malam refleksi')
+        );
+        const galaTicketCode = 'UII-TIK-2026-5501';
+        const galaHash = this.generateHashSignature('23525055', 'evt-005', galaTicketCode);
+        const galaQrPayload = JSON.stringify({
+          ticketCode: galaTicketCode,
+          nim: '23525055',
+          name: 'Muhammad Raynor Athaillah',
+          eventId: 'evt-005',
+          hash: galaHash,
+          timestamp: 1763640000000
+        });
+        const galaTicket: TicketItem = {
+          id: 'tck-gala-raynor-001',
+          registrationId: 'reg-gala-raynor-001',
+          ticketCode: galaTicketCode,
+          eventId: 'evt-005',
+          eventTitle: 'Malam Refleksi & Apresiasi Seni Kemahasiswaan (Gala Budaya UII)',
+          eventCategory: 'KONSER',
+          eventDate: '2026-12-18',
+          eventTime: '19:30 - 22:30 WIB',
+          eventLocation: 'Lapangan Gedung Prof. Dr. Sardjito UII',
+          eventRoom: 'Open Air Amphitheater UII',
+          userId: 'usr-raynor-001',
+          userName: 'Muhammad Raynor Athaillah',
+          userNim: '23525055',
+          userStudyProgram: 'Teknik Mesin - Fakultas Teknologi Industri',
+          qrPayload: galaQrPayload,
+          hashSignature: galaHash,
+          timestampIssued: '21 November 2026, 08:30 WIB',
+          isCheckedIn: false
+        };
+        const hasGalaReg = currentRegs.some(r => 
+          r.eventId === 'evt-005' || r.eventTitle?.toLowerCase().includes('malam refleksi')
+        );
+        if (!hasGalaReg) {
+          currentRegs.push({
+            id: 'reg-gala-raynor-001',
+            userId: 'usr-raynor-001',
+            userNim: '23525055',
+            userName: 'Muhammad Raynor Athaillah',
+            userEmail: '23525055@students.uii.ac.id',
+            userPhone: '081234567890',
+            userFaculty: 'Fakultas Teknologi Industri',
+            userStudyProgram: 'Teknik Mesin',
+            eventId: 'evt-005',
+            eventTitle: 'Malam Refleksi & Apresiasi Seni Kemahasiswaan (Gala Budaya UII)',
+            eventDate: '2026-12-18',
+            eventLocation: 'Open Air Amphitheater UII, Lapangan Gedung Prof. Dr. Sardjito UII',
+            status: 'REGISTERED',
+            createdAt: '2026-11-21T08:30:00.000Z'
+          });
+        }
+        if (!hasGalaTicket) {
+          currentTickets.push(galaTicket);
+        }
+
+        // Check if Cyber Security (evt-006) ticket is present, if not present restore it
+        const hasCyberTicket = currentTickets.some(t => 
+          t.eventId === 'evt-006' || t.eventTitle?.toLowerCase().includes('cyber security')
+        );
+        const cyberTicketCode = 'UII-TIK-2026-6602';
+        const cyberHash = this.generateHashSignature('23525055', 'evt-006', cyberTicketCode);
+        const cyberQrPayload = JSON.stringify({
+          ticketCode: cyberTicketCode,
+          nim: '23525055',
+          name: 'Muhammad Raynor Athaillah',
+          eventId: 'evt-006',
+          hash: cyberHash,
+          timestamp: 1763640000000
+        });
+        const cyberTicket: TicketItem = {
+          id: 'tck-cyber-raynor-001',
+          registrationId: 'reg-cyber-raynor-001',
+          ticketCode: cyberTicketCode,
+          eventId: 'evt-006',
+          eventTitle: 'Workshop Cyber Security 2026: Hands-on Penetration Testing & Ethical Defense',
+          eventCategory: 'WORKSHOP',
+          eventDate: '2026-12-23',
+          eventTime: '09:00 - 15:00 WIB',
+          eventLocation: 'Gedung FTI UII Lt. 2',
+          eventRoom: 'Lab Jaringan & Cyber Security Lt. 2',
+          userId: 'usr-raynor-001',
+          userName: 'Muhammad Raynor Athaillah',
+          userNim: '23525055',
+          userStudyProgram: 'Teknik Mesin - Fakultas Teknologi Industri',
+          qrPayload: cyberQrPayload,
+          hashSignature: cyberHash,
+          timestampIssued: '21 November 2026, 09:00 WIB',
+          isCheckedIn: false
+        };
+        const hasCyberReg = currentRegs.some(r => 
+          r.eventId === 'evt-006' || r.eventTitle?.toLowerCase().includes('cyber security')
+        );
+        if (!hasCyberReg) {
+          currentRegs.push({
+            id: 'reg-cyber-raynor-001',
+            userId: 'usr-raynor-001',
+            userNim: '23525055',
+            userName: 'Muhammad Raynor Athaillah',
+            userEmail: '23525055@students.uii.ac.id',
+            userPhone: '081234567890',
+            userFaculty: 'Fakultas Teknologi Industri',
+            userStudyProgram: 'Teknik Mesin',
+            eventId: 'evt-006',
+            eventTitle: 'Workshop Cyber Security 2026: Hands-on Penetration Testing & Ethical Defense',
+            eventDate: '2026-12-23',
+            eventLocation: 'Lab Jaringan & Cyber Security Lt. 2, Gedung FTI UII Lt. 2',
+            status: 'REGISTERED',
+            createdAt: '2026-11-21T09:00:00.000Z'
+          });
+        }
+        if (!hasCyberTicket) {
+          currentTickets.push(cyberTicket);
+        }
+
         // Sanitize tickets data to guarantee correct department mapping
         currentTickets = currentTickets.map(t => {
           if (t.userId === 'usr-raynor-001' || t.userNim === '23525055' || t.userNim === '23523055') {
@@ -391,14 +571,32 @@ export class EventService {
         this.registrations.set(currentRegs);
         this.tickets.set(currentTickets);
         this.saveToStorage();
-        if (!eventsList.some(e => e.id === 'evt-001')) {
-          this.loadMockDefaults();
-          return;
-        }
+
         let certList: CertificateItem[] = savedCerts ? JSON.parse(savedCerts) : [];
         if (!certList.some(c => c.id === '0491' || c.certificateNumber?.includes('0491'))) {
-          this.loadMockDefaults();
-          return;
+          certList.unshift({
+            id: '0491',
+            registrationId: 'reg-0491',
+            ticketId: 'tck-0491',
+            eventId: 'evt-001',
+            eventTitle: 'Seminar Nasional AI & Karir Teknologi 2026',
+            eventDate: 'Rabu, 25 November 2026',
+            organizer: 'LEM FTI UII',
+            eventRoom: 'Auditorium KH. Abdurrahman Wahid FTI UII',
+            publishedAtFormatted: 'Rabu, 25 November 2026 · 08.14 WIB (saat presensi)',
+            userId: 'usr-raynor-001',
+            userName: 'Muhammad Raynor Athaillah',
+            userNim: '23525055',
+            userFaculty: 'Fakultas Teknologi Industri',
+            userStudyProgram: 'Teknik Mesin',
+            certificateNumber: 'UII/DPK/CERT/2026/0491',
+            skpiPoints: 15,
+            issueDate: '25 November 2026',
+            verificationHash: '7f3a9c2e41b8d05a',
+            issuerName: 'Dr. Ir. Budi Hartono, M.T.',
+            issuerRole: 'Direktur Pembinaan Kemahasiswaan UII',
+            isUnlocked: true
+          });
         }
 
         // Sanitize certificate list: ensure NIM 23525055 and Teknik Mesin
@@ -811,6 +1009,56 @@ export class EventService {
         eventLocation: 'Auditorium Prof. K.H. Abdul Kahar Mudzakkir, Kampus Terpadu UII',
         status: 'REGISTERED',
         createdAt: '2026-11-21T08:30:00.000Z'
+      },
+      {
+        id: 'reg-pesta-raynor-001',
+        userId: 'usr-raynor-001',
+        userNim: '23525055',
+        userName: 'Muhammad Raynor Athaillah',
+        userEmail: '23525055@students.uii.ac.id',
+        userPhone: '081234567890',
+        userFaculty: 'Fakultas Teknologi Industri',
+        userStudyProgram: 'Teknik Mesin',
+        eventId: 'evt-003',
+        eventTitle: 'Open Recruitment Panitia PESTA UII 2027 (Pekan Seni & Ta\'aruf Mahasiswa)',
+        eventDate: '2026-12-01',
+        eventLocation: 'Ruang Sidang Utama LEM UII Lt. 2, Student Center UII',
+        divisionChoice1: 'Divisi Acara & Manajemen Panggung',
+        divisionChoice2: 'Divisi IT & Presensi Web Scanner',
+        status: 'REGISTERED',
+        createdAt: '2026-11-21T08:00:00.000Z'
+      },
+      {
+        id: 'reg-gala-raynor-001',
+        userId: 'usr-raynor-001',
+        userNim: '23525055',
+        userName: 'Muhammad Raynor Athaillah',
+        userEmail: '23525055@students.uii.ac.id',
+        userPhone: '081234567890',
+        userFaculty: 'Fakultas Teknologi Industri',
+        userStudyProgram: 'Teknik Mesin',
+        eventId: 'evt-005',
+        eventTitle: 'Malam Refleksi & Apresiasi Seni Kemahasiswaan (Gala Budaya UII)',
+        eventDate: '2026-12-18',
+        eventLocation: 'Open Air Amphitheater UII, Lapangan Gedung Prof. Dr. Sardjito UII',
+        status: 'REGISTERED',
+        createdAt: '2026-11-21T08:30:00.000Z'
+      },
+      {
+        id: 'reg-cyber-raynor-001',
+        userId: 'usr-raynor-001',
+        userNim: '23525055',
+        userName: 'Muhammad Raynor Athaillah',
+        userEmail: '23525055@students.uii.ac.id',
+        userPhone: '081234567890',
+        userFaculty: 'Fakultas Teknologi Industri',
+        userStudyProgram: 'Teknik Mesin',
+        eventId: 'evt-006',
+        eventTitle: 'Workshop Cyber Security 2026: Hands-on Penetration Testing & Ethical Defense',
+        eventDate: '2026-12-23',
+        eventLocation: 'Lab Jaringan & Cyber Security Lt. 2, Gedung FTI UII Lt. 2',
+        status: 'REGISTERED',
+        createdAt: '2026-11-21T09:00:00.000Z'
       }
     ];
 
@@ -876,11 +1124,107 @@ export class EventService {
       isCheckedIn: false
     };
 
+    const pestaTicketCode = 'UII-TIK-2026-3399';
+    const pestaHash = this.generateHashSignature('23525055', 'evt-003', pestaTicketCode);
+    const pestaQrPayload = JSON.stringify({
+      ticketCode: pestaTicketCode,
+      nim: '23525055',
+      name: 'Muhammad Raynor Athaillah',
+      eventId: 'evt-003',
+      hash: pestaHash,
+      timestamp: 1763640000000
+    });
+    const pestaTicket: TicketItem = {
+      id: 'tck-pesta-raynor-001',
+      registrationId: 'reg-pesta-raynor-001',
+      ticketCode: pestaTicketCode,
+      eventId: 'evt-003',
+      eventTitle: 'Open Recruitment Panitia PESTA UII 2027 (Pekan Seni & Ta\'aruf Mahasiswa)',
+      eventCategory: 'COMMITTEE_RECRUITMENT',
+      eventDate: '2026-12-01',
+      eventTime: '09:00 - 17:00 WIB (Wawancara)',
+      eventLocation: 'Student Center UII',
+      eventRoom: 'Ruang Sidang Utama LEM UII Lt. 2',
+      userId: 'usr-raynor-001',
+      userName: 'Muhammad Raynor Athaillah',
+      userNim: '23525055',
+      userStudyProgram: 'Teknik Mesin - Fakultas Teknologi Industri',
+      qrPayload: pestaQrPayload,
+      hashSignature: pestaHash,
+      timestampIssued: '21 November 2026, 08:00 WIB',
+      isCheckedIn: false
+    };
+
+    const galaTicketCode = 'UII-TIK-2026-5501';
+    const galaHash = this.generateHashSignature('23525055', 'evt-005', galaTicketCode);
+    const galaQrPayload = JSON.stringify({
+      ticketCode: galaTicketCode,
+      nim: '23525055',
+      name: 'Muhammad Raynor Athaillah',
+      eventId: 'evt-005',
+      hash: galaHash,
+      timestamp: 1763640000000
+    });
+    const galaTicket: TicketItem = {
+      id: 'tck-gala-raynor-001',
+      registrationId: 'reg-gala-raynor-001',
+      ticketCode: galaTicketCode,
+      eventId: 'evt-005',
+      eventTitle: 'Malam Refleksi & Apresiasi Seni Kemahasiswaan (Gala Budaya UII)',
+      eventCategory: 'KONSER',
+      eventDate: '2026-12-18',
+      eventTime: '19:30 - 22:30 WIB',
+      eventLocation: 'Lapangan Gedung Prof. Dr. Sardjito UII',
+      eventRoom: 'Open Air Amphitheater UII',
+      userId: 'usr-raynor-001',
+      userName: 'Muhammad Raynor Athaillah',
+      userNim: '23525055',
+      userStudyProgram: 'Teknik Mesin - Fakultas Teknologi Industri',
+      qrPayload: galaQrPayload,
+      hashSignature: galaHash,
+      timestampIssued: '21 November 2026, 08:30 WIB',
+      isCheckedIn: false
+    };
+
+    const cyberTicketCode = 'UII-TIK-2026-6602';
+    const cyberHash = this.generateHashSignature('23525055', 'evt-006', cyberTicketCode);
+    const cyberQrPayload = JSON.stringify({
+      ticketCode: cyberTicketCode,
+      nim: '23525055',
+      name: 'Muhammad Raynor Athaillah',
+      eventId: 'evt-006',
+      hash: cyberHash,
+      timestamp: 1763640000000
+    });
+    const cyberTicket: TicketItem = {
+      id: 'tck-cyber-raynor-001',
+      registrationId: 'reg-cyber-raynor-001',
+      ticketCode: cyberTicketCode,
+      eventId: 'evt-006',
+      eventTitle: 'Workshop Cyber Security 2026: Hands-on Penetration Testing & Ethical Defense',
+      eventCategory: 'WORKSHOP',
+      eventDate: '2026-12-23',
+      eventTime: '09:00 - 15:00 WIB',
+      eventLocation: 'Gedung FTI UII Lt. 2',
+      eventRoom: 'Lab Jaringan & Cyber Security Lt. 2',
+      userId: 'usr-raynor-001',
+      userName: 'Muhammad Raynor Athaillah',
+      userNim: '23525055',
+      userStudyProgram: 'Teknik Mesin - Fakultas Teknologi Industri',
+      qrPayload: cyberQrPayload,
+      hashSignature: cyberHash,
+      timestampIssued: '21 November 2026, 09:00 WIB',
+      isCheckedIn: false
+    };
+
     const seedTickets: TicketItem[] = [
       porsematikTicket,
       nitcTicket,
       workshopTicket,
-      seminarAiTicket
+      seminarAiTicket,
+      pestaTicket,
+      galaTicket,
+      cyberTicket
     ];
     const attendedRegId = 'reg-rian-attended-099';
     const attendedTicketId = 'tck-rian-attended-099';

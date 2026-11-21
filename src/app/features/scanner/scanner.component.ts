@@ -99,7 +99,8 @@ export class ScannerComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.route.queryParams.subscribe(params => {
-      const id = params['eventId'] || this.route.snapshot.paramMap.get('id');
+      const id = params['eventId'] || this.route.snapshot.paramMap.get('id') || 
+        (typeof localStorage !== 'undefined' ? localStorage.getItem('uii_panitia_selected_event') : null);
       if (id) {
         this.currentEventId.set(id);
       }
