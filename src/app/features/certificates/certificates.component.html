@@ -192,23 +192,24 @@
                 </p>
               </div>
 
-              <!-- Bottom Row: Signatures & QR Code (Garis Tanda Tangan Presisi Sejajar) -->
-              <div class="grid grid-cols-3 gap-4 pt-4 text-center relative z-10 items-start">
+              <!-- Bottom Row: Signatures & QR Code (Garis Tanda Tangan Presisi Sejajar & Proporsional di Bawah) -->
+              <div class="grid grid-cols-3 gap-4 pt-6 sm:pt-8 text-center relative z-10 items-start">
                 <div class="flex flex-col items-center">
-                  <div class="h-10 sm:h-12 w-full"></div>
+                  <div class="h-12 sm:h-15 w-full"></div>
                   <div class="w-28 sm:w-36 border-b-2 border-slate-300 mx-auto mb-1.5"></div>
                   <div class="font-bold text-xs text-[#002855]">Ketua Panitia Pelaksana</div>
                   <div class="text-[10px] text-slate-500">Penyelenggara</div>
                 </div>
 
                 <div class="flex flex-col items-center">
-                  <div class="h-10 sm:h-12 w-full"></div>
+                  <div class="h-12 sm:h-15 w-full"></div>
                   <div class="w-28 sm:w-36 border-b-2 border-slate-300 mx-auto mb-1.5"></div>
                   <div class="font-bold text-xs text-[#002855]">Direktur Pembinaan Kemahasiswaan</div>
                   <div class="text-[10px] text-slate-500">Mengesahkan</div>
                 </div>
 
                 <div class="flex flex-col items-center justify-end h-full">
+                  <div class="h-4 sm:h-6 w-full"></div>
                   @if (certQrDataUrl()) {
                     <div class="p-1 bg-white rounded border border-amber-300/60 shadow-2xs">
                       <img [src]="certQrDataUrl()" alt="QR Verifikasi" class="w-13 h-13 sm:w-15 sm:h-15 object-contain" />
