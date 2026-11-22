@@ -1,5 +1,5 @@
 export const environment = {
-  production: false,
-  apiUrl: 'http://127.0.0.1:8000/api/v1',
-  backendBaseUrl: 'http://127.0.0.1:8000'
+  production: true,
+  apiUrl: 'https://be-managevent.onrender.com/api/v1',
+  backendBaseUrl: 'https://be-managevent.onrender.com'
 };
