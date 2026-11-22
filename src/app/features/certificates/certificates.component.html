@@ -129,12 +129,12 @@
               <path d="M 700 0 C 775 90, 865 130, 1000 108 L 1000 92 C 875 115, 790 75, 725 0 Z" fill="url(#uiiGoldGrad)" />
               <path d="M 770 0 C 830 65, 910 100, 1000 80 L 1000 72 C 915 92, 840 56, 785 0 Z" fill="#FDE68A" opacity="0.95" />
 
-              <!-- Bottom-Left Dynamic Waves -->
-              <path d="M 0 450 C 185 470, 275 555, 370 680 L 0 680 Z" fill="url(#uiiGoldSoft)" />
-              <path d="M 0 495 C 165 505, 245 575, 330 680 L 0 680 Z" fill="url(#uiiBlueGrad)" />
-              <path d="M 0 480 C 170 490, 255 560, 340 680 L 324 680 C 240 580, 160 510, 0 500 Z" fill="url(#uiiGoldGrad)" />
-              <path d="M 0 565 C 115 570, 180 615, 248 680 L 0 680 Z" fill="#001838" opacity="0.9" />
-              <path d="M 0 555 C 120 560, 186 605, 256 680 L 248 680 C 180 615, 115 570, 0 565 Z" fill="#FDE68A" opacity="0.95" />
+              <!-- Bottom-Left Dynamic Waves (Tastefully restrained to outer corner so text is never obstructed) -->
+              <path d="M 0 570 C 60 580, 110 625, 150 680 L 0 680 Z" fill="url(#uiiGoldSoft)" />
+              <path d="M 0 595 C 50 605, 95 640, 130 680 L 0 680 Z" fill="url(#uiiBlueGrad)" />
+              <path d="M 0 590 C 55 600, 100 635, 135 680 L 125 680 C 90 640, 50 605, 0 595 Z" fill="url(#uiiGoldGrad)" />
+              <path d="M 0 630 C 40 635, 70 655, 95 680 L 0 680 Z" fill="#001838" opacity="0.9" />
+              <path d="M 0 625 C 42 630, 72 652, 98 680 L 92 680 C 70 655, 40 635, 0 630 Z" fill="#FDE68A" opacity="0.95" />
 
               <!-- Subtle Watermark Seal in Background Center -->
               <g transform="translate(500, 340)" opacity="0.045">
@@ -147,7 +147,7 @@
             </svg>
 
             <!-- Inner Gold Frame -->
-            <div class="border border-amber-500/40 p-6 sm:p-8 flex flex-col justify-between min-h-[460px] relative z-10 bg-white/80 backdrop-blur-[0.5px] certificate-print-inner overflow-hidden">
+            <div class="border border-amber-500/40 p-6 sm:p-8 flex flex-col justify-between min-h-[460px] relative z-10 bg-white/95 backdrop-blur-[0.5px] certificate-print-inner overflow-hidden shadow-xs">
               
               <!-- Subtle Official UII Emblem Watermark in Center Background -->
               <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
@@ -192,27 +192,73 @@
                 </p>
               </div>
 
-              <!-- Bottom Row: Signatures & QR Code -->
-              <div class="grid grid-cols-3 gap-4 pt-5 items-end text-center relative z-10">
-                <div>
-                  <div class="w-28 sm:w-36 border-b-2 border-slate-300 mx-auto mb-1.5"></div>
-                  <div class="font-bold text-xs text-[#002855]">Ketua Panitia Pelaksana</div>
-                  <div class="text-[10px] text-slate-500">Penyelenggara</div>
-                </div>
-
-                <div>
-                  <div class="w-28 sm:w-36 border-b-2 border-slate-300 mx-auto mb-1.5"></div>
-                  <div class="font-bold text-xs text-[#002855]">Direktur Pembinaan Kemahasiswaan</div>
-                  <div class="text-[10px] text-slate-500">Mengesahkan</div>
-                </div>
-
-                <div class="flex flex-col items-center justify-end">
-                  @if (certQrDataUrl()) {
-                    <div class="p-1 bg-white rounded border border-amber-300/60 shadow-2xs">
-                      <img [src]="certQrDataUrl()" alt="QR Verifikasi" class="w-13 h-13 sm:w-15 sm:h-15 object-contain" />
+              <!-- Bottom Row: Signatures & QR Code (Neat, Elegant & Perfectly Aligned) -->
+              <div class="pt-5 border-t border-slate-100/80 relative z-10">
+                <div class="grid grid-cols-3 gap-3 sm:gap-6 items-end text-center">
+                  
+                  <!-- Left: Ketua Panitia Pelaksana -->
+                  <div class="flex flex-col items-center justify-end">
+                    <span class="text-[10px] text-slate-500 font-medium mb-1">
+                      Ketua Panitia Pelaksana,
+                    </span>
+                    <!-- Digital Signature / Paraf Art -->
+                    <div class="h-10 sm:h-12 flex items-center justify-center relative my-0.5 w-full">
+                      <svg class="w-24 sm:w-28 h-8 sm:h-10 text-[#002855]/80" viewBox="0 0 140 45" fill="none" stroke="currentColor">
+                        <path d="M 12 32 C 28 14, 38 6, 50 18 C 58 26, 54 36, 65 28 C 78 16, 74 6, 88 20 C 95 26, 102 24, 116 16 C 124 12, 132 18, 136 16" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M 30 24 L 118 24" stroke-width="1.2" stroke-linecap="round" stroke-dasharray="2,3" opacity="0.35"/>
+                      </svg>
+                      <span class="absolute right-1 top-0 px-1 py-0.5 bg-emerald-50 border border-emerald-300 text-emerald-800 text-[7px] font-bold rounded">
+                        ✓ TTD Digital
+                      </span>
                     </div>
-                  }
-                  <span class="text-[9px] text-slate-500 font-medium mt-1">Pindai untuk verifikasi</span>
+                    <div class="w-28 sm:w-36 border-b border-slate-400 mx-auto"></div>
+                    <div class="font-extrabold text-xs text-[#002855] mt-1 tracking-tight">
+                      Ahmad Fauzi, S.Kom.
+                    </div>
+                    <div class="text-[9px] sm:text-[10px] text-slate-500">
+                      {{ selectedCert()?.organizer || 'Panitia Pelaksana UII' }}
+                    </div>
+                  </div>
+
+                  <!-- Center: Direktur Pembinaan Kemahasiswaan UII -->
+                  <div class="flex flex-col items-center justify-end">
+                    <span class="text-[10px] text-slate-500 font-medium mb-1">
+                      Yogyakarta, {{ selectedCert()?.issueDate || '25 November 2026' }}
+                    </span>
+                    <!-- Digital Official Signature Art -->
+                    <div class="h-10 sm:h-12 flex items-center justify-center relative my-0.5 w-full">
+                      <svg class="w-28 sm:w-32 h-9 sm:h-11 text-[#002855]" viewBox="0 0 160 50" fill="none" stroke="currentColor">
+                        <path d="M 14 34 C 30 10, 42 4, 56 20 C 64 30, 60 40, 72 30 C 86 18, 82 8, 98 22 C 107 30, 117 26, 134 14 C 144 8, 152 18, 156 16" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M 36 38 C 68 36, 112 35, 148 33" stroke-width="1.8" stroke-linecap="round"/>
+                      </svg>
+                      <span class="absolute left-1 top-0 px-1 py-0.5 bg-amber-50 border border-amber-300 text-amber-800 text-[7px] font-bold rounded">
+                        DPK UII
+                      </span>
+                    </div>
+                    <div class="w-36 sm:w-44 border-b border-slate-400 mx-auto"></div>
+                    <div class="font-extrabold text-xs text-[#002855] mt-1 tracking-tight">
+                      {{ selectedCert()?.issuerName || 'Dr. Ir. Budi Hartono, M.T.' }}
+                    </div>
+                    <div class="text-[9px] sm:text-[10px] text-slate-500">
+                      {{ selectedCert()?.issuerRole || 'Direktur Pembinaan Kemahasiswaan' }}
+                    </div>
+                  </div>
+
+                  <!-- Right: QR Code & Public Verification Info -->
+                  <div class="flex flex-col items-center justify-end">
+                    @if (certQrDataUrl()) {
+                      <div class="p-1 sm:p-1.5 bg-white rounded-lg border border-amber-300 shadow-2xs flex flex-col items-center">
+                        <img [src]="certQrDataUrl()" alt="QR Verifikasi" class="w-12 h-12 sm:w-15 sm:h-15 object-contain" />
+                      </div>
+                    }
+                    <span class="text-[9px] font-bold text-[#002855] mt-1 tracking-tight">
+                      Pindai untuk Verifikasi
+                    </span>
+                    <span class="text-[8px] font-mono text-slate-400">
+                      Hash: {{ selectedCert()?.verificationHash?.substring(0, 10) || '7f3a9c2e41' }}
+                    </span>
+                  </div>
+
                 </div>
               </div>
 
