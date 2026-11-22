@@ -176,48 +176,7 @@
             </div>
           </div>
 
-          <!-- Quick Account Preset Selector for Testing -->
-          <div class="pt-0.5 pb-0.5">
-            <span class="text-[10px] text-slate-400 font-semibold block mb-1">Pilih Cepat Akun Demo (SSO):</span>
-            <div class="flex items-center gap-1.5 flex-wrap">
-              <button 
-                type="button" 
-                (click)="fillAccount('JAY')" 
-                [class.ring-2]="identifier === '23524001'"
-                [class.ring-uii-blue]="identifier === '23524001'"
-                class="px-2 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-uii-blue text-[11px] font-bold border border-blue-200 transition cursor-pointer flex items-center gap-1">
-                <span>👨‍🎓</span>
-                <span>Jay (23524001)</span>
-              </button>
-              <button 
-                type="button" 
-                (click)="fillAccount('RAYNOR')" 
-                [class.ring-2]="identifier === '23525055'"
-                [class.ring-uii-blue]="identifier === '23525055'"
-                class="px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold border border-slate-300 transition cursor-pointer flex items-center gap-1">
-                <span>👨‍🎓</span>
-                <span>Raynor (23525055)</span>
-              </button>
-              <button 
-                type="button" 
-                (click)="fillAccount('PANITIA')" 
-                [class.ring-2]="identifier === '20523120'"
-                [class.ring-uii-blue]="identifier === '20523120'"
-                class="px-2 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-[11px] font-bold border border-emerald-200 transition cursor-pointer flex items-center gap-1">
-                <span>📋</span>
-                <span>Panitia</span>
-              </button>
-              <button 
-                type="button" 
-                (click)="fillAccount('ADMIN')" 
-                [class.ring-2]="identifier === 'NIP.19740512'"
-                [class.ring-uii-blue]="identifier === 'NIP.19740512'"
-                class="px-2 py-1 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-900 text-[11px] font-bold border border-amber-200 transition cursor-pointer flex items-center gap-1">
-                <span>🛡️</span>
-                <span>Admin DPK</span>
-              </button>
-            </div>
-          </div>
+
 
           <div>
             <label class="block font-semibold text-slate-700 mb-1">{{ identifierLabel }}</label>
