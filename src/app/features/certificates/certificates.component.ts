@@ -19,6 +19,7 @@ export class CertificatesComponent implements OnInit {
 
   selectedCert = signal<CertificateItem | null>(null);
   certQrDataUrl = signal<string>('');
+  unlockSuccessNotice = signal<string>('');
 
   get userTickets(): TicketItem[] {
     const user = this.authService.currentUser();
@@ -74,6 +75,20 @@ export class CertificatesComponent implements OnInit {
     // Default select first available certificate
     if (this.userCertificates.length > 0) {
       this.selectCertificate(this.userCertificates[0]);
+    }
+  }
+
+  unlockAndDownload(ticket: TicketItem): void {
+    const cert = this.userCertificates.find(c => c.ticketId === ticket.id || c.eventId === ticket.eventId);
+    if (cert) {
+      this.unlockSuccessNotice.set(`Presensi Hadir Berhasil! E-Sertifikat resmi dan ${cert.skpiPoints || 15} Poin SKPI untuk "${cert.eventTitle}" telah aktif dan siap diunduh.`);
+      this.selectCertificate(cert);
+      setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }, 100);
+      setTimeout(() => {
+        this.unlockSuccessNotice.set('');
+      }, 6000);
     }
   }
 

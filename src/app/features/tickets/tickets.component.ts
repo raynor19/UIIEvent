@@ -91,6 +91,15 @@ export class TicketsComponent implements OnInit {
     }
   }
 
+  async checkInTicket(ticket: TicketItem): Promise<void> {
+    const res = await this.eventService.processScanReal(ticket.ticketCode);
+    if (res.status === 'SUCCESS' || res.status === 'DUPLICATE') {
+      await this.eventService.loadMyTickets();
+      await this.eventService.loadMyCertificates();
+      await this.generateAllQrCodes();
+    }
+  }
+
   downloadTicketPdf(ticket: TicketItem): void {
     window.print();
   }
