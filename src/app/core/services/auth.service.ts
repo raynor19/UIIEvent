@@ -197,7 +197,10 @@ export class AuthService {
               ru.studyProgram = info.studyProgram;
               ru.faculty = info.faculty;
             }
-            if (!MOCK_USERS.some(u => u.id === ru.id || u.nim === ru.nim)) {
+            const existingIdx = MOCK_USERS.findIndex(u => u.id === ru.id || u.nim === ru.nim);
+            if (existingIdx >= 0) {
+              MOCK_USERS[existingIdx] = { ...MOCK_USERS[existingIdx], ...ru };
+            } else {
               MOCK_USERS.push(ru);
             }
           });
@@ -206,12 +209,36 @@ export class AuthService {
         }
       }
 
-      if (savedToken && savedId) {
-        if (savedId === 'usr-rian-001' || savedId === '21523001' || savedId === 'usr-raynor-001') {
-          savedId = 'usr-raynor-001';
-          localStorage.setItem(this.USER_STORAGE_KEY, 'usr-raynor-001');
+      // Check stored profile JSON first for highest fidelity
+      const savedProfileJson = localStorage.getItem('uii_active_user_profile');
+      if (savedProfileJson) {
+        try {
+          const profile: UserProfile = JSON.parse(savedProfileJson);
+          if (profile && profile.name) {
+            const existingIdx = MOCK_USERS.findIndex(u => u.id === profile.id || u.nim === profile.nim);
+            if (existingIdx >= 0) {
+              MOCK_USERS[existingIdx] = profile;
+            } else {
+              MOCK_USERS.push(profile);
+            }
+            this.currentUser.set(profile);
+            this.isLoggedIn.set(true);
+            if (savedToken) this.jwtToken.set(savedToken);
+            return;
+          }
+        } catch (e) {
+          console.error('Failed to parse saved user profile', e);
         }
-        const found = MOCK_USERS.find(u => u.id === savedId || u.nim === savedId);
+      }
+
+      if (savedToken && savedId) {
+        const cleanSavedId = savedId.replace(/^usr-/, '');
+        const found = MOCK_USERS.find(u => 
+          u.id === savedId || 
+          u.nim === savedId || 
+          u.nim === cleanSavedId ||
+          (cleanSavedId === '23524001' && (u.id === 'usr-jay-001' || u.nim === '23524001'))
+        );
         if (found) {
           if (found.role === 'MAHASISWA' && found.nim) {
             const info = getUiiProdiFromNim(found.nim);
@@ -221,14 +248,15 @@ export class AuthService {
           this.currentUser.set(found);
           this.isLoggedIn.set(true);
           this.jwtToken.set(savedToken);
+          localStorage.setItem('uii_active_user_profile', JSON.stringify(found));
           return;
         }
       }
     }
-    // Default active session for instant interactive testing: Muhammad Raynor Athaillah
-    this.currentUser.set(MOCK_USERS[0]);
+    // Default active session for instant interactive testing: Jay
+    this.currentUser.set(MOCK_USERS[1] || MOCK_USERS[0]);
     this.isLoggedIn.set(true);
-    this.jwtToken.set('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJ1c3ItcmF5bm9yLTAwMSIsInJvbGUiOiJNQUhBU0lTV0EifQ');
+    this.jwtToken.set('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJ1c3ItamF5LTAwMSIsInJvbGUiOiJNQUhBU0lTV0EifQ');
   }
 
   /**
@@ -334,6 +362,7 @@ export class AuthService {
     if (typeof localStorage !== 'undefined') {
       localStorage.setItem(this.USER_STORAGE_KEY, user.id);
       localStorage.setItem(this.TOKEN_STORAGE_KEY, mockJwt);
+      localStorage.setItem('uii_active_user_profile', JSON.stringify(user));
     }
 
     return {
@@ -382,6 +411,7 @@ export class AuthService {
     if (typeof localStorage !== 'undefined') {
       localStorage.setItem(this.USER_STORAGE_KEY, user.id);
       localStorage.setItem(this.TOKEN_STORAGE_KEY, mockJwt);
+      localStorage.setItem('uii_active_user_profile', JSON.stringify(user));
     }
 
     return {
@@ -452,6 +482,7 @@ export class AuthService {
     if (typeof localStorage !== 'undefined') {
       localStorage.removeItem(this.TOKEN_STORAGE_KEY);
       localStorage.removeItem(this.USER_STORAGE_KEY);
+      localStorage.removeItem('uii_active_user_profile');
     }
     this.router.navigate(['/login']);
   }

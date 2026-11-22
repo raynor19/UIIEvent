@@ -23,8 +23,8 @@ export class LoginComponent implements OnInit, OnDestroy {
   authService = inject(AuthService);
   private cdr = inject(ChangeDetectorRef);
 
-  identifier = '23525055';
-  password = 'password123';
+  identifier = '23524001';
+  password = 'jay123';
   rememberMe = true;
   showPassword = false;
   isLoading = false;
@@ -162,12 +162,36 @@ export class LoginComponent implements OnInit, OnDestroy {
     this.isLoginModalOpen = false;
   }
 
+  fillAccount(type: 'JAY' | 'RAYNOR' | 'PANITIA' | 'ADMIN'): void {
+    if (type === 'JAY') {
+      this.selectedRoleTab = 'MAHASISWA';
+      this.identifier = '23524001';
+      this.password = 'jay123';
+    } else if (type === 'RAYNOR') {
+      this.selectedRoleTab = 'MAHASISWA';
+      this.identifier = '23525055';
+      this.password = 'password123';
+    } else if (type === 'PANITIA') {
+      this.selectedRoleTab = 'PANITIA';
+      this.identifier = '20523120';
+      this.password = 'password123';
+    } else {
+      this.selectedRoleTab = 'ADMIN';
+      this.identifier = 'NIP.19740512';
+      this.password = 'password123';
+    }
+    this.errorMessage = '';
+    this.successMessage = '';
+  }
+
   selectRole(role: 'MAHASISWA' | 'PANITIA' | 'ADMIN'): void {
     this.selectedRoleTab = role;
     this.isRoleDropdownOpen = false;
     if (role === 'MAHASISWA') {
-      this.identifier = '23525055';
-      this.password = 'password123';
+      if (!this.identifier || ['23525055', '20523120', 'NIP.19740512'].includes(this.identifier)) {
+        this.identifier = '23524001';
+        this.password = 'jay123';
+      }
     } else if (role === 'PANITIA') {
       this.identifier = '20523120';
       this.password = 'password123';

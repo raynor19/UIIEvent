@@ -554,6 +554,162 @@ export class EventService {
           currentTickets.push(cyberTicket);
         }
 
+        // Seed tickets and registrations for Jay (NIM 23524001, Teknik Elektro)
+        const hasJayWorkshopTicket = currentTickets.some(t => 
+          (t.userId === 'usr-jay-001' || t.userNim === '23524001') && t.eventId === 'evt-002'
+        );
+        if (!hasJayWorkshopTicket) {
+          const workshopCodeJay = 'UII-TIK-2026-5241';
+          const workshopHashJay = this.generateHashSignature('23524001', 'evt-002', workshopCodeJay);
+          currentTickets.push({
+            id: 'tck-workshop-jay-001',
+            registrationId: 'reg-workshop-jay-001',
+            ticketCode: workshopCodeJay,
+            eventId: 'evt-002',
+            eventTitle: 'Workshop Pengelola Website: Pengelolaan Konten Berbasis SEO dan AI',
+            eventCategory: 'WORKSHOP',
+            eventDate: '2026-11-25',
+            eventTime: '08:30 - 15:30 WIB',
+            eventLocation: 'Gedung Prof. Dr. Sardjito UII, Kampus Terpadu',
+            eventRoom: 'Ruang Teatrikal Gedung Prof. Dr. Sardjito',
+            userId: 'usr-jay-001',
+            userName: 'Jay',
+            userNim: '23524001',
+            userStudyProgram: 'Teknik Elektro - Fakultas Teknologi Industri',
+            qrPayload: JSON.stringify({
+              ticketCode: workshopCodeJay,
+              nim: '23524001',
+              name: 'Jay',
+              eventId: 'evt-002',
+              hash: workshopHashJay,
+              timestamp: 1763640000000
+            }),
+            hashSignature: workshopHashJay,
+            timestampIssued: '22 November 2026, 09:00 WIB',
+            isCheckedIn: false
+          });
+          currentRegs.push({
+            id: 'reg-workshop-jay-001',
+            userId: 'usr-jay-001',
+            userNim: '23524001',
+            userName: 'Jay',
+            userEmail: '23524001@students.uii.ac.id',
+            userPhone: '081234567891',
+            userFaculty: 'Fakultas Teknologi Industri',
+            userStudyProgram: 'Teknik Elektro',
+            eventId: 'evt-002',
+            eventTitle: 'Workshop Pengelola Website: Pengelolaan Konten Berbasis SEO dan AI',
+            eventDate: '2026-11-25',
+            eventLocation: 'Ruang Teatrikal Gedung Prof. Dr. Sardjito, Gedung Prof. Dr. Sardjito UII, Kampus Terpadu',
+            status: 'REGISTERED',
+            createdAt: '2026-11-22T09:00:00.000Z'
+          });
+        }
+
+        const hasJaySeminarTicket = currentTickets.some(t => 
+          (t.userId === 'usr-jay-001' || t.userNim === '23524001') && t.eventId === 'evt-001'
+        );
+        if (!hasJaySeminarTicket) {
+          const seminarCodeJay = 'UII-TIK-2026-5242';
+          const seminarHashJay = this.generateHashSignature('23524001', 'evt-001', seminarCodeJay);
+          currentTickets.push({
+            id: 'tck-seminar-jay-001',
+            registrationId: 'reg-seminar-jay-001',
+            ticketCode: seminarCodeJay,
+            eventId: 'evt-001',
+            eventTitle: 'Seminar Nasional AI & Karir Teknologi 2026',
+            eventCategory: 'SEMINAR',
+            eventDate: '2026-11-25',
+            eventTime: '08:00 - 12:30 WIB',
+            eventLocation: 'Kampus Terpadu UII, Gedung FTI',
+            eventRoom: 'Auditorium KH. Abdurrahman Wahid Lt. 3',
+            userId: 'usr-jay-001',
+            userName: 'Jay',
+            userNim: '23524001',
+            userStudyProgram: 'Teknik Elektro - Fakultas Teknologi Industri',
+            qrPayload: JSON.stringify({
+              ticketCode: seminarCodeJay,
+              nim: '23524001',
+              name: 'Jay',
+              eventId: 'evt-001',
+              hash: seminarHashJay,
+              timestamp: 1763640000000
+            }),
+            hashSignature: seminarHashJay,
+            timestampIssued: '22 November 2026, 09:10 WIB',
+            isCheckedIn: false
+          });
+          currentRegs.push({
+            id: 'reg-seminar-jay-001',
+            userId: 'usr-jay-001',
+            userNim: '23524001',
+            userName: 'Jay',
+            userEmail: '23524001@students.uii.ac.id',
+            userPhone: '081234567891',
+            userFaculty: 'Fakultas Teknologi Industri',
+            userStudyProgram: 'Teknik Elektro',
+            eventId: 'evt-001',
+            eventTitle: 'Seminar Nasional AI & Karir Teknologi 2026',
+            eventDate: '2026-11-25',
+            eventLocation: 'Auditorium KH. Abdurrahman Wahid Lt. 3, Kampus Terpadu UII, Gedung FTI',
+            status: 'REGISTERED',
+            createdAt: '2026-11-22T09:10:00.000Z'
+          });
+        }
+
+        const hasJayGalaTicket = currentTickets.some(t => 
+          (t.userId === 'usr-jay-001' || t.userNim === '23524001') && t.eventId === 'evt-005'
+        );
+        if (!hasJayGalaTicket) {
+          const galaCodeJay = 'UII-TIK-2026-5244';
+          const galaHashJay = this.generateHashSignature('23524001', 'evt-005', galaCodeJay);
+          currentTickets.push({
+            id: 'tck-gala-jay-001',
+            registrationId: 'reg-gala-jay-001',
+            ticketCode: galaCodeJay,
+            eventId: 'evt-005',
+            eventTitle: 'Malam Refleksi & Apresiasi Seni Kemahasiswaan (Gala Budaya UII)',
+            eventCategory: 'CONCERT',
+            eventDate: '2026-12-18',
+            eventTime: '19:30 - 22:30 WIB',
+            eventLocation: 'Open Air Amphitheater UII',
+            eventRoom: 'Panggung Utama Amphitheater',
+            userId: 'usr-jay-001',
+            userName: 'Jay',
+            userNim: '23524001',
+            userStudyProgram: 'Teknik Elektro - Fakultas Teknologi Industri',
+            qrPayload: JSON.stringify({
+              ticketCode: galaCodeJay,
+              nim: '23524001',
+              name: 'Jay',
+              eventId: 'evt-005',
+              hash: galaHashJay,
+              timestamp: 1763640000000
+            }),
+            hashSignature: galaHashJay,
+            timestampIssued: '22 November 2026, 09:15 WIB',
+            isCheckedIn: true,
+            checkedInAt: '19.45 WIB',
+            checkedInBy: 'Meja Registrasi UII'
+          });
+          currentRegs.push({
+            id: 'reg-gala-jay-001',
+            userId: 'usr-jay-001',
+            userNim: '23524001',
+            userName: 'Jay',
+            userEmail: '23524001@students.uii.ac.id',
+            userPhone: '081234567891',
+            userFaculty: 'Fakultas Teknologi Industri',
+            userStudyProgram: 'Teknik Elektro',
+            eventId: 'evt-005',
+            eventTitle: 'Malam Refleksi & Apresiasi Seni Kemahasiswaan (Gala Budaya UII)',
+            eventDate: '2026-12-18',
+            eventLocation: 'Panggung Utama Amphitheater, Open Air Amphitheater UII',
+            status: 'ATTENDED',
+            createdAt: '2026-11-22T09:15:00.000Z'
+          });
+        }
+
         // Sanitize tickets data to guarantee correct department mapping
         currentTickets = currentTickets.map(t => {
           if (t.userId === 'usr-raynor-001' || t.userNim === '23525055' || t.userNim === '23523055') {
@@ -608,6 +764,16 @@ export class EventService {
               userName: 'Muhammad Raynor Athaillah',
               userNim: '23525055',
               userStudyProgram: 'Teknik Mesin',
+              userFaculty: 'Fakultas Teknologi Industri',
+              isUnlocked: true
+            };
+          } else if (c.userNim === '23524001' || c.userId === 'usr-jay-001' || c.userName?.toLowerCase().includes('jay')) {
+            return {
+              ...c,
+              userId: 'usr-jay-001',
+              userName: 'Jay',
+              userNim: '23524001',
+              userStudyProgram: 'Teknik Elektro',
               userFaculty: 'Fakultas Teknologi Industri',
               isUnlocked: true
             };
@@ -1260,6 +1426,13 @@ export class EventService {
       isCheckedIn: false
     };
 
+    const workshopCodeJay = 'UII-TIK-2026-5241';
+    const workshopHashJay = this.generateHashSignature('23524001', 'evt-002', workshopCodeJay);
+    const seminarCodeJay = 'UII-TIK-2026-5242';
+    const seminarHashJay = this.generateHashSignature('23524001', 'evt-001', seminarCodeJay);
+    const galaCodeJay = 'UII-TIK-2026-5244';
+    const galaHashJay = this.generateHashSignature('23524001', 'evt-005', galaCodeJay);
+
     const seedTickets: TicketItem[] = [
       porsematikTicket,
       nitcTicket,
@@ -1267,7 +1440,90 @@ export class EventService {
       seminarAiTicket,
       pestaTicket,
       galaTicket,
-      cyberTicket
+      cyberTicket,
+      {
+        id: 'tck-workshop-jay-001',
+        registrationId: 'reg-workshop-jay-001',
+        ticketCode: workshopCodeJay,
+        eventId: 'evt-002',
+        eventTitle: 'Workshop Pengelola Website: Pengelolaan Konten Berbasis SEO dan AI',
+        eventCategory: 'WORKSHOP',
+        eventDate: '2026-11-25',
+        eventTime: '08:30 - 15:30 WIB',
+        eventLocation: 'Gedung Prof. Dr. Sardjito UII, Kampus Terpadu',
+        eventRoom: 'Ruang Teatrikal Gedung Prof. Dr. Sardjito',
+        userId: 'usr-jay-001',
+        userName: 'Jay',
+        userNim: '23524001',
+        userStudyProgram: 'Teknik Elektro - Fakultas Teknologi Industri',
+        qrPayload: JSON.stringify({
+          ticketCode: workshopCodeJay,
+          nim: '23524001',
+          name: 'Jay',
+          eventId: 'evt-002',
+          hash: workshopHashJay,
+          timestamp: 1763640000000
+        }),
+        hashSignature: workshopHashJay,
+        timestampIssued: '22 November 2026, 09:00 WIB',
+        isCheckedIn: false
+      },
+      {
+        id: 'tck-seminar-jay-001',
+        registrationId: 'reg-seminar-jay-001',
+        ticketCode: seminarCodeJay,
+        eventId: 'evt-001',
+        eventTitle: 'Seminar Nasional AI & Karir Teknologi 2026',
+        eventCategory: 'SEMINAR',
+        eventDate: '2026-11-25',
+        eventTime: '08:00 - 12:30 WIB',
+        eventLocation: 'Kampus Terpadu UII, Gedung FTI',
+        eventRoom: 'Auditorium KH. Abdurrahman Wahid Lt. 3',
+        userId: 'usr-jay-001',
+        userName: 'Jay',
+        userNim: '23524001',
+        userStudyProgram: 'Teknik Elektro - Fakultas Teknologi Industri',
+        qrPayload: JSON.stringify({
+          ticketCode: seminarCodeJay,
+          nim: '23524001',
+          name: 'Jay',
+          eventId: 'evt-001',
+          hash: seminarHashJay,
+          timestamp: 1763640000000
+        }),
+        hashSignature: seminarHashJay,
+        timestampIssued: '22 November 2026, 09:10 WIB',
+        isCheckedIn: false
+      },
+      {
+        id: 'tck-gala-jay-001',
+        registrationId: 'reg-gala-jay-001',
+        ticketCode: galaCodeJay,
+        eventId: 'evt-005',
+        eventTitle: 'Malam Refleksi & Apresiasi Seni Kemahasiswaan (Gala Budaya UII)',
+        eventCategory: 'CONCERT',
+        eventDate: '2026-12-18',
+        eventTime: '19:30 - 22:30 WIB',
+        eventLocation: 'Open Air Amphitheater UII',
+        eventRoom: 'Panggung Utama Amphitheater',
+        userId: 'usr-jay-001',
+        userName: 'Jay',
+        userNim: '23524001',
+        userStudyProgram: 'Teknik Elektro - Fakultas Teknologi Industri',
+        qrPayload: JSON.stringify({
+          ticketCode: galaCodeJay,
+          nim: '23524001',
+          name: 'Jay',
+          eventId: 'evt-005',
+          hash: galaHashJay,
+          timestamp: 1763640000000
+        }),
+        hashSignature: galaHashJay,
+        timestampIssued: '22 November 2026, 09:15 WIB',
+        isCheckedIn: true,
+        checkedInAt: '19.45 WIB',
+        checkedInBy: 'Meja Registrasi UII'
+      }
     ];
     const attendedRegId = 'reg-rian-attended-099';
     const attendedTicketId = 'tck-rian-attended-099';
