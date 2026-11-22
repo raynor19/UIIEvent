@@ -58,6 +58,7 @@ export class EventService {
 
   constructor(private authService: AuthService) {
     this.initializeData();
+    this.initRealtimeSync();
   }
 
   private initializeData(): void {
@@ -1808,6 +1809,12 @@ export class EventService {
         parsedObj = JSON.parse(scannedPayload);
         ticketCode = parsedObj.ticketCode || '';
         hash = parsedObj.hash || '';
+      } else if (scannedPayload.includes('code=')) {
+        const m = scannedPayload.match(/code=([^&]+)/);
+        ticketCode = m ? decodeURIComponent(m[1]).trim() : scannedPayload.trim();
+      } else if (scannedPayload.includes('/tickets/')) {
+        const parts = scannedPayload.split('/tickets/');
+        ticketCode = parts[1] ? parts[1].split('?')[0].trim() : scannedPayload.trim();
       } else {
         ticketCode = scannedPayload.trim();
       }
@@ -1877,6 +1884,7 @@ export class EventService {
         this.tickets.update(prev => [adoptedTicket, ...prev.filter(t => !(t.userNim === studentNim && t.eventId === event.id))]);
         this.issueCertificateForTicket(adoptedTicket);
         this.saveToStorage();
+        this.broadcastCheckIn(adoptedTicket.ticketCode, adoptedTicket.userNim, adoptedTicket.eventId, adoptedTicket.checkedInAt, adoptedTicket.checkedInBy);
 
         return {
           status: 'SUCCESS',
@@ -1931,6 +1939,7 @@ export class EventService {
     const newCert = this.issueCertificateForTicket(ticket);
 
     this.saveToStorage();
+    this.broadcastCheckIn(ticket.ticketCode, ticket.userNim, ticket.eventId, ticket.checkedInAt, ticket.checkedInBy);
 
     return {
       status: 'SUCCESS',
@@ -2031,7 +2040,200 @@ export class EventService {
     // Generate & unlock certificate
     const cert = this.issueCertificateForTicket(ticket);
     this.saveToStorage();
+    this.broadcastCheckIn(ticket.ticketCode, ticket.userNim, ticket.eventId, ticket.checkedInAt, ticket.checkedInBy);
     return cert;
+  }
+
+  /**
+   * Broadcast check-in event across local tabs (BroadcastChannel + storage) and across devices (ntfy.sh)
+   */
+  broadcastCheckIn(ticketCode: string, userNim?: string, eventId?: string, checkInTime?: string, operatorName?: string): void {
+    const time = checkInTime || (new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB');
+    const op = operatorName || 'Panitia Meja Registrasi UII';
+    const payload = {
+      action: 'CHECK_IN_SUCCESS',
+      ticketCode: (ticketCode || '').toUpperCase().trim(),
+      userNim: userNim || '',
+      eventId: eventId || '',
+      checkInTime: time,
+      operatorName: op,
+      timestamp: Date.now()
+    };
+
+    // 1. BroadcastChannel for same-device multi-tab real-time sync
+    try {
+      if (typeof BroadcastChannel !== 'undefined') {
+        const bc = new BroadcastChannel('uii_event_sync_channel');
+        bc.postMessage(payload);
+        bc.close();
+      }
+    } catch {}
+
+    // 2. Storage event for local browser tabs
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('uii_last_checkin_sync', JSON.stringify(payload));
+      }
+    } catch {}
+
+    // 3. Real-time Pub/Sub via ntfy.sh for Cross-Device Phone <-> Laptop sync
+    try {
+      if (typeof fetch !== 'undefined') {
+        fetch('https://ntfy.sh/uii_event_sync_prod_2026', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        }).catch(() => {});
+      }
+    } catch {}
+
+    // Dispatch locally as well
+    try {
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('uii-ticket-checked-in', { detail: payload }));
+      }
+    } catch {}
+  }
+
+  private syncInitialized = false;
+
+  /**
+   * Initialize real-time synchronization listeners for check-in events
+   */
+  initRealtimeSync(): void {
+    if (this.syncInitialized || typeof window === 'undefined') return;
+    this.syncInitialized = true;
+
+    // 1. Same-device BroadcastChannel
+    try {
+      if (typeof BroadcastChannel !== 'undefined') {
+        const bc = new BroadcastChannel('uii_event_sync_channel');
+        bc.onmessage = (event) => {
+          if (event.data?.action === 'CHECK_IN_SUCCESS') {
+            this.handleRemoteCheckIn(event.data);
+          }
+        };
+      }
+    } catch {}
+
+    // 2. Same-device Storage Event
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'uii_last_checkin_sync' && e.newValue) {
+        try {
+          const data = JSON.parse(e.newValue);
+          this.handleRemoteCheckIn(data);
+        } catch {}
+      } else if (e.key === STORAGE_KEYS.TICKETS) {
+        this.reloadStorageData();
+      }
+    });
+
+    // 3. Cross-device Real-time SSE via ntfy.sh
+    try {
+      if (typeof EventSource !== 'undefined') {
+        const sse = new EventSource('https://ntfy.sh/uii_event_sync_prod_2026/sse');
+        sse.onmessage = (event) => {
+          try {
+            const raw = JSON.parse(event.data);
+            const data = typeof raw.message === 'string' ? JSON.parse(raw.message) : raw.message || raw;
+            if (data?.action === 'CHECK_IN_SUCCESS') {
+              this.handleRemoteCheckIn(data);
+            }
+          } catch {}
+        };
+      }
+    } catch {}
+
+    // 4. Polling fallback every 2.5s for cross-device check
+    setInterval(() => {
+      if (typeof fetch !== 'undefined' && typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        fetch('https://ntfy.sh/uii_event_sync_prod_2026/json?poll=1&since=60s')
+          .then(res => res.text())
+          .then(text => {
+            const lines = text.trim().split('\n');
+            for (const line of lines) {
+              if (!line) continue;
+              try {
+                const parsed = JSON.parse(line);
+                const data = typeof parsed.message === 'string' ? JSON.parse(parsed.message) : parsed.message || parsed;
+                if (data?.action === 'CHECK_IN_SUCCESS') {
+                  this.handleRemoteCheckIn(data);
+                }
+              } catch {}
+            }
+          })
+          .catch(() => {});
+      }
+    }, 2500);
+  }
+
+  /**
+   * Handle incoming remote check-in from another device or scanner
+   */
+  handleRemoteCheckIn(data: any): void {
+    if (!data || !data.ticketCode) return;
+    const code = (data.ticketCode || '').toUpperCase().trim();
+    const nim = data.userNim;
+    const evId = data.eventId;
+    const time = data.checkInTime || (new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB');
+    const op = data.operatorName || 'Panitia Meja Registrasi UII';
+
+    let hasChanged = false;
+
+    // Check existing tickets in memory
+    const tickets = this.tickets();
+    const match = tickets.find(t => 
+      t.ticketCode.toUpperCase() === code || 
+      (nim && t.userNim === nim && evId && t.eventId === evId)
+    );
+
+    if (match) {
+      if (!match.isCheckedIn) {
+        match.isCheckedIn = true;
+        match.checkedInAt = time;
+        match.checkedInBy = op;
+        this.tickets.update(ticks => ticks.map(t => t.id === match.id ? { ...match } : t));
+        this.registrations.update(regs => regs.map(r => 
+          (r.id === match.registrationId || (r.userNim === match.userNim && r.eventId === match.eventId))
+            ? { ...r, status: 'ATTENDED', attendedAt: new Date().toISOString() }
+            : r
+        ));
+        this.issueCertificateForTicket(match);
+        this.saveToStorage();
+        hasChanged = true;
+      }
+    } else {
+      this.reloadStorageData();
+    }
+
+    if (hasChanged) {
+      try {
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('uii-ticket-checked-in', { detail: data }));
+        }
+      } catch {}
+    }
+  }
+
+  /**
+   * Reload tickets, registrations, and certificates from storage
+   */
+  reloadStorageData(): void {
+    if (typeof localStorage === 'undefined') return;
+    try {
+      const savedTickets = localStorage.getItem(STORAGE_KEYS.TICKETS);
+      if (savedTickets) {
+        this.tickets.set(JSON.parse(savedTickets));
+      }
+      const savedRegs = localStorage.getItem(STORAGE_KEYS.REGISTRATIONS);
+      if (savedRegs) {
+        this.registrations.set(JSON.parse(savedRegs));
+      }
+      const savedCerts = localStorage.getItem(STORAGE_KEYS.CERTIFICATES);
+      if (savedCerts) {
+        this.certificates.set(JSON.parse(savedCerts));
+      }
+    } catch {}
   }
 
   /**

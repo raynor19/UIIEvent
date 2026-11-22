@@ -127,18 +127,29 @@
 
                 <div class="w-full space-y-3">
                   <!-- QR Code Container -->
-                  <div class="relative bg-white p-4 rounded-2xl border-2 border-dashed border-slate-300 shadow-xs inline-block mx-auto">
+                  <div 
+                    (click)="!ticket.isCheckedIn && checkInTicket(ticket)"
+                    [class.cursor-pointer]="!ticket.isCheckedIn"
+                    title="Tunjukkan ke panitia untuk di-scan (atau tap barcode untuk simulasi)"
+                    class="relative bg-white p-4 rounded-2xl border-2 border-dashed border-slate-300 shadow-xs inline-block mx-auto group">
                     @if (qrDataUrls[ticket.id]) {
-                      <img [src]="qrDataUrls[ticket.id]" [alt]="ticket.ticketCode" class="w-48 h-48 sm:w-52 sm:h-52 object-contain mx-auto" />
+                      <img [src]="qrDataUrls[ticket.id]" [alt]="ticket.ticketCode" class="w-48 h-48 sm:w-52 sm:h-52 object-contain mx-auto transition-transform group-hover:scale-[1.01]" />
                     }
                     @if (ticket.isCheckedIn) {
-                      <div class="absolute inset-0 bg-emerald-950/70 backdrop-blur-2xs rounded-2xl flex flex-col items-center justify-center text-white p-3">
+                      <div class="absolute inset-0 bg-emerald-950/70 backdrop-blur-2xs rounded-2xl flex flex-col items-center justify-center text-white p-3 animate-in fade-in zoom-in-95 duration-200">
                         <span class="text-3xl mb-1">✓</span>
                         <span class="font-black text-xs uppercase tracking-wider text-emerald-200">SUDAH CHECK-IN</span>
                         <span class="text-[10px] text-slate-200">{{ ticket.checkedInAt }}</span>
                       </div>
                     }
                   </div>
+                  @if (!ticket.isCheckedIn) {
+                    <span 
+                      (click)="checkInTicket(ticket)" 
+                      class="text-[10px] text-slate-400 hover:text-emerald-700 font-medium block mt-0.5 transition cursor-pointer">
+                      💡 Tunjukkan ke panitia untuk di-scan (atau tap barcode)
+                    </span>
+                  }
 
                   <!-- Monospace Ticket Code -->
                   <div>
@@ -155,7 +166,7 @@
                       (click)="checkInTicket(ticket)"
                       class="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-xs transition flex items-center justify-center gap-2 shadow-sm cursor-pointer active:scale-[0.99]">
                       <span>✓</span>
-                      <span>Konfirmasi Hadir (Check-In)</span>
+                      <span>Konfirmasi Hadir (Simulasi Scan)</span>
                     </button>
                   } @else {
                     <a 

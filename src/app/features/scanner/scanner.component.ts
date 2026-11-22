@@ -421,6 +421,7 @@ export class ScannerComponent implements OnInit, OnDestroy {
       );
       this.eventService.issueCertificateForTicket(matchTicket);
       this.eventService.saveToStorage();
+      this.eventService.broadcastCheckIn(matchTicket.ticketCode, matchTicket.userNim, matchTicket.eventId, matchTicket.checkedInAt, matchTicket.checkedInBy);
     }
 
     const nowStr = new Date().toTimeString().substring(0, 8);
