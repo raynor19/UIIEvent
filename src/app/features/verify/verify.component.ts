@@ -16,9 +16,14 @@ export class VerifyComponent implements OnInit {
 
   cert: CertificateItem | undefined;
 
-  ngOnInit(): void {
+  async ngOnInit(): Promise<void> {
     const hash = this.route.snapshot.paramMap.get('hash');
     if (hash) {
+      const remoteCert = await this.eventService.verifyCertificatePublicApi(hash);
+      if (remoteCert) {
+        this.cert = remoteCert;
+        return;
+      }
       this.cert = this.eventService.certificates().find(c => c.verificationHash === hash);
       // Fallback for partial hash demo
       if (!this.cert) {

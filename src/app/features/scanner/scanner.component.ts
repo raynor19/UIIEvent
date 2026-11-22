@@ -16,6 +16,7 @@ export interface ScanLogItem {
 }
 
 export interface ManualParticipant {
+  ticketCode?: string;
   nim: string;
   name: string;
   prodi: string;
@@ -38,15 +39,6 @@ export class ScannerComponent implements OnInit, OnDestroy {
   audioService = inject(AudioService);
   authService = inject(AuthService);
 
-  // Active event being scanned (defaults to NITC evt-004 or query param)
-  currentEventId = signal<string>('evt-004');
-  currentEvent = computed(() => {
-    const id = this.currentEventId();
-    const list = this.eventService.events();
-    const found = list.find(e => e.id === id);
-    return found || list[0] || null;
-  });
-
   // Sound configuration
   soundActive = signal<boolean>(true);
 
@@ -62,7 +54,7 @@ export class ScannerComponent implements OnInit, OnDestroy {
   // Real-time counter metrics (SCR-PAN-05)
   hadirCount = signal<number>(0);
   totalCount = signal<number>(0);
-  unattendedCount = computed(() => Math.max(0, this.totalCount() - this.hadirCount()));
+  unattendedCount = computed(() => this.totalCount() - this.hadirCount());
 
   // Online / Offline mode
   isOnline = signal<boolean>(true);
@@ -82,6 +74,11 @@ export class ScannerComponent implements OnInit, OnDestroy {
   // Recent scan logs
   scanLogs = signal<ScanLogItem[]>([]);
 
+  // Active Event Header info
+  eventHeaderTitle = signal<string>('Kegiatan UII');
+  eventOrgTitle = signal<string>('Web Scanner Meja Registrasi');
+  currentEventId = signal<string>('');
+
   // Presensi Manual state
   showManualSearch = signal<boolean>(false);
   manualSearchInput = signal<string>('');
@@ -97,48 +94,82 @@ export class ScannerComponent implements OnInit, OnDestroy {
 
   autoDismissTimeout: any = null;
 
-  ngOnInit(): void {
-    this.route.queryParams.subscribe(params => {
-      const id = params['eventId'] || this.route.snapshot.paramMap.get('id') || 
-        (typeof localStorage !== 'undefined' ? localStorage.getItem('uii_panitia_selected_event') : null);
-      if (id) {
-        this.currentEventId.set(id);
-      }
-      this.syncEventMetrics();
-    });
-
+  async ngOnInit(): Promise<void> {
     // Attempt auto-start camera
     this.startCamera();
+
+    // Check if event ID is provided in route query or param
+    let eventId = this.route.snapshot.paramMap.get('eventId') || this.route.snapshot.queryParamMap.get('eventId');
+    
+    if (!eventId) {
+      await this.eventService.loadOrganizerEvents();
+      const orgEvents = this.eventService.events().filter(e => e.status === 'PUBLISHED');
+      if (orgEvents.length > 0) {
+        eventId = orgEvents[0].id;
+      } else if (this.eventService.events().length > 0) {
+        eventId = this.eventService.events()[0].id;
+      }
+    }
+
+    if (eventId) {
+      this.currentEventId.set(eventId);
+      await this.loadEventAttendance(eventId);
+    } else {
+      // Default to total tickets count
+      const allTickets = this.eventService.tickets();
+      this.totalCount.set(allTickets.length || 0);
+      this.hadirCount.set(allTickets.filter(t => t.isCheckedIn).length || 0);
+      this.manualParticipants.set(allTickets.map(t => ({
+        ticketCode: t.ticketCode,
+        nim: t.userNim,
+        name: t.userName,
+        prodi: t.userStudyProgram,
+        isCheckedIn: t.isCheckedIn
+      })));
+    }
   }
 
-  syncEventMetrics(): void {
-    const evId = this.currentEventId();
-    const tickets = this.eventService.tickets().filter(t => t.eventId === evId);
-    const regs = this.eventService.registrations().filter(r => r.eventId === evId && r.status !== 'CANCELLED');
+  async loadEventAttendance(eventId: string): Promise<void> {
+    const activeEvent = this.eventService.events().find(e => e.id === eventId);
+    if (activeEvent) {
+      this.eventHeaderTitle.set(activeEvent.title);
+      this.eventOrgTitle.set(`Web Scanner Meja Registrasi · ${activeEvent.organizer || 'Panitia UII'}`);
+    }
 
-    this.totalCount.set(Math.max(tickets.length, regs.length));
-    const attended = tickets.filter(t => t.isCheckedIn).length || regs.filter(r => r.status === 'ATTENDED').length;
-    this.hadirCount.set(attended);
-
-    if (regs.length > 0) {
-      const mapped: ManualParticipant[] = regs.map(r => {
-        const t = tickets.find(tick => tick.registrationId === r.id);
-        return {
-          nim: r.userNim,
-          name: r.userName,
-          prodi: r.userStudyProgram || 'Teknik Mesin',
-          isCheckedIn: r.status === 'ATTENDED' || !!t?.isCheckedIn
-        };
-      });
-      this.manualParticipants.set(mapped);
-      if (mapped.length > 0) {
-        this.manualSearchInput.set(mapped[0].name.toLowerCase());
+    const stats = await this.eventService.getEventAttendanceStatsApi(eventId);
+    if (stats?.data && Array.isArray(stats.data)) {
+      if (stats.data[0]?.event?.title) {
+        this.eventHeaderTitle.set(stats.data[0].event.title);
       }
+      
+      const totalReg = stats.meta?.statistics?.total_registered ?? stats.meta?.total ?? stats.data.length;
+      const totalAtt = stats.meta?.statistics?.total_attended ?? stats.data.filter((d: any) => d.is_checked_in).length;
+      
+      this.totalCount.set(totalReg);
+      this.hadirCount.set(totalAtt);
+
+      const mappedManual: ManualParticipant[] = stats.data.map((item: any) => ({
+        ticketCode: item.ticket_code,
+        nim: item.attendee?.nim || item.user?.nim || '',
+        name: item.attendee?.name || item.user?.name || 'Peserta',
+        prodi: item.attendee?.study_program || item.attendee?.faculty || 'Informatika',
+        isCheckedIn: !!item.is_checked_in
+      }));
+
+      this.manualParticipants.set(mappedManual);
     } else {
-      this.manualParticipants.set([
-        { nim: '23525055', name: 'Muhammad Raynor Athaillah', prodi: 'Teknik Mesin', isCheckedIn: false }
-      ]);
-      this.manualSearchInput.set('raynor');
+      const matchingTickets = this.eventService.tickets().filter(t => !eventId || t.eventId === eventId);
+      if (matchingTickets.length > 0) {
+        this.totalCount.set(matchingTickets.length);
+        this.hadirCount.set(matchingTickets.filter(t => t.isCheckedIn).length);
+        this.manualParticipants.set(matchingTickets.map(t => ({
+          ticketCode: t.ticketCode,
+          nim: t.userNim,
+          name: t.userName,
+          prodi: t.userStudyProgram,
+          isCheckedIn: t.isCheckedIn
+        })));
+      }
     }
   }
 
@@ -223,7 +254,7 @@ export class ScannerComponent implements OnInit, OnDestroy {
     if (video && canvas && video.readyState === video.HAVE_ENOUGH_DATA) {
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
-      const ctx = canvas.getContext('2d');
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
       if (ctx) {
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
@@ -243,32 +274,31 @@ export class ScannerComponent implements OnInit, OnDestroy {
   }
 
   // Processing scanned QR code
-  processDecodedQr(payload: string): void {
+  async processDecodedQr(payload: string): Promise<void> {
     if (this.isProcessingScan) return;
     this.isProcessingScan = true;
 
     const operatorName = this.authService.currentUser().name;
-    const result = this.eventService.processScan(payload, operatorName);
+    const result = await this.eventService.processScanReal(payload, operatorName);
 
     const nowStr = new Date().toTimeString().substring(0, 8);
 
     if (result.status === 'SUCCESS') {
       this.scanResultState.set('VALID');
       this.scanResultData.set({
-        name: result.participantName || 'Muhammad Raynor Athaillah',
-        nim: result.nim || '23525055',
+        name: result.participantName || 'Mahasiswa UII',
+        nim: result.nim || '',
+        message: result.message || 'Presensi Berhasil: Hadir Terverifikasi!',
         timestamp: nowStr
       });
       this.hadirCount.update(c => c + 1);
 
       this.addScanLog({
         time: nowStr,
-        name: result.participantName || 'Muhammad Raynor Athaillah',
-        nim: result.nim || '23525055',
+        name: result.participantName || 'Mahasiswa UII',
+        nim: result.nim || '',
         status: 'HADIR'
       });
-
-      this.syncEventMetrics();
 
       if (this.soundActive()) {
         this.audioService.playSuccessBeep();
@@ -281,15 +311,15 @@ export class ScannerComponent implements OnInit, OnDestroy {
     } else if (result.status === 'DUPLICATE') {
       this.scanResultState.set('DUPLICATE');
       this.scanResultData.set({
-        name: result.participantName || 'Muhammad Raynor Athaillah',
-        nim: result.nim || '23525055',
-        message: 'Tiket sudah pernah digunakan pada pukul 08.15 WIB!'
+        name: result.participantName || 'Mahasiswa UII',
+        nim: result.nim || '',
+        message: result.message || 'Peringatan: Tiket sudah pernah dipindai sebelumnya!'
       });
 
       this.addScanLog({
         time: nowStr,
-        name: result.participantName || 'Muhammad Raynor Athaillah',
-        nim: result.nim || '23525055',
+        name: result.participantName || 'Mahasiswa UII',
+        nim: result.nim || '',
         status: 'DUPLIKAT'
       });
 
@@ -299,15 +329,15 @@ export class ScannerComponent implements OnInit, OnDestroy {
     } else {
       this.scanResultState.set('INVALID');
       this.scanResultData.set({
-        name: 'QR tidak dikenal',
-        nim: '',
-        message: 'Tiket Tidak Dikenali / Tidak Sah!'
+        name: result.participantName || 'QR Tidak Sah',
+        nim: result.nim || '',
+        message: result.message || 'Tiket Tidak Dikenali / Tidak Sah!'
       });
 
       this.addScanLog({
         time: nowStr,
-        name: 'QR tidak dikenal',
-        nim: '',
+        name: result.participantName || 'QR Tidak Sah',
+        nim: result.nim || '',
         status: 'TIDAK_SAH'
       });
 
@@ -330,19 +360,7 @@ export class ScannerComponent implements OnInit, OnDestroy {
 
   // Quick prototype simulator actions as seen in SCR-PAN-05
   simulateScanValid(): void {
-    const evId = this.currentEventId();
-    const t = this.eventService.tickets().find(tick => tick.eventId === evId);
-    if (t) {
-      this.processDecodedQr(t.qrPayload || t.ticketCode);
-    } else {
-      this.processDecodedQr(JSON.stringify({
-        ticketCode: `UII-TIK-2026-5522`,
-        nim: '23525055',
-        name: 'Muhammad Raynor Athaillah',
-        eventId: evId,
-        hash: 'valid_test_hash'
-      }));
-    }
+    this.processDecodedQr('VALID_TICKET_TEST');
   }
 
   simulateScanDuplicate(): void {
@@ -402,44 +420,81 @@ export class ScannerComponent implements OnInit, OnDestroy {
     this.showManualSearch.update(v => !v);
   }
 
-  markManualHadir(p: ManualParticipant): void {
-    p.isCheckedIn = true;
-    this.hadirCount.update(c => c + 1);
-
-    // Also update ticket & registration in eventService if matching
-    const matchTicket = this.eventService.tickets().find(t => t.userNim === p.nim && t.eventId === this.currentEventId());
-    if (matchTicket && !matchTicket.isCheckedIn) {
-      const nowFormatted = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB';
-      matchTicket.isCheckedIn = true;
-      matchTicket.checkedInAt = nowFormatted;
-      matchTicket.checkedInBy = this.authService.currentUser().name;
-      this.eventService.registrations.update(regs => 
-        regs.map(r => r.id === matchTicket.registrationId ? { ...r, status: 'ATTENDED', attendedAt: new Date().toISOString() } : r)
-      );
-      this.eventService.tickets.update(ticks => 
-        ticks.map(t => t.id === matchTicket.id ? { ...matchTicket } : t)
-      );
-      this.eventService.issueCertificateForTicket(matchTicket);
-      this.eventService.saveToStorage();
-      this.eventService.broadcastCheckIn(matchTicket.ticketCode, matchTicket.userNim, matchTicket.eventId, matchTicket.checkedInAt, matchTicket.checkedInBy);
-    }
+  async markManualHadir(p: ManualParticipant): Promise<void> {
+    const operatorName = this.authService.currentUser()?.name || 'Panitia Meja Registrasi';
+    const scanRef = p.ticketCode || p.nim;
+    const result = await this.eventService.processScanReal(scanRef, operatorName);
 
     const nowStr = new Date().toTimeString().substring(0, 8);
-    this.scanResultState.set('VALID');
-    this.scanResultData.set({
-      name: p.name,
-      nim: p.nim
-    });
 
-    this.addScanLog({
-      time: nowStr,
-      name: p.name,
-      nim: p.nim,
-      status: 'HADIR'
-    });
+    if (result.status === 'SUCCESS') {
+      p.isCheckedIn = true;
+      this.hadirCount.update(c => c + 1);
 
-    if (this.soundActive()) {
-      this.audioService.playSuccessBeep();
+      this.scanResultState.set('VALID');
+      this.scanResultData.set({
+        name: result.participantName || p.name,
+        nim: result.nim || p.nim,
+        message: result.message || 'Presensi Manual Berhasil!',
+        timestamp: nowStr
+      });
+
+      if (this.currentEventId()) {
+        this.loadEventAttendance(this.currentEventId()).catch(() => {});
+      }
+
+      this.addScanLog({
+        time: nowStr,
+        name: result.participantName || p.name,
+        nim: result.nim || p.nim,
+        status: 'HADIR'
+      });
+
+      if (this.soundActive()) {
+        this.audioService.playSuccessBeep();
+      }
+      confetti({
+        particleCount: 40,
+        spread: 60,
+        origin: { y: 0.6 }
+      });
+    } else if (result.status === 'DUPLICATE') {
+      p.isCheckedIn = true;
+      this.scanResultState.set('DUPLICATE');
+      this.scanResultData.set({
+        name: result.participantName || p.name,
+        nim: result.nim || p.nim,
+        message: result.message || 'Peringatan: Peserta sudah tercatat presensi sebelumnya!'
+      });
+
+      this.addScanLog({
+        time: nowStr,
+        name: result.participantName || p.name,
+        nim: result.nim || p.nim,
+        status: 'DUPLIKAT'
+      });
+
+      if (this.soundActive()) {
+        this.audioService.playErrorAlarm();
+      }
+    } else {
+      this.scanResultState.set('INVALID');
+      this.scanResultData.set({
+        name: p.name,
+        nim: p.nim,
+        message: result.message || 'Gagal memproses presensi manual.'
+      });
+
+      this.addScanLog({
+        time: nowStr,
+        name: p.name,
+        nim: p.nim,
+        status: 'TIDAK_SAH'
+      });
+
+      if (this.soundActive()) {
+        this.audioService.playErrorAlarm();
+      }
     }
 
     if (this.autoDismissTimeout) clearTimeout(this.autoDismissTimeout);
@@ -449,11 +504,6 @@ export class ScannerComponent implements OnInit, OnDestroy {
   }
 
   goBack(): void {
-    const evId = this.currentEventId();
-    if (evId) {
-      this.router.navigate(['/dashboard/panitia'], { queryParams: { eventId: evId } });
-    } else {
-      this.router.navigate(['/dashboard/panitia']);
-    }
+    this.router.navigate(['/dashboard/panitia']);
   }
 }

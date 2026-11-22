@@ -12,10 +12,10 @@
 
       <div>
         <div class="text-[11px] text-slate-400 font-medium">
-          Web Scanner Meja Registrasi · {{ currentEvent()?.organizer || 'Panitia Acara UII' }}
+          {{ eventOrgTitle() }}
         </div>
         <h1 class="text-base sm:text-lg font-bold text-white tracking-tight">
-          {{ currentEvent()?.title || 'Scanner Meja Registrasi' }}
+          {{ eventHeaderTitle() }}
         </h1>
       </div>
     </div>
@@ -233,11 +233,13 @@
               </div>
               <div>
                 <h3 class="font-bold text-sm leading-snug">
-                  PERINGATAN: Tiket sudah pernah digunakan pada pukul 08.15 WIB!
+                  {{ scanResultData().message || 'PERINGATAN: Tiket sudah pernah digunakan sebelumnya!' }}
                 </h3>
-                <div class="text-xs text-rose-100 mt-1 flex items-center gap-1.5">
-                  <span>🔊 Alarm diputar · kartu berkedip maks. 3x</span>
-                </div>
+                @if (scanResultData().name) {
+                  <div class="text-xs text-rose-100 mt-1 flex items-center gap-1.5">
+                    <span>{{ scanResultData().name }} ({{ scanResultData().nim }})</span>
+                  </div>
+                }
               </div>
             </div>
           }
@@ -250,10 +252,10 @@
               </div>
               <div>
                 <h3 class="font-bold text-sm leading-snug">
-                  Tiket Tidak Dikenali / Tidak Sah!
+                  {{ scanResultData().message || 'Tiket Tidak Dikenali / Tidak Sah!' }}
                 </h3>
                 <div class="text-xs text-rose-100 mt-1 flex items-center gap-1.5">
-                  <span>🔊 Alarm diputar · QR tidak lolos verifikasi HMAC</span>
+                  <span>🔊 Alarm diputar · Verifikasi kode tiket atau payload gagal</span>
                 </div>
               </div>
             </div>
@@ -380,10 +382,16 @@
                     }
                   </div>
                 }
+                @empty {
+                  <div class="py-4 text-center text-xs text-slate-400">
+                    Tidak ada data peserta yang cocok dengan "{{ manualSearchInput() }}"
+                  </div>
+                }
               </div>
 
-              <div class="pt-2 border-t border-slate-100 text-[10px] text-slate-400">
-                Daftar peserta di-cache saat koneksi online (208 peserta)
+              <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-400">
+                <span>Total Peserta: <strong class="text-slate-700">{{ manualParticipants().length }} peserta</strong></span>
+                <span class="text-emerald-600 font-medium">✓ Terhubung Realtime DB</span>
               </div>
             </div>
           }

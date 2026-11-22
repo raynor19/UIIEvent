@@ -1,5 +1,8 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal, computed, inject } from '@angular/core';
 import { Router } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
+import { environment } from '../../../environments/environment';
 import { UserProfile } from '../models/user.model';
 
 export interface UiiDepartmentInfo {
@@ -128,17 +131,6 @@ export const MOCK_USERS: UserProfile[] = [
     avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80'
   },
   {
-    id: 'usr-jay-001',
-    nim: '23524001',
-    name: 'Jay',
-    email: '23524001@students.uii.ac.id',
-    phone: '081234567891',
-    faculty: 'Fakultas Teknologi Industri',
-    studyProgram: 'Teknik Elektro',
-    role: 'MAHASISWA',
-    avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80'
-  },
-  {
     id: 'usr-sarah-002',
     nim: '20523120',
     name: 'Panitia UII',
@@ -166,6 +158,7 @@ export const MOCK_USERS: UserProfile[] = [
   providedIn: 'root'
 })
 export class AuthService {
+  private http = inject(HttpClient);
   private readonly USER_STORAGE_KEY = 'uii_active_user_id';
   private readonly TOKEN_STORAGE_KEY = 'uii_jwt_token_session';
 
@@ -185,6 +178,19 @@ export class AuthService {
     if (typeof localStorage !== 'undefined') {
       const savedToken = localStorage.getItem(this.TOKEN_STORAGE_KEY);
       let savedId = localStorage.getItem(this.USER_STORAGE_KEY);
+      const savedProfile = localStorage.getItem('uii_user_profile');
+
+      if (savedProfile && savedToken) {
+        try {
+          const profile = JSON.parse(savedProfile);
+          if (profile && profile.role) {
+            this.currentUser.set(profile);
+            this.isLoggedIn.set(true);
+            this.jwtToken.set(savedToken);
+            return;
+          }
+        } catch (e) {}
+      }
 
       // Restore custom registered users if any
       const savedRegistered = localStorage.getItem('uii_registered_users_list');
@@ -197,10 +203,7 @@ export class AuthService {
               ru.studyProgram = info.studyProgram;
               ru.faculty = info.faculty;
             }
-            const existingIdx = MOCK_USERS.findIndex(u => u.id === ru.id || u.nim === ru.nim);
-            if (existingIdx >= 0) {
-              MOCK_USERS[existingIdx] = { ...MOCK_USERS[existingIdx], ...ru };
-            } else {
+            if (!MOCK_USERS.some(u => u.id === ru.id || u.nim === ru.nim)) {
               MOCK_USERS.push(ru);
             }
           });
@@ -209,36 +212,12 @@ export class AuthService {
         }
       }
 
-      // Check stored profile JSON first for highest fidelity
-      const savedProfileJson = localStorage.getItem('uii_active_user_profile');
-      if (savedProfileJson) {
-        try {
-          const profile: UserProfile = JSON.parse(savedProfileJson);
-          if (profile && profile.name) {
-            const existingIdx = MOCK_USERS.findIndex(u => u.id === profile.id || u.nim === profile.nim);
-            if (existingIdx >= 0) {
-              MOCK_USERS[existingIdx] = profile;
-            } else {
-              MOCK_USERS.push(profile);
-            }
-            this.currentUser.set(profile);
-            this.isLoggedIn.set(true);
-            if (savedToken) this.jwtToken.set(savedToken);
-            return;
-          }
-        } catch (e) {
-          console.error('Failed to parse saved user profile', e);
-        }
-      }
-
       if (savedToken && savedId) {
-        const cleanSavedId = savedId.replace(/^usr-/, '');
-        const found = MOCK_USERS.find(u => 
-          u.id === savedId || 
-          u.nim === savedId || 
-          u.nim === cleanSavedId ||
-          (cleanSavedId === '23524001' && (u.id === 'usr-jay-001' || u.nim === '23524001'))
-        );
+        if (savedId === 'usr-rian-001' || savedId === '21523001' || savedId === 'usr-raynor-001') {
+          savedId = 'usr-raynor-001';
+          localStorage.setItem(this.USER_STORAGE_KEY, 'usr-raynor-001');
+        }
+        const found = MOCK_USERS.find(u => u.id === savedId || u.nim === savedId);
         if (found) {
           if (found.role === 'MAHASISWA' && found.nim) {
             const info = getUiiProdiFromNim(found.nim);
@@ -248,96 +227,89 @@ export class AuthService {
           this.currentUser.set(found);
           this.isLoggedIn.set(true);
           this.jwtToken.set(savedToken);
-          localStorage.setItem('uii_active_user_profile', JSON.stringify(found));
           return;
         }
       }
     }
-    // Default active session for instant interactive testing: Jay
-    this.currentUser.set(MOCK_USERS[1] || MOCK_USERS[0]);
+    // Default active session for instant interactive testing: Muhammad Raynor Athaillah
+    this.currentUser.set(MOCK_USERS[0]);
     this.isLoggedIn.set(true);
-    this.jwtToken.set('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJ1c3ItamF5LTAwMSIsInJvbGUiOiJNQUhBU0lTV0EifQ');
+    this.jwtToken.set('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJ1c3ItcmF5bm9yLTAwMSIsInJvbGUiOiJNQUhBU0lTV0EifQ');
   }
 
   /**
-   * SSO Authentication with UII Directory credentials
+   * SSO Authentication with UII Directory credentials (Connected to Laravel API with Offline Fallback)
    */
-  login(identifier: string, password?: string): { success: boolean; message: string; user?: UserProfile } {
-    const cleanId = identifier.trim().toLowerCase();
+  async login(identifier: string, password = 'password123'): Promise<{ success: boolean; message: string; user?: UserProfile }> {
+    const cleanId = identifier.trim();
 
-    let user = MOCK_USERS.find(
-      u => u.nim.toLowerCase() === cleanId || u.email.toLowerCase() === cleanId
-    );
+    try {
+      const res: any = await firstValueFrom(
+        this.http.post(`${environment.apiUrl}/auth/login`, {
+          identifier: cleanId,
+          password: password
+        })
+      );
 
-    // If not found in memory, check if previously registered in localStorage
-    if (!user && typeof localStorage !== 'undefined') {
-      const savedRegistered = localStorage.getItem('uii_registered_users_list');
-      if (savedRegistered) {
-        try {
-          const list: UserProfile[] = JSON.parse(savedRegistered);
-          user = list.find(u => u.nim.toLowerCase() === cleanId || u.email.toLowerCase() === cleanId);
-          if (user && !MOCK_USERS.some(u => u.id === user!.id || u.nim === user!.nim)) {
-            MOCK_USERS.push(user);
-          }
-        } catch (e) {
-          console.error('Failed to parse registered users list', e);
-        }
-      }
-    }
+      if (res && res.data && res.data.token) {
+        const backendUser = res.data.user;
+        const roleMap: Record<string, 'MAHASISWA' | 'PANITIA' | 'DPK_ADMIN'> = {
+          'STUDENT': 'MAHASISWA',
+          'ORGANIZER': 'PANITIA',
+          'SUPERADMIN': 'DPK_ADMIN'
+        };
+        const mappedRole = roleMap[backendUser.role] || 'MAHASISWA';
 
-    // Dynamic UII Campus Directory SSO Resolution:
-    // Seamlessly authenticate students entering any valid UII NIM or campus email across devices
-    if (!user) {
-      const cleanDigits = cleanId.replace(/\D/g, '');
-      const isNimFormat = cleanDigits.length >= 6 && cleanDigits.length <= 10;
-      const isUiiEmail = cleanId.includes('@students.uii.ac.id') || cleanId.includes('@uii.ac.id');
-      const isEmail = cleanId.includes('@');
-
-      if (isNimFormat || isUiiEmail || cleanId === '23524001') {
-        const nim = isNimFormat ? cleanDigits : (cleanId.split('@')[0]);
-        const prodiInfo = getUiiProdiFromNim(nim);
-
-        let detectedName = 'Mahasiswa UII';
-        if (cleanId === '23524001' || (password && password.toLowerCase().includes('jay'))) {
-          detectedName = 'Jay';
-        } else if (password && password.length >= 3 && !password.toLowerCase().startsWith('password')) {
-          const alphaMatch = password.match(/^[a-zA-Z]+/);
-          if (alphaMatch && alphaMatch[0].length >= 3) {
-            detectedName = alphaMatch[0].charAt(0).toUpperCase() + alphaMatch[0].slice(1).toLowerCase();
-          }
-        } else if (isEmail) {
-          const namePart = cleanId.split('@')[0].replace(/[._]/g, ' ');
-          detectedName = namePart.charAt(0).toUpperCase() + namePart.slice(1);
-        }
-
-        user = {
-          id: `usr-${nim}`,
-          nim: nim,
-          name: detectedName,
-          email: isEmail ? cleanId : `${nim}@students.uii.ac.id`,
-          phone: '081234567891',
-          faculty: prodiInfo.faculty,
-          studyProgram: prodiInfo.studyProgram,
-          role: 'MAHASISWA',
+        const userProfile: UserProfile = {
+          id: backendUser.id,
+          nim: backendUser.nim || '',
+          name: backendUser.name,
+          email: backendUser.email,
+          phone: backendUser.phone_number || '',
+          faculty: backendUser.faculty || 'Fakultas Teknologi Industri',
+          studyProgram: backendUser.study_program || 'Informatika',
+          role: mappedRole,
           avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80'
         };
 
-        MOCK_USERS.push(user);
+        this.currentUser.set(userProfile);
+        this.isLoggedIn.set(true);
+        this.jwtToken.set(res.data.token);
 
         if (typeof localStorage !== 'undefined') {
-          try {
-            const existingSaved = localStorage.getItem('uii_registered_users_list');
-            const list: UserProfile[] = existingSaved ? JSON.parse(existingSaved) : [];
-            if (!list.some(u => u.nim === user!.nim || u.email === user!.email)) {
-              list.push(user);
-              localStorage.setItem('uii_registered_users_list', JSON.stringify(list));
-            }
-          } catch (e) {
-            console.error('Failed to sync directory user', e);
-          }
+          localStorage.setItem('uii_user_profile', JSON.stringify(userProfile));
+          localStorage.setItem(this.USER_STORAGE_KEY, userProfile.id);
+          localStorage.setItem(this.TOKEN_STORAGE_KEY, res.data.token);
         }
+
+        return {
+          success: true,
+          message: res.message || `Selamat datang, ${userProfile.name}! Sesi SSO berhasil diverifikasi.`,
+          user: userProfile
+        };
+      }
+    } catch (err: any) {
+      console.warn('Backend login API not reached or error, trying local directory:', err);
+      if (err?.status === 422 || err?.status === 401) {
+        return {
+          success: false,
+          message: err.error?.message || 'Kredensial NIM/Email atau password salah.'
+        };
       }
     }
+
+    return this.loginLocal(identifier, password);
+  }
+
+  /**
+   * Local Directory Fallback Login
+   */
+  loginLocal(identifier: string, password?: string): { success: boolean; message: string; user?: UserProfile } {
+    const cleanId = identifier.trim().toLowerCase();
+
+    const user = MOCK_USERS.find(
+      u => u.nim.toLowerCase() === cleanId || u.email.toLowerCase() === cleanId
+    );
 
     if (!user) {
       return {
@@ -362,12 +334,11 @@ export class AuthService {
     if (typeof localStorage !== 'undefined') {
       localStorage.setItem(this.USER_STORAGE_KEY, user.id);
       localStorage.setItem(this.TOKEN_STORAGE_KEY, mockJwt);
-      localStorage.setItem('uii_active_user_profile', JSON.stringify(user));
     }
 
     return {
       success: true,
-      message: `Selamat datang, ${user.name}! Sesi SSO berhasil diverifikasi.`,
+      message: `Selamat datang, ${user.name}! Sesi SSO berhasil diverifikasi (Mode Direktori Kampus).`,
       user: user
     };
   }
@@ -411,7 +382,6 @@ export class AuthService {
     if (typeof localStorage !== 'undefined') {
       localStorage.setItem(this.USER_STORAGE_KEY, user.id);
       localStorage.setItem(this.TOKEN_STORAGE_KEY, mockJwt);
-      localStorage.setItem('uii_active_user_profile', JSON.stringify(user));
     }
 
     return {
@@ -422,9 +392,74 @@ export class AuthService {
   }
 
   /**
-   * Register new user account
+   * Register new user account (Laravel API with local directory fallback)
    */
-  register(userData: {
+  async register(userData: {
+    nim: string;
+    name: string;
+    email: string;
+    role: 'MAHASISWA' | 'PANITIA' | 'DPK_ADMIN';
+    password?: string;
+    faculty?: string;
+    studyProgram?: string;
+    phone?: string;
+  }): Promise<{ success: boolean; message: string; user?: UserProfile }> {
+    const roleMapReverse: Record<string, string> = {
+      'MAHASISWA': 'STUDENT',
+      'PANITIA': 'ORGANIZER',
+      'DPK_ADMIN': 'SUPERADMIN'
+    };
+
+    try {
+      const res: any = await firstValueFrom(
+        this.http.post(`${environment.apiUrl}/auth/register`, {
+          name: userData.name,
+          email: userData.email,
+          password: userData.password || 'password123',
+          phone_number: userData.phone || '081234567890',
+          nim: userData.nim,
+          faculty: userData.faculty,
+          study_program: userData.studyProgram,
+          role: roleMapReverse[userData.role] || 'STUDENT'
+        })
+      );
+
+      if (res && res.data) {
+        const u = res.data.user;
+        const newUser: UserProfile = {
+          id: u.id,
+          nim: u.nim,
+          name: u.name,
+          email: u.email,
+          phone: u.phone_number,
+          faculty: u.faculty,
+          studyProgram: u.study_program,
+          role: userData.role
+        };
+        MOCK_USERS.unshift(newUser);
+        return {
+          success: true,
+          message: res.message || 'Registrasi akun berhasil!',
+          user: newUser
+        };
+      }
+    } catch (err: any) {
+      console.warn('Backend register failed, trying local directory:', err);
+      if (err?.status === 422 || err?.status === 409) {
+        return {
+          success: false,
+          message: err.error?.message || 'Registrasi gagal: periksa kembali data Anda.'
+        };
+      }
+    }
+
+    return this.registerLocal(userData);
+  }
+
+  /**
+   * Local Directory Fallback Registration
+   */
+  registerLocal(userData: {
     nim: string;
     name: string;
     email: string;
@@ -476,13 +511,20 @@ export class AuthService {
     };
   }
 
-  logout(): void {
+  async logout(): Promise<void> {
+    try {
+      if (this.jwtToken()) {
+        await firstValueFrom(this.http.post(`${environment.apiUrl}/auth/logout`, {}));
+      }
+    } catch (e) {
+      // ignore
+    }
     this.isLoggedIn.set(false);
     this.jwtToken.set(null);
     if (typeof localStorage !== 'undefined') {
       localStorage.removeItem(this.TOKEN_STORAGE_KEY);
       localStorage.removeItem(this.USER_STORAGE_KEY);
-      localStorage.removeItem('uii_active_user_profile');
+      localStorage.removeItem('uii_user_profile');
     }
     this.router.navigate(['/login']);
   }

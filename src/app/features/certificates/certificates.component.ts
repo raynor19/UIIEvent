@@ -19,7 +19,6 @@ export class CertificatesComponent implements OnInit {
 
   selectedCert = signal<CertificateItem | null>(null);
   certQrDataUrl = signal<string>('');
-  unlockSuccessNotice = signal<string>('');
 
   get userTickets(): TicketItem[] {
     const user = this.authService.currentUser();
@@ -57,22 +56,15 @@ export class CertificatesComponent implements OnInit {
     return this.userCertificates.reduce((sum, c) => sum + (c.skpiPoints || 0), 0);
   }
 
-  ngOnInit(): void {
-    // 1. Auto-issue certificates for any tickets already marked attended
-    for (const ticket of this.userTickets) {
-      if (ticket.isCheckedIn) {
-        this.eventService.issueCertificateForTicket(ticket);
-      }
-    }
-
+  async ngOnInit(): Promise<void> {
+    await this.eventService.loadMyCertificates();
     // Check if route has :id param
     const paramId = this.route.snapshot.paramMap.get('id');
     if (paramId) {
       const match = this.userCertificates.find(c => 
         c.id === paramId || 
         c.ticketId === paramId || 
-        c.certificateNumber.includes(paramId) ||
-        c.eventId === paramId
+        c.certificateNumber.includes(paramId)
       );
       if (match) {
         this.selectCertificate(match);
@@ -82,20 +74,6 @@ export class CertificatesComponent implements OnInit {
     // Default select first available certificate
     if (this.userCertificates.length > 0) {
       this.selectCertificate(this.userCertificates[0]);
-    }
-  }
-
-  unlockAndDownload(ticket: TicketItem): void {
-    const cert = this.eventService.checkInAndUnlockCertificate(ticket.id);
-    if (cert) {
-      this.unlockSuccessNotice.set(`Presensi Hadir Berhasil! E-Sertifikat resmi dan ${cert.skpiPoints} Poin SKPI untuk "${cert.eventTitle}" telah aktif dan siap diunduh.`);
-      this.selectCertificate(cert);
-      setTimeout(() => {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }, 100);
-      setTimeout(() => {
-        this.unlockSuccessNotice.set('');
-      }, 6000);
     }
   }
 

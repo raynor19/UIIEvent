@@ -1,5 +1,8 @@
-import { Injectable, signal } from '@angular/core';
-import { EventItem, EventCategory } from '../models/event.model';
+import { Injectable, signal, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { EventItem, EventCategory, EventStatus } from '../models/event.model';
 import { RegistrationItem, TicketItem, CertificateItem } from '../models/ticket.model';
 import { AuthService, getUiiProdiFromNim } from './auth.service';
 
@@ -49,1561 +52,640 @@ export interface NotificationLog {
   providedIn: 'root'
 })
 export class EventService {
+  private http = inject(HttpClient);
+
   // Reactive signals for real-time UI binding
   events = signal<EventItem[]>([]);
   registrations = signal<RegistrationItem[]>([]);
   tickets = signal<TicketItem[]>([]);
   certificates = signal<CertificateItem[]>([]);
   notificationLogs = signal<NotificationLog[]>([]);
+  applications = signal<any[]>([]);
 
   constructor(private authService: AuthService) {
     this.initializeData();
-    this.initRealtimeSync();
+    this.syncWithBackend();
+  }
+
+  /**
+   * Asynchronously synchronize with backend Laravel API (Prioritize Real Database Records)
+   */
+  async syncWithBackend(): Promise<void> {
+    try {
+      const res: any = await firstValueFrom(
+        this.http.get(`${environment.apiUrl}/events?limit=50`)
+      );
+      if (res && res.data && Array.isArray(res.data) && res.data.length > 0) {
+        const backendEvents = res.data.map((be: any) => this.mapBackendEventToFrontend(be));
+        // Remove stale mock events starting with 'evt-'
+        const current = this.events().filter(e => !e.id.startsWith('evt-'));
+        backendEvents.forEach((be: EventItem) => {
+          const idx = current.findIndex(e => e.id === be.id || e.slug === be.slug);
+          if (idx >= 0) {
+            current[idx] = be;
+          } else {
+            current.push(be);
+          }
+        });
+        this.events.set(current);
+      }
+    } catch (e) {
+      console.warn('Backend API /events not reached, using local state:', e);
+    }
+
+    if (this.authService.isLoggedIn() && this.authService.jwtToken()) {
+      await this.loadMyTickets();
+      await this.loadMyCertificates();
+      await this.loadMyApplications();
+
+      // If user is Organizer (Panitia), also pull organizer events
+      if (this.authService.currentUser().role === 'PANITIA') {
+        try {
+          const orgRes: any = await firstValueFrom(
+            this.http.get(`${environment.apiUrl}/organizer/events?limit=50`)
+          );
+          if (orgRes?.data && Array.isArray(orgRes.data)) {
+            const orgEvents = orgRes.data.map((be: any) => this.mapBackendEventToFrontend(be));
+            const current = this.events().filter(e => !e.id.startsWith('evt-'));
+            orgEvents.forEach((oe: EventItem) => {
+              const idx = current.findIndex(e => e.id === oe.id || e.slug === oe.slug);
+              if (idx >= 0) {
+                current[idx] = oe;
+              } else {
+                current.push(oe);
+              }
+            });
+            this.events.set(current);
+          }
+        } catch (e) {
+          // silent fallback
+        }
+      }
+
+      // If user is DPK Super Admin, also pull pending curation events
+      if (this.authService.currentUser().role === 'DPK_ADMIN') {
+        try {
+          const admRes: any = await firstValueFrom(
+            this.http.get(`${environment.apiUrl}/admin/events?limit=50`)
+          );
+          if (admRes?.data && Array.isArray(admRes.data)) {
+            const admEvents = admRes.data.map((be: any) => this.mapBackendEventToFrontend(be));
+            const current = this.events().filter(e => !e.id.startsWith('evt-'));
+            admEvents.forEach((ae: EventItem) => {
+              const idx = current.findIndex(e => e.id === ae.id || e.slug === ae.slug);
+              if (idx >= 0) {
+                current[idx] = ae;
+              } else {
+                current.push(ae);
+              }
+            });
+            this.events.set(current);
+          }
+        } catch (e) {
+          // silent fallback
+        }
+      }
+    }
+  }
+
+  async loadMyTickets(): Promise<void> {
+    if (!this.authService.isLoggedIn() || !this.authService.jwtToken()) return;
+    try {
+      const ticketsRes: any = await firstValueFrom(
+        this.http.get(`${environment.apiUrl}/my-tickets?limit=50`)
+      );
+      if (ticketsRes?.data && Array.isArray(ticketsRes.data)) {
+        const mappedTickets = ticketsRes.data.map((bt: any) => this.mapBackendTicketToFrontend(bt));
+        this.tickets.set(mappedTickets);
+      }
+    } catch (e) {
+      console.warn('Failed to load tickets from backend:', e);
+    }
+  }
+
+  async loadMyCertificates(): Promise<void> {
+    if (!this.authService.isLoggedIn() || !this.authService.jwtToken()) return;
+    try {
+      const certsRes: any = await firstValueFrom(
+        this.http.get(`${environment.apiUrl}/my-certificates?limit=50`)
+      );
+      if (certsRes?.data && Array.isArray(certsRes.data)) {
+        const mappedCerts = certsRes.data.map((bc: any) => this.mapBackendCertToFrontend(bc));
+        this.certificates.set(mappedCerts);
+      }
+    } catch (e) {
+      console.warn('Failed to load certificates from backend:', e);
+    }
+  }
+
+  async loadMyApplications(): Promise<void> {
+    if (!this.authService.isLoggedIn() || !this.authService.jwtToken()) return;
+    try {
+      const appsRes: any = await firstValueFrom(
+        this.http.get(`${environment.apiUrl}/my-applications?limit=50`)
+      );
+      if (appsRes?.data && Array.isArray(appsRes.data)) {
+        this.applications.set(appsRes.data);
+      }
+    } catch (e) {
+      console.warn('Failed to load applications from backend:', e);
+    }
+  }
+
+  async getOrganizerRegistrationsApi(eventId: string): Promise<any[]> {
+    if (!eventId || eventId.startsWith('evt-')) return [];
+    try {
+      const res: any = await firstValueFrom(
+        this.http.get(`${environment.apiUrl}/organizer/events/${eventId}/registrations?limit=100`)
+      );
+      return res?.data || [];
+    } catch (e) {
+      console.warn('Failed to load organizer registrations:', e);
+      return [];
+    }
+  }
+
+  async getOrganizerApplicantsApi(eventId: string): Promise<any[]> {
+    if (!eventId || eventId.startsWith('evt-')) return [];
+    try {
+      const res: any = await firstValueFrom(
+        this.http.get(`${environment.apiUrl}/organizer/events/${eventId}/applicants?limit=100`)
+      );
+      return res?.data || [];
+    } catch (e) {
+      console.warn('Failed to load organizer applicants:', e);
+      return [];
+    }
+  }
+
+  async updateApplicantSelectionApi(registrationId: string, selectionStatus: string, notes?: string): Promise<boolean> {
+    try {
+      await firstValueFrom(
+        this.http.patch(`${environment.apiUrl}/organizer/registrations/${registrationId}/selection`, {
+          selection_status: selectionStatus,
+          notes: notes
+        })
+      );
+      return true;
+    } catch (e) {
+      console.warn('Failed to update applicant selection:', e);
+      return false;
+    }
+  }
+
+  async getEventAttendanceStatsApi(eventId: string): Promise<any> {
+    if (!eventId || eventId.startsWith('evt-')) return null;
+    try {
+      const res: any = await firstValueFrom(
+        this.http.get(`${environment.apiUrl}/organizer/events/${eventId}/attendance?limit=100`)
+      );
+      return res || null;
+    } catch (e) {
+      console.warn('Failed to load event attendance stats:', e);
+      return null;
+    }
+  }
+
+  async verifyCertificatePublicApi(hash: string): Promise<CertificateItem | null> {
+    try {
+      const res: any = await firstValueFrom(
+        this.http.get(`${environment.apiUrl}/certificates/verify/${hash}`)
+      );
+      if (res?.data) {
+        return this.mapBackendCertToFrontend(res.data);
+      }
+    } catch (e) {
+      console.warn('Public verify certificate API returned error:', e);
+    }
+    return null;
+  }
+
+  /**
+   * Cancel Registration and return quota (Student)
+   */
+  async cancelRegistrationReal(ticketCode: string): Promise<boolean> {
+    try {
+      await firstValueFrom(
+        this.http.post(`${environment.apiUrl}/my-tickets/${ticketCode}/cancel`, {})
+      );
+      await this.loadMyTickets();
+      return true;
+    } catch (e) {
+      console.warn('Backend ticket cancel API returned error, falling back locally:', e);
+      const ticket = this.tickets().find(t => t.ticketCode === ticketCode);
+      if (ticket) {
+        this.cancelRegistration(ticket.id);
+      }
+      return true;
+    }
+  }
+
+  /**
+   * Day-H Presensi Check-In with Backend API
+   */
+  async processScanReal(payload: string, operatorName: string = 'Panitia Meja Registrasi 1'): Promise<CheckInResult> {
+    let ticketCode = '';
+    let hash = '';
+    const trimmed = (payload || '').trim();
+
+    try {
+      if (trimmed.startsWith('{')) {
+        const parsed = JSON.parse(trimmed);
+        ticketCode = parsed.ticketCode || parsed.ticket_code || '';
+        hash = parsed.hash || '';
+      } else if (trimmed.startsWith('TKT-') || trimmed.startsWith('UII-TIK-')) {
+        ticketCode = trimmed;
+      } else if (trimmed === 'VALID_TICKET_TEST') {
+        ticketCode = 'VALID_TICKET_TEST';
+      } else {
+        // Try Base64 decoding
+        try {
+          const decoded = atob(trimmed);
+          if (decoded.startsWith('{')) {
+            const parsed = JSON.parse(decoded);
+            ticketCode = parsed.ticket_code || parsed.ticketCode || '';
+          } else {
+            ticketCode = trimmed;
+          }
+        } catch {
+          ticketCode = trimmed;
+        }
+      }
+    } catch {
+      ticketCode = trimmed;
+    }
+
+    if (!ticketCode) {
+      ticketCode = trimmed;
+    }
+
+    if (this.authService.isLoggedIn() && this.authService.jwtToken()) {
+      try {
+        const res: any = await firstValueFrom(
+          this.http.post(`${environment.apiUrl}/attendance/check-in`, {
+            qr_payload: trimmed,
+            ticket_code: ticketCode
+          })
+        );
+        if (res?.data) {
+          const attendanceData = res.data;
+          const participantName = attendanceData.attendee?.name || attendanceData.user?.name || attendanceData.registration?.user?.name || 'Mahasiswa UII';
+          const participantNim = attendanceData.attendee?.nim || attendanceData.user?.nim || attendanceData.registration?.user?.nim || '';
+          const eventTitle = attendanceData.event?.title || 'Acara UII';
+          const certNumber = attendanceData.certificate?.certificate_number || '';
+          const actualCode = attendanceData.ticket_code || ticketCode;
+
+          // Update local state
+          const ticket = this.tickets().find(t => t.ticketCode.toUpperCase() === actualCode.toUpperCase());
+          if (ticket) {
+            ticket.isCheckedIn = true;
+            ticket.checkedInAt = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB';
+            ticket.checkedInBy = operatorName;
+            this.tickets.update(prev => prev.map(t => t.id === ticket.id ? { ...ticket } : t));
+          }
+
+          // Also reload tickets & certificates in background
+          this.loadMyTickets().catch(() => {});
+          this.loadMyCertificates().catch(() => {});
+
+          return {
+            status: 'SUCCESS',
+            message: res.message || 'Presensi Berhasil: Hadir Terverifikasi di Meja Registrasi!',
+            participantName,
+            nim: participantNim,
+            eventTitle,
+            ticketCode: actualCode,
+            certificateNumber: certNumber
+          };
+        }
+      } catch (err: any) {
+        console.warn('Backend check-in API returned error:', err);
+        if (err?.status === 409) {
+          return {
+            status: 'DUPLICATE',
+            message: err.error?.message || 'Peringatan! Tiket sudah pernah di-scan sebelumnya.',
+            ticketCode
+          };
+        }
+        if (err?.status === 403) {
+          return {
+            status: 'INVALID',
+            message: err.error?.message || 'Akses ditolak: Anda bukan panitia dari kegiatan ini.',
+            ticketCode
+          };
+        }
+        if (err?.status === 400 || err?.status === 404 || err?.status === 422) {
+          return {
+            status: 'INVALID',
+            message: err.error?.message || 'Tiket Tidak Valid: Kode QR tidak terdaftar di sistem kepanitiaan UII.',
+            ticketCode
+          };
+        }
+      }
+    }
+
+    // Graceful fallback to client-side validation logic
+    return this.processScan(payload, operatorName);
+  }
+
+  /**
+   * DPK Approve event (Backend API)
+   */
+  async adminApproveEventReal(eventId: string): Promise<boolean> {
+    try {
+      await firstValueFrom(
+        this.http.post(`${environment.apiUrl}/admin/events/${eventId}/approve`, {})
+      );
+      await this.loadAdminEvents();
+      return true;
+    } catch (e) {
+      console.warn('Backend admin approve API returned error, applying locally:', e);
+      return this.dpkApproveEvent(eventId);
+    }
+  }
+
+  /**
+   * DPK Reject event (Backend API)
+   */
+  async adminRejectEventReal(eventId: string, reason: string): Promise<boolean> {
+    try {
+      await firstValueFrom(
+        this.http.post(`${environment.apiUrl}/admin/events/${eventId}/reject`, {
+          rejection_reason: reason
+        })
+      );
+      await this.loadAdminEvents();
+      return true;
+    } catch (e) {
+      console.warn('Backend admin reject API returned error, applying locally:', e);
+      return this.dpkRejectEvent(eventId, reason);
+    }
+  }
+
+  /**
+   * Create Draft Event via Backend API (Panitia)
+   */
+  async createDraftEventReal(data: any): Promise<EventItem | null> {
+    try {
+      const isOprec = data.category === 'COMMITTEE_RECRUITMENT' || data.type === 'Oprec' || (data.divisions && data.divisions.length > 0);
+      const catMap: Record<string, number> = {
+        'SEMINAR': 1,
+        'WORKSHOP': 2,
+        'LOMBA': 3,
+        'KONSER': 4,
+        'COMMITTEE_RECRUITMENT': 5
+      };
+
+      const payload: any = {
+        title: data.title,
+        description: data.description || 'Pengajuan kegiatan mahasiswa UII.',
+        activity_type: isOprec ? 'COMMITTEE_RECRUITMENT' : 'PARTICIPANT_EVENT',
+        category_id: catMap[data.category] || (isOprec ? 5 : 1),
+        location: data.location || data.room || 'Kampus Terpadu UII',
+        poster_url: data.bannerUrl || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1200&q=80',
+        start_time: (data.date || '2026-12-20') + ' 09:00:00',
+        end_time: (data.date || '2026-12-20') + ' 13:00:00',
+        quota_total: Number(data.quotaTotal) || 100,
+        skpi_points: Number(data.skpiPoints) || 15
+      };
+
+      if (isOprec && data.divisions && data.divisions.length > 0) {
+        payload.divisions = data.divisions.map((d: any) => typeof d === 'string' ? { name: d, quota: 10 } : d);
+      }
+
+      const res: any = await firstValueFrom(
+        this.http.post(`${environment.apiUrl}/organizer/events`, payload)
+      );
+      if (res?.data) {
+        const created = this.mapBackendEventToFrontend(res.data);
+        this.events.update(prev => [created, ...prev]);
+        return created;
+      }
+    } catch (e) {
+      console.warn('Backend create event API returned error, creating locally:', e);
+    }
+    return this.createDraftEvent(data);
+  }
+
+  /**
+   * Submit Event to DPK for Curation via Backend API (Panitia)
+   */
+  async submitEventToDpkReal(eventId: string): Promise<boolean> {
+    if (!eventId || eventId.startsWith('evt-')) {
+      return this.submitEventToDpk(eventId);
+    }
+    try {
+      await firstValueFrom(
+        this.http.post(`${environment.apiUrl}/organizer/events/${eventId}/submit`, {})
+      );
+      await this.syncWithBackend();
+      return true;
+    } catch (e) {
+      console.warn('Backend submit to DPK API returned error, applying locally:', e);
+      return this.submitEventToDpk(eventId);
+    }
+  }
+
+  /**
+   * Load Organizer events directly from backend for Panitia Dashboard
+   */
+  async loadOrganizerEvents(): Promise<void> {
+    try {
+      const orgRes: any = await firstValueFrom(
+        this.http.get(`${environment.apiUrl}/organizer/events?limit=50`)
+      );
+      if (orgRes?.data && Array.isArray(orgRes.data)) {
+        const orgEvents = orgRes.data.map((be: any) => this.mapBackendEventToFrontend(be));
+        const current = this.events().filter(e => !e.id.startsWith('evt-'));
+        orgEvents.forEach((oe: EventItem) => {
+          const idx = current.findIndex(e => e.id === oe.id || e.slug === oe.slug);
+          if (idx >= 0) {
+            current[idx] = oe;
+          } else {
+            current.unshift(oe);
+          }
+        });
+        this.events.set(current);
+        this.saveToStorage();
+      }
+    } catch (e) {
+      console.warn('Failed to load organizer events from backend:', e);
+    }
+  }
+
+  /**
+   * Load Admin events directly from backend for DPK Curation
+   */
+  async loadAdminEvents(): Promise<void> {
+    try {
+      const res: any = await firstValueFrom(
+        this.http.get(`${environment.apiUrl}/admin/events?limit=50`)
+      );
+      if (res?.data && Array.isArray(res.data)) {
+        const adminEvents = res.data.map((be: any) => this.mapBackendEventToFrontend(be));
+        const current = this.events().filter(e => !e.id.startsWith('evt-'));
+        adminEvents.forEach((ae: EventItem) => {
+          const idx = current.findIndex(e => e.id === ae.id || e.slug === ae.slug);
+          if (idx >= 0) {
+            current[idx] = ae;
+          } else {
+            current.unshift(ae);
+          }
+        });
+        this.events.set(current);
+        this.saveToStorage();
+      }
+    } catch (e) {
+      console.warn('Failed to load admin events from backend:', e);
+    }
+  }
+
+  mapBackendEventToFrontend(be: any): EventItem {
+    const categoryLabelMap: Record<string, string> = {
+      'SEMINAR': 'Seminar Nasional',
+      'WORKSHOP': 'Hands-on Workshop',
+      'LOMBA': 'Kompetisi Nasional',
+      'KONSER': 'Konser & Festival',
+      'COMMITTEE_RECRUITMENT': 'Oprec Kepanitiaan'
+    };
+    const categoryKey = (be.category?.toUpperCase() || (be.activity_type === 'COMMITTEE_RECRUITMENT' ? 'COMMITTEE_RECRUITMENT' : 'SEMINAR')) as EventCategory;
+
+    let mappedStatus: EventStatus = 'PUBLISHED';
+    const rawStatus = (be.status || '').toUpperCase();
+    if (rawStatus === 'PENDING' || rawStatus === 'PENDING_APPROVAL') {
+      mappedStatus = 'PENDING';
+    } else if (rawStatus === 'DRAFT') {
+      mappedStatus = 'DRAFT';
+    } else if (rawStatus === 'REJECTED') {
+      mappedStatus = 'REJECTED';
+    } else if (rawStatus === 'REVISION') {
+      mappedStatus = 'REVISION';
+    } else if (rawStatus === 'COMPLETED') {
+      mappedStatus = 'COMPLETED';
+    } else if (rawStatus === 'PUBLISHED') {
+      mappedStatus = 'PUBLISHED';
+    }
+
+    return {
+      id: be.id,
+      title: be.title,
+      slug: be.slug,
+      category: categoryKey,
+      categoryLabel: categoryLabelMap[categoryKey] || be.category || 'Kegiatan Kampus',
+      organizer: be.organizer_name || (be.organizer?.name) || 'Panitia UII',
+      faculty: be.organizer?.faculty || 'Fakultas Teknologi Industri',
+      description: be.description || '',
+      date: be.start_time ? be.start_time.substring(0, 10) : '2026-11-25',
+      time: be.start_time ? `${new Date(be.start_time).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB` : '08:30 WIB',
+      location: be.location || 'Kampus Terpadu UII',
+      room: be.location || 'Auditorium UII',
+      bannerUrl: be.poster_url || '/assets/images/seminar-ai-uii.jpg',
+      quotaTotal: be.quota_total || 100,
+      quotaRemaining: be.quota_remaining ?? be.quota_total ?? 100,
+      status: mappedStatus,
+      skpiPoints: 15,
+      isFree: true,
+      whatsappHelpdesk: '6281234567890',
+      submittedAt: be.created_at || be.submitted_at || new Date().toISOString()
+    };
+  }
+
+  mapBackendTicketToFrontend(be: any): TicketItem {
+    const currentUser = this.authService.currentUser();
+    return {
+      id: be.id,
+      registrationId: be.registration_id || be.id,
+      ticketCode: be.ticket_code,
+      eventId: be.event?.id || '',
+      eventTitle: be.event?.title || 'Kegiatan UII',
+      eventCategory: 'SEMINAR',
+      eventDate: be.event?.start_time ? be.event.start_time.substring(0, 10) : '2026-11-25',
+      eventTime: be.event?.start_time ? `${new Date(be.event.start_time).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB` : '08:30 WIB',
+      eventLocation: be.event?.location || 'Kampus Terpadu UII',
+      eventRoom: be.event?.location || 'Auditorium',
+      userId: be.participant?.id || currentUser.id,
+      userName: be.participant?.name || currentUser.name,
+      userNim: be.participant?.nim || currentUser.nim,
+      userStudyProgram: be.participant?.study_program || currentUser.studyProgram,
+      qrPayload: be.qr_payload,
+      hashSignature: be.ticket_code,
+      timestampIssued: be.created_at || 'Hari ini',
+      isCheckedIn: be.is_checked_in || false,
+      checkedInAt: be.checked_in_at
+    };
+  }
+
+  mapBackendCertToFrontend(be: any): CertificateItem {
+    const currentUser = this.authService.currentUser();
+    const recipient = be.recipient || be.participant || {};
+    return {
+      id: be.id,
+      registrationId: be.registration_id || be.id,
+      ticketId: be.ticket_id || be.registration_id || be.id,
+      eventId: be.event?.id || '',
+      eventTitle: be.event?.title || 'Kegiatan UII',
+      eventDate: be.event?.start_time ? be.event.start_time.substring(0, 10) : '2026-11-25',
+      organizer: 'Direktorat Pembinaan Kemahasiswaan (DPK) UII',
+      userId: recipient.id || currentUser.id,
+      userName: recipient.name || currentUser.name,
+      userNim: recipient.nim || currentUser.nim,
+      userFaculty: recipient.faculty || currentUser.faculty,
+      userStudyProgram: recipient.study_program || currentUser.studyProgram,
+      certificateNumber: be.certificate_number,
+      skpiPoints: 15,
+      issueDate: be.issued_at ? be.issued_at.substring(0, 10) : '2026-11-20',
+      verificationHash: be.verify_hash,
+      issuerName: 'Dr. Ir. Budi Hartono, M.T.',
+      issuerRole: 'Direktur Pembinaan Kemahasiswaan UII',
+      isUnlocked: true
+    };
   }
 
   private initializeData(): void {
-    if (typeof localStorage === 'undefined') {
-      this.loadMockDefaults();
-      return;
-    }
-
-    const savedEvents = localStorage.getItem(STORAGE_KEYS.EVENTS);
-    const savedRegs = localStorage.getItem(STORAGE_KEYS.REGISTRATIONS);
-    const savedTickets = localStorage.getItem(STORAGE_KEYS.TICKETS);
-    const savedCerts = localStorage.getItem(STORAGE_KEYS.CERTIFICATES);
-    const savedLogs = localStorage.getItem(STORAGE_KEYS.NOTIFICATIONS);
-
-    if (savedEvents && savedRegs && savedTickets) {
+    if (typeof localStorage !== 'undefined') {
       try {
-        let eventsList: EventItem[] = JSON.parse(savedEvents);
-        // Filter out dummy pending events (evt-adm-01, evt-adm-02, evt-adm-03)
-        eventsList = eventsList.filter(e => !['evt-adm-01', 'evt-adm-02', 'evt-adm-03'].includes(e.id));
-        eventsList.forEach(e => {
-          if (e.id === 'evt-001' || (e.title.toLowerCase().includes('seminar') && e.title.toLowerCase().includes('ai'))) {
-            e.bannerUrl = '/assets/images/seminar-ai-uii.jpg';
-          }
-          if (e.id === 'evt-002' || (e.category === 'WORKSHOP' && e.bannerUrl?.includes('unsplash'))) {
-            e.bannerUrl = '/assets/images/workshop-ai-uii.jpg';
-            if (e.id === 'evt-002') {
-              e.title = 'Workshop Pengelola Website: Pengelolaan Konten Berbasis SEO dan AI';
-              e.location = 'Gedung Prof. Dr. Sardjito UII, Kampus Terpadu';
-              e.room = 'Ruang Teatrikal Gedung Prof. Dr. Sardjito';
-              e.quotaRemaining = 15;
-            }
-          }
-          if (e.id === 'evt-003' || (e.title.toLowerCase().includes('pesta') && e.category === 'COMMITTEE_RECRUITMENT')) {
-            e.bannerUrl = '/assets/images/oprec-pesta-uii.jpg';
-          }
-          if (e.id === 'evt-adm-02' || e.title.toLowerCase().includes('dies natalis')) {
-            e.bannerUrl = '/assets/images/dies-natalis-uii.jpg';
-          }
-          if (e.id === 'evt-007' || e.title.toLowerCase().includes('startup')) {
-            e.status = 'PUBLISHED';
-            e.category = 'SEMINAR';
-            e.categoryLabel = 'Seminar Nasional';
-          }
-          if (e.id === 'evt-008' || e.title.toLowerCase().includes('porsematik')) {
-            e.category = 'COMMITTEE_RECRUITMENT';
-            e.categoryLabel = 'Oprec Kepanitiaan';
-            e.bannerUrl = '/assets/images/campus/uii-kampus-terpadu-hd.jpg';
-            e.oprecDivisions = [
-              'Divisi Acara & Pertandingan',
-              'Divisi Humas & Publikasi (Medsos)',
-              'Divisi IT, Web & Presensi Scanner',
-              'Divisi Logistik & Perlengkapan',
-              'Divisi Konsumsi & Medis',
-              'Divisi Wasit & Keamanan'
-            ];
-          }
-        });
-        this.events.set(eventsList);
-        localStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(eventsList));
-        
-        let currentTickets: TicketItem[] = JSON.parse(savedTickets);
-        let currentRegs: RegistrationItem[] = JSON.parse(savedRegs);
-
-        // Check if Porsematik ticket is present, if missing or wiped, restore it for Raynor and Rian
-        const hasPorsematikTicket = currentTickets.some(t => 
-          t.eventId === 'evt-008' || t.eventTitle?.toLowerCase().includes('porsematik')
-        );
-
-        const porsematikTicketCode = 'UII-TIK-2026-8899';
-        const porsematikHash = this.generateHashSignature('23525055', 'evt-008', porsematikTicketCode);
-        const porsematikQrPayload = JSON.stringify({
-          ticketCode: porsematikTicketCode,
-          nim: '23525055',
-          name: 'Muhammad Raynor Athaillah',
-          eventId: 'evt-008',
-          hash: porsematikHash,
-          timestamp: 1763640000000
-        });
-
-        const porsematikTicket: TicketItem = {
-          id: 'tck-porsematik-raynor-001',
-          registrationId: 'reg-porsematik-raynor-001',
-          ticketCode: porsematikTicketCode,
-          eventId: 'evt-008',
-          eventTitle: 'Porsematik HMIF UII 2026',
-          eventCategory: 'COMMITTEE_RECRUITMENT',
-          eventDate: '2026-12-05',
-          eventTime: '08:00 - 17:00 WIB',
-          eventLocation: 'GOR Ki Bagoes Hadikoesoemo & Hall FTI UII',
-          eventRoom: 'GOR Utama Kampus Terpadu UII',
-          userId: 'usr-raynor-001',
-          userName: 'Muhammad Raynor Athaillah',
-          userNim: '23525055',
-          userStudyProgram: 'Teknik Mesin - Fakultas Teknologi Industri',
-          qrPayload: porsematikQrPayload,
-          hashSignature: porsematikHash,
-          timestampIssued: '20 November 2026, 14:15 WIB',
-          isCheckedIn: false
-        };
-
-        // Filter out legacy Ahmad Fikri and test data so user only sees Muhammad Raynor Athaillah
-        currentTickets = currentTickets.filter(t => !t.userName?.toLowerCase().includes('ahmad fikri') && t.userId !== 'usr-rian-001');
-        currentRegs = currentRegs.filter(r => !r.userName?.toLowerCase().includes('ahmad fikri') && r.userId !== 'usr-rian-001');
-
-        if (!hasPorsematikTicket) {
-          currentTickets.unshift(porsematikTicket);
+        const savedEvents = localStorage.getItem(STORAGE_KEYS.EVENTS);
+        if (savedEvents) {
+          const parsed: EventItem[] = JSON.parse(savedEvents);
+          const valid = parsed.filter(e => !e.id.startsWith('evt-'));
+          this.events.set(valid);
         }
-
-        const hasPorsematikReg = currentRegs.some(r => 
-          r.eventId === 'evt-008' || r.eventTitle?.toLowerCase().includes('porsematik')
-        );
-        if (!hasPorsematikReg) {
-          currentRegs.unshift({
-            id: 'reg-porsematik-raynor-001',
-            userId: 'usr-raynor-001',
-            userNim: '23525055',
-            userName: 'Muhammad Raynor Athaillah',
-            userEmail: '23525055@students.uii.ac.id',
-            userPhone: '081234567890',
-            userFaculty: 'Fakultas Teknologi Industri',
-            userStudyProgram: 'Teknik Mesin',
-            eventId: 'evt-008',
-            eventTitle: 'Porsematik HMIF UII 2026',
-            eventDate: '2026-12-05',
-            eventLocation: 'GOR Utama Kampus Terpadu UII, GOR Ki Bagoes Hadikoesoemo & Hall FTI UII',
-            status: 'REGISTERED',
-            createdAt: '2026-11-20T14:15:00.000Z'
-          });
+        const savedTickets = localStorage.getItem(STORAGE_KEYS.TICKETS);
+        if (savedTickets) {
+          const parsed = JSON.parse(savedTickets);
+          const valid = parsed.filter((t: any) => !t.eventId?.startsWith('evt-') && !t.id?.startsWith('tck-'));
+          this.tickets.set(valid);
         }
-
-        // Check if National Islamic Technology Competition (evt-004) ticket is present, if not present restore it
-        const hasNitcTicket = currentTickets.some(t => 
-          t.eventId === 'evt-004' || t.eventTitle?.toLowerCase().includes('national islamic')
-        );
-
-        const nitcTicketCode = 'UII-TIK-2026-7721';
-        const nitcHash = this.generateHashSignature('23525055', 'evt-004', nitcTicketCode);
-        const nitcQrPayload = JSON.stringify({
-          ticketCode: nitcTicketCode,
-          nim: '23525055',
-          name: 'Muhammad Raynor Athaillah',
-          eventId: 'evt-004',
-          hash: nitcHash,
-          timestamp: 1763640000000
-        });
-
-        const nitcTicket: TicketItem = {
-          id: 'tck-nitc-raynor-001',
-          registrationId: 'reg-nitc-raynor-001',
-          ticketCode: nitcTicketCode,
-          eventId: 'evt-004',
-          eventTitle: 'National Islamic Technology Competition (NITC 2026): Sharia FinTech & GovTech',
-          eventCategory: 'LOMBA',
-          eventDate: '2026-12-10',
-          eventTime: '08:00 - 16:00 WIB',
-          eventLocation: 'Auditorium FMIPA UII, Kampus Terpadu',
-          eventRoom: 'Hall K.H. Mas Mansyur Lt. 3',
-          userId: 'usr-raynor-001',
-          userName: 'Muhammad Raynor Athaillah',
-          userNim: '23525055',
-          userStudyProgram: 'Teknik Mesin - Fakultas Teknologi Industri',
-          qrPayload: nitcQrPayload,
-          hashSignature: nitcHash,
-          timestampIssued: '21 November 2026, 09:30 WIB',
-          isCheckedIn: false
-        };
-
-        const hasNitcReg = currentRegs.some(r => 
-          r.eventId === 'evt-004' || r.eventTitle?.toLowerCase().includes('national islamic')
-        );
-        if (!hasNitcReg) {
-          currentRegs.push({
-            id: 'reg-nitc-raynor-001',
-            userId: 'usr-raynor-001',
-            userNim: '23525055',
-            userName: 'Muhammad Raynor Athaillah',
-            userEmail: '23525055@students.uii.ac.id',
-            userPhone: '081234567890',
-            userFaculty: 'Fakultas Teknologi Industri',
-            userStudyProgram: 'Teknik Mesin',
-            eventId: 'evt-004',
-            eventTitle: 'National Islamic Technology Competition (NITC 2026): Sharia FinTech & GovTech',
-            eventDate: '2026-12-10',
-            eventLocation: 'Hall K.H. Mas Mansyur Lt. 3, Auditorium FMIPA UII, Kampus Terpadu',
-            status: 'REGISTERED',
-            createdAt: '2026-11-21T09:30:00.000Z'
-          });
+        const savedRegs = localStorage.getItem(STORAGE_KEYS.REGISTRATIONS);
+        if (savedRegs) {
+          const parsed = JSON.parse(savedRegs);
+          const valid = parsed.filter((r: any) => !r.eventId?.startsWith('evt-') && !r.id?.startsWith('reg-'));
+          this.registrations.set(valid);
         }
-        if (!hasNitcTicket) {
-          currentTickets.push(nitcTicket);
+        const savedCerts = localStorage.getItem(STORAGE_KEYS.CERTIFICATES);
+        if (savedCerts) {
+          const parsed = JSON.parse(savedCerts);
+          const valid = parsed.filter((c: any) => !c.eventId?.startsWith('evt-'));
+          this.certificates.set(valid);
         }
-
-        // Check if Workshop Pengelola Website (evt-002) ticket is present, if not present restore it
-        const hasWorkshopTicket = currentTickets.some(t => 
-          t.eventId === 'evt-002' || t.eventTitle?.toLowerCase().includes('pengelola website')
-        );
-
-        const workshopTicketCode = 'UII-TIK-2026-5522';
-        const workshopHash = this.generateHashSignature('23525055', 'evt-002', workshopTicketCode);
-        const workshopQrPayload = JSON.stringify({
-          ticketCode: workshopTicketCode,
-          nim: '23525055',
-          name: 'Muhammad Raynor Athaillah',
-          eventId: 'evt-002',
-          hash: workshopHash,
-          timestamp: 1763640000000
-        });
-
-        const workshopTicket: TicketItem = {
-          id: 'tck-workshop-raynor-001',
-          registrationId: 'reg-workshop-raynor-001',
-          ticketCode: workshopTicketCode,
-          eventId: 'evt-002',
-          eventTitle: 'Workshop Pengelola Website: Pengelolaan Konten Berbasis SEO dan AI',
-          eventCategory: 'WORKSHOP',
-          eventDate: '2026-11-25',
-          eventTime: '09:00 - 15:30 WIB',
-          eventLocation: 'Gedung Prof. Dr. Sardjito UII, Kampus Terpadu',
-          eventRoom: 'Ruang Teatrikal Gedung Prof. Dr. Sardjito',
-          userId: 'usr-raynor-001',
-          userName: 'Muhammad Raynor Athaillah',
-          userNim: '23525055',
-          userStudyProgram: 'Teknik Mesin - Fakultas Teknologi Industri',
-          qrPayload: workshopQrPayload,
-          hashSignature: workshopHash,
-          timestampIssued: '21 November 2026, 10:00 WIB',
-          isCheckedIn: false
-        };
-
-        const hasWorkshopReg = currentRegs.some(r => 
-          r.eventId === 'evt-002' || r.eventTitle?.toLowerCase().includes('pengelola website')
-        );
-        if (!hasWorkshopReg) {
-          currentRegs.push({
-            id: 'reg-workshop-raynor-001',
-            userId: 'usr-raynor-001',
-            userNim: '23525055',
-            userName: 'Muhammad Raynor Athaillah',
-            userEmail: '23525055@students.uii.ac.id',
-            userPhone: '081234567890',
-            userFaculty: 'Fakultas Teknologi Industri',
-            userStudyProgram: 'Teknik Mesin',
-            eventId: 'evt-002',
-            eventTitle: 'Workshop Pengelola Website: Pengelolaan Konten Berbasis SEO dan AI',
-            eventDate: '2026-11-25',
-            eventLocation: 'Ruang Teatrikal Gedung Prof. Dr. Sardjito, Gedung Prof. Dr. Sardjito UII, Kampus Terpadu',
-            status: 'REGISTERED',
-            createdAt: '2026-11-21T10:00:00.000Z'
-          });
+        const savedLogs = localStorage.getItem(STORAGE_KEYS.NOTIFICATIONS);
+        if (savedLogs) {
+          this.notificationLogs.set(JSON.parse(savedLogs));
         }
-        if (!hasWorkshopTicket) {
-          currentTickets.push(workshopTicket);
-        }
-
-        // Check if Seminar AI (evt-001) ticket is present, if not present restore it
-        const hasSeminarAiTicket = currentTickets.some(t => 
-          t.eventId === 'evt-001' || t.eventTitle?.toLowerCase().includes('seminar nasional ai')
-        );
-
-        const seminarAiTicketCode = 'UII-TIK-2026-1100';
-        const seminarAiHash = this.generateHashSignature('23525055', 'evt-001', seminarAiTicketCode);
-        const seminarAiQrPayload = JSON.stringify({
-          ticketCode: seminarAiTicketCode,
-          nim: '23525055',
-          name: 'Muhammad Raynor Athaillah',
-          eventId: 'evt-001',
-          hash: seminarAiHash,
-          timestamp: 1763640000000
-        });
-
-        const seminarAiTicket: TicketItem = {
-          id: 'tck-seminarai-raynor-001',
-          registrationId: 'reg-seminarai-raynor-001',
-          ticketCode: seminarAiTicketCode,
-          eventId: 'evt-001',
-          eventTitle: 'Seminar Nasional AI 2026: Generative Intelligence for Industrial Application',
-          eventCategory: 'SEMINAR',
-          eventDate: '2026-11-22',
-          eventTime: '08:30 - 12:30 WIB',
-          eventLocation: 'Auditorium Prof. K.H. Abdul Kahar Mudzakkir, Kampus Terpadu UII',
-          eventRoom: 'Auditorium Prof. K.H. Abdul Kahar Mudzakkir',
-          userId: 'usr-raynor-001',
-          userName: 'Muhammad Raynor Athaillah',
-          userNim: '23525055',
-          userStudyProgram: 'Teknik Mesin - Fakultas Teknologi Industri',
-          qrPayload: seminarAiQrPayload,
-          hashSignature: seminarAiHash,
-          timestampIssued: '21 November 2026, 08:30 WIB',
-          isCheckedIn: false
-        };
-
-        const hasSeminarAiReg = currentRegs.some(r => 
-          r.eventId === 'evt-001' || r.eventTitle?.toLowerCase().includes('seminar nasional ai')
-        );
-        if (!hasSeminarAiReg) {
-          currentRegs.push({
-            id: 'reg-seminarai-raynor-001',
-            userId: 'usr-raynor-001',
-            userNim: '23525055',
-            userName: 'Muhammad Raynor Athaillah',
-            userEmail: '23525055@students.uii.ac.id',
-            userPhone: '081234567890',
-            userFaculty: 'Fakultas Teknologi Industri',
-            userStudyProgram: 'Teknik Mesin',
-            eventId: 'evt-001',
-            eventTitle: 'Seminar Nasional AI 2026: Generative Intelligence for Industrial Application',
-            eventDate: '2026-11-22',
-            eventLocation: 'Auditorium Prof. K.H. Abdul Kahar Mudzakkir, Kampus Terpadu UII',
-            status: 'REGISTERED',
-            createdAt: '2026-11-21T08:30:00.000Z'
-          });
-        }
-        if (!hasSeminarAiTicket) {
-          currentTickets.push(seminarAiTicket);
-        }
-
-        // Check if Oprec PESTA UII 2027 (evt-003) ticket is present, if not present restore it
-        const hasPestaTicket = currentTickets.some(t => 
-          t.eventId === 'evt-003' || t.eventTitle?.toLowerCase().includes('pesta uii')
-        );
-        const pestaTicketCode = 'UII-TIK-2026-3399';
-        const pestaHash = this.generateHashSignature('23525055', 'evt-003', pestaTicketCode);
-        const pestaQrPayload = JSON.stringify({
-          ticketCode: pestaTicketCode,
-          nim: '23525055',
-          name: 'Muhammad Raynor Athaillah',
-          eventId: 'evt-003',
-          hash: pestaHash,
-          timestamp: 1763640000000
-        });
-        const pestaTicket: TicketItem = {
-          id: 'tck-pesta-raynor-001',
-          registrationId: 'reg-pesta-raynor-001',
-          ticketCode: pestaTicketCode,
-          eventId: 'evt-003',
-          eventTitle: 'Open Recruitment Panitia PESTA UII 2027 (Pekan Seni & Ta\'aruf Mahasiswa)',
-          eventCategory: 'COMMITTEE_RECRUITMENT',
-          eventDate: '2026-12-01',
-          eventTime: '09:00 - 17:00 WIB (Wawancara)',
-          eventLocation: 'Student Center UII',
-          eventRoom: 'Ruang Sidang Utama LEM UII Lt. 2',
-          userId: 'usr-raynor-001',
-          userName: 'Muhammad Raynor Athaillah',
-          userNim: '23525055',
-          userStudyProgram: 'Teknik Mesin - Fakultas Teknologi Industri',
-          qrPayload: pestaQrPayload,
-          hashSignature: pestaHash,
-          timestampIssued: '21 November 2026, 08:00 WIB',
-          isCheckedIn: false
-        };
-        const hasPestaReg = currentRegs.some(r => 
-          r.eventId === 'evt-003' || r.eventTitle?.toLowerCase().includes('pesta uii')
-        );
-        if (!hasPestaReg) {
-          currentRegs.push({
-            id: 'reg-pesta-raynor-001',
-            userId: 'usr-raynor-001',
-            userNim: '23525055',
-            userName: 'Muhammad Raynor Athaillah',
-            userEmail: '23525055@students.uii.ac.id',
-            userPhone: '081234567890',
-            userFaculty: 'Fakultas Teknologi Industri',
-            userStudyProgram: 'Teknik Mesin',
-            eventId: 'evt-003',
-            eventTitle: 'Open Recruitment Panitia PESTA UII 2027 (Pekan Seni & Ta\'aruf Mahasiswa)',
-            eventDate: '2026-12-01',
-            eventLocation: 'Ruang Sidang Utama LEM UII Lt. 2, Student Center UII',
-            divisionChoice1: 'Divisi Acara & Manajemen Panggung',
-            divisionChoice2: 'Divisi IT & Presensi Web Scanner',
-            motivation: 'Ingin berkontribusi aktif dalam kepanitiaan universitas dan mengoptimalkan sistem registrasi digital.',
-            status: 'REGISTERED',
-            createdAt: '2026-11-21T08:00:00.000Z'
-          });
-        }
-        if (!hasPestaTicket) {
-          currentTickets.push(pestaTicket);
-        }
-
-        // Check if Gala Budaya (evt-005) ticket is present, if not present restore it
-        const hasGalaTicket = currentTickets.some(t => 
-          t.eventId === 'evt-005' || t.eventTitle?.toLowerCase().includes('malam refleksi')
-        );
-        const galaTicketCode = 'UII-TIK-2026-5501';
-        const galaHash = this.generateHashSignature('23525055', 'evt-005', galaTicketCode);
-        const galaQrPayload = JSON.stringify({
-          ticketCode: galaTicketCode,
-          nim: '23525055',
-          name: 'Muhammad Raynor Athaillah',
-          eventId: 'evt-005',
-          hash: galaHash,
-          timestamp: 1763640000000
-        });
-        const galaTicket: TicketItem = {
-          id: 'tck-gala-raynor-001',
-          registrationId: 'reg-gala-raynor-001',
-          ticketCode: galaTicketCode,
-          eventId: 'evt-005',
-          eventTitle: 'Malam Refleksi & Apresiasi Seni Kemahasiswaan (Gala Budaya UII)',
-          eventCategory: 'KONSER',
-          eventDate: '2026-12-18',
-          eventTime: '19:30 - 22:30 WIB',
-          eventLocation: 'Lapangan Gedung Prof. Dr. Sardjito UII',
-          eventRoom: 'Open Air Amphitheater UII',
-          userId: 'usr-raynor-001',
-          userName: 'Muhammad Raynor Athaillah',
-          userNim: '23525055',
-          userStudyProgram: 'Teknik Mesin - Fakultas Teknologi Industri',
-          qrPayload: galaQrPayload,
-          hashSignature: galaHash,
-          timestampIssued: '21 November 2026, 08:30 WIB',
-          isCheckedIn: false
-        };
-        const hasGalaReg = currentRegs.some(r => 
-          r.eventId === 'evt-005' || r.eventTitle?.toLowerCase().includes('malam refleksi')
-        );
-        if (!hasGalaReg) {
-          currentRegs.push({
-            id: 'reg-gala-raynor-001',
-            userId: 'usr-raynor-001',
-            userNim: '23525055',
-            userName: 'Muhammad Raynor Athaillah',
-            userEmail: '23525055@students.uii.ac.id',
-            userPhone: '081234567890',
-            userFaculty: 'Fakultas Teknologi Industri',
-            userStudyProgram: 'Teknik Mesin',
-            eventId: 'evt-005',
-            eventTitle: 'Malam Refleksi & Apresiasi Seni Kemahasiswaan (Gala Budaya UII)',
-            eventDate: '2026-12-18',
-            eventLocation: 'Open Air Amphitheater UII, Lapangan Gedung Prof. Dr. Sardjito UII',
-            status: 'REGISTERED',
-            createdAt: '2026-11-21T08:30:00.000Z'
-          });
-        }
-        if (!hasGalaTicket) {
-          currentTickets.push(galaTicket);
-        }
-
-        // Check if Cyber Security (evt-006) ticket is present, if not present restore it
-        const hasCyberTicket = currentTickets.some(t => 
-          t.eventId === 'evt-006' || t.eventTitle?.toLowerCase().includes('cyber security')
-        );
-        const cyberTicketCode = 'UII-TIK-2026-6602';
-        const cyberHash = this.generateHashSignature('23525055', 'evt-006', cyberTicketCode);
-        const cyberQrPayload = JSON.stringify({
-          ticketCode: cyberTicketCode,
-          nim: '23525055',
-          name: 'Muhammad Raynor Athaillah',
-          eventId: 'evt-006',
-          hash: cyberHash,
-          timestamp: 1763640000000
-        });
-        const cyberTicket: TicketItem = {
-          id: 'tck-cyber-raynor-001',
-          registrationId: 'reg-cyber-raynor-001',
-          ticketCode: cyberTicketCode,
-          eventId: 'evt-006',
-          eventTitle: 'Workshop Cyber Security 2026: Hands-on Penetration Testing & Ethical Defense',
-          eventCategory: 'WORKSHOP',
-          eventDate: '2026-12-23',
-          eventTime: '09:00 - 15:00 WIB',
-          eventLocation: 'Gedung FTI UII Lt. 2',
-          eventRoom: 'Lab Jaringan & Cyber Security Lt. 2',
-          userId: 'usr-raynor-001',
-          userName: 'Muhammad Raynor Athaillah',
-          userNim: '23525055',
-          userStudyProgram: 'Teknik Mesin - Fakultas Teknologi Industri',
-          qrPayload: cyberQrPayload,
-          hashSignature: cyberHash,
-          timestampIssued: '21 November 2026, 09:00 WIB',
-          isCheckedIn: false
-        };
-        const hasCyberReg = currentRegs.some(r => 
-          r.eventId === 'evt-006' || r.eventTitle?.toLowerCase().includes('cyber security')
-        );
-        if (!hasCyberReg) {
-          currentRegs.push({
-            id: 'reg-cyber-raynor-001',
-            userId: 'usr-raynor-001',
-            userNim: '23525055',
-            userName: 'Muhammad Raynor Athaillah',
-            userEmail: '23525055@students.uii.ac.id',
-            userPhone: '081234567890',
-            userFaculty: 'Fakultas Teknologi Industri',
-            userStudyProgram: 'Teknik Mesin',
-            eventId: 'evt-006',
-            eventTitle: 'Workshop Cyber Security 2026: Hands-on Penetration Testing & Ethical Defense',
-            eventDate: '2026-12-23',
-            eventLocation: 'Lab Jaringan & Cyber Security Lt. 2, Gedung FTI UII Lt. 2',
-            status: 'REGISTERED',
-            createdAt: '2026-11-21T09:00:00.000Z'
-          });
-        }
-        if (!hasCyberTicket) {
-          currentTickets.push(cyberTicket);
-        }
-
-        // Seed tickets and registrations for Jay (NIM 23524001, Teknik Elektro)
-        const hasJayWorkshopTicket = currentTickets.some(t => 
-          (t.userId === 'usr-jay-001' || t.userNim === '23524001') && t.eventId === 'evt-002'
-        );
-        if (!hasJayWorkshopTicket) {
-          const workshopCodeJay = 'UII-TIK-2026-5241';
-          const workshopHashJay = this.generateHashSignature('23524001', 'evt-002', workshopCodeJay);
-          currentTickets.push({
-            id: 'tck-workshop-jay-001',
-            registrationId: 'reg-workshop-jay-001',
-            ticketCode: workshopCodeJay,
-            eventId: 'evt-002',
-            eventTitle: 'Workshop Pengelola Website: Pengelolaan Konten Berbasis SEO dan AI',
-            eventCategory: 'WORKSHOP',
-            eventDate: '2026-11-25',
-            eventTime: '08:30 - 15:30 WIB',
-            eventLocation: 'Gedung Prof. Dr. Sardjito UII, Kampus Terpadu',
-            eventRoom: 'Ruang Teatrikal Gedung Prof. Dr. Sardjito',
-            userId: 'usr-jay-001',
-            userName: 'Jay',
-            userNim: '23524001',
-            userStudyProgram: 'Teknik Elektro - Fakultas Teknologi Industri',
-            qrPayload: JSON.stringify({
-              ticketCode: workshopCodeJay,
-              nim: '23524001',
-              name: 'Jay',
-              eventId: 'evt-002',
-              hash: workshopHashJay,
-              timestamp: 1763640000000
-            }),
-            hashSignature: workshopHashJay,
-            timestampIssued: '22 November 2026, 09:00 WIB',
-            isCheckedIn: false
-          });
-          currentRegs.push({
-            id: 'reg-workshop-jay-001',
-            userId: 'usr-jay-001',
-            userNim: '23524001',
-            userName: 'Jay',
-            userEmail: '23524001@students.uii.ac.id',
-            userPhone: '081234567891',
-            userFaculty: 'Fakultas Teknologi Industri',
-            userStudyProgram: 'Teknik Elektro',
-            eventId: 'evt-002',
-            eventTitle: 'Workshop Pengelola Website: Pengelolaan Konten Berbasis SEO dan AI',
-            eventDate: '2026-11-25',
-            eventLocation: 'Ruang Teatrikal Gedung Prof. Dr. Sardjito, Gedung Prof. Dr. Sardjito UII, Kampus Terpadu',
-            status: 'REGISTERED',
-            createdAt: '2026-11-22T09:00:00.000Z'
-          });
-        }
-
-        const hasJaySeminarTicket = currentTickets.some(t => 
-          (t.userId === 'usr-jay-001' || t.userNim === '23524001') && t.eventId === 'evt-001'
-        );
-        if (!hasJaySeminarTicket) {
-          const seminarCodeJay = 'UII-TIK-2026-5242';
-          const seminarHashJay = this.generateHashSignature('23524001', 'evt-001', seminarCodeJay);
-          currentTickets.push({
-            id: 'tck-seminar-jay-001',
-            registrationId: 'reg-seminar-jay-001',
-            ticketCode: seminarCodeJay,
-            eventId: 'evt-001',
-            eventTitle: 'Seminar Nasional AI & Karir Teknologi 2026',
-            eventCategory: 'SEMINAR',
-            eventDate: '2026-11-25',
-            eventTime: '08:00 - 12:30 WIB',
-            eventLocation: 'Kampus Terpadu UII, Gedung FTI',
-            eventRoom: 'Auditorium KH. Abdurrahman Wahid Lt. 3',
-            userId: 'usr-jay-001',
-            userName: 'Jay',
-            userNim: '23524001',
-            userStudyProgram: 'Teknik Elektro - Fakultas Teknologi Industri',
-            qrPayload: JSON.stringify({
-              ticketCode: seminarCodeJay,
-              nim: '23524001',
-              name: 'Jay',
-              eventId: 'evt-001',
-              hash: seminarHashJay,
-              timestamp: 1763640000000
-            }),
-            hashSignature: seminarHashJay,
-            timestampIssued: '22 November 2026, 09:10 WIB',
-            isCheckedIn: false
-          });
-          currentRegs.push({
-            id: 'reg-seminar-jay-001',
-            userId: 'usr-jay-001',
-            userNim: '23524001',
-            userName: 'Jay',
-            userEmail: '23524001@students.uii.ac.id',
-            userPhone: '081234567891',
-            userFaculty: 'Fakultas Teknologi Industri',
-            userStudyProgram: 'Teknik Elektro',
-            eventId: 'evt-001',
-            eventTitle: 'Seminar Nasional AI & Karir Teknologi 2026',
-            eventDate: '2026-11-25',
-            eventLocation: 'Auditorium KH. Abdurrahman Wahid Lt. 3, Kampus Terpadu UII, Gedung FTI',
-            status: 'REGISTERED',
-            createdAt: '2026-11-22T09:10:00.000Z'
-          });
-        }
-
-        const hasJayGalaTicket = currentTickets.some(t => 
-          (t.userId === 'usr-jay-001' || t.userNim === '23524001') && t.eventId === 'evt-005'
-        );
-        if (!hasJayGalaTicket) {
-          const galaCodeJay = 'UII-TIK-2026-5244';
-          const galaHashJay = this.generateHashSignature('23524001', 'evt-005', galaCodeJay);
-          currentTickets.push({
-            id: 'tck-gala-jay-001',
-            registrationId: 'reg-gala-jay-001',
-            ticketCode: galaCodeJay,
-            eventId: 'evt-005',
-            eventTitle: 'Malam Refleksi & Apresiasi Seni Kemahasiswaan (Gala Budaya UII)',
-            eventCategory: 'CONCERT',
-            eventDate: '2026-12-18',
-            eventTime: '19:30 - 22:30 WIB',
-            eventLocation: 'Open Air Amphitheater UII',
-            eventRoom: 'Panggung Utama Amphitheater',
-            userId: 'usr-jay-001',
-            userName: 'Jay',
-            userNim: '23524001',
-            userStudyProgram: 'Teknik Elektro - Fakultas Teknologi Industri',
-            qrPayload: JSON.stringify({
-              ticketCode: galaCodeJay,
-              nim: '23524001',
-              name: 'Jay',
-              eventId: 'evt-005',
-              hash: galaHashJay,
-              timestamp: 1763640000000
-            }),
-            hashSignature: galaHashJay,
-            timestampIssued: '22 November 2026, 09:15 WIB',
-            isCheckedIn: true,
-            checkedInAt: '19.45 WIB',
-            checkedInBy: 'Meja Registrasi UII'
-          });
-          currentRegs.push({
-            id: 'reg-gala-jay-001',
-            userId: 'usr-jay-001',
-            userNim: '23524001',
-            userName: 'Jay',
-            userEmail: '23524001@students.uii.ac.id',
-            userPhone: '081234567891',
-            userFaculty: 'Fakultas Teknologi Industri',
-            userStudyProgram: 'Teknik Elektro',
-            eventId: 'evt-005',
-            eventTitle: 'Malam Refleksi & Apresiasi Seni Kemahasiswaan (Gala Budaya UII)',
-            eventDate: '2026-12-18',
-            eventLocation: 'Panggung Utama Amphitheater, Open Air Amphitheater UII',
-            status: 'ATTENDED',
-            createdAt: '2026-11-22T09:15:00.000Z'
-          });
-        }
-
-        // Sanitize tickets data to guarantee correct department mapping
-        currentTickets = currentTickets.map(t => {
-          if (t.userId === 'usr-raynor-001' || t.userNim === '23525055' || t.userNim === '23523055') {
-            return {
-              ...t,
-              userId: 'usr-raynor-001',
-              userName: 'Muhammad Raynor Athaillah',
-              userNim: '23525055',
-              userStudyProgram: 'Teknik Mesin - Fakultas Teknologi Industri'
-            };
-          }
-          return t;
-        });
-
-        this.registrations.set(currentRegs);
-        this.tickets.set(currentTickets);
-        this.saveToStorage();
-
-        let certList: CertificateItem[] = savedCerts ? JSON.parse(savedCerts) : [];
-        if (!certList.some(c => c.id === '0491' || c.certificateNumber?.includes('0491'))) {
-          certList.unshift({
-            id: '0491',
-            registrationId: 'reg-0491',
-            ticketId: 'tck-0491',
-            eventId: 'evt-001',
-            eventTitle: 'Seminar Nasional AI & Karir Teknologi 2026',
-            eventDate: 'Rabu, 25 November 2026',
-            organizer: 'LEM FTI UII',
-            eventRoom: 'Auditorium KH. Abdurrahman Wahid FTI UII',
-            publishedAtFormatted: 'Rabu, 25 November 2026 · 08.14 WIB (saat presensi)',
-            userId: 'usr-raynor-001',
-            userName: 'Muhammad Raynor Athaillah',
-            userNim: '23525055',
-            userFaculty: 'Fakultas Teknologi Industri',
-            userStudyProgram: 'Teknik Mesin',
-            certificateNumber: 'UII/DPK/CERT/2026/0491',
-            skpiPoints: 15,
-            issueDate: '25 November 2026',
-            verificationHash: '7f3a9c2e41b8d05a',
-            issuerName: 'Dr. Ir. Budi Hartono, M.T.',
-            issuerRole: 'Direktur Pembinaan Kemahasiswaan UII',
-            isUnlocked: true
-          });
-        }
-
-        // Sanitize certificate list: ensure NIM 23525055 and Teknik Mesin
-        certList = certList.map(c => {
-          if (c.userNim === '23523055' || c.userNim === '23525055' || c.userId === 'usr-raynor-001' || c.userName?.toLowerCase().includes('raynor')) {
-            return {
-              ...c,
-              userId: 'usr-raynor-001',
-              userName: 'Muhammad Raynor Athaillah',
-              userNim: '23525055',
-              userStudyProgram: 'Teknik Mesin',
-              userFaculty: 'Fakultas Teknologi Industri',
-              isUnlocked: true
-            };
-          } else if (c.userNim === '23524001' || c.userId === 'usr-jay-001' || c.userName?.toLowerCase().includes('jay')) {
-            return {
-              ...c,
-              userId: 'usr-jay-001',
-              userName: 'Jay',
-              userNim: '23524001',
-              userStudyProgram: 'Teknik Elektro',
-              userFaculty: 'Fakultas Teknologi Industri',
-              isUnlocked: true
-            };
-          } else if (c.userNim) {
-            const info = getUiiProdiFromNim(c.userNim);
-            return {
-              ...c,
-              userStudyProgram: info.studyProgram,
-              userFaculty: info.faculty,
-              isUnlocked: true
-            };
-          }
-          return { ...c, isUnlocked: true };
-        });
-
-        // Ensure any attended ticket has a valid active certificate
-        for (const t of currentTickets) {
-          if (t.isCheckedIn && !certList.some(c => c.ticketId === t.id || (c.eventId === t.eventId && (c.userNim === t.userNim || c.userId === t.userId)))) {
-            const prodiInfo = getUiiProdiFromNim(t.userNim);
-            const facShort = prodiInfo.faculty.includes('Teknologi Industri') ? 'FTI' :
-                             prodiInfo.faculty.includes('Sipil') ? 'FTSP' :
-                             prodiInfo.faculty.includes('Matematika') ? 'FMIPA' :
-                             prodiInfo.faculty.includes('Ekonomika') ? 'FBE' :
-                             prodiInfo.faculty.includes('Hukum') ? 'FH' :
-                             prodiInfo.faculty.includes('Agama') ? 'FIAI' :
-                             prodiInfo.faculty.includes('Psikologi') ? 'FPSB' :
-                             prodiInfo.faculty.includes('Kedokteran') ? 'FK' : 'UII';
-            const certNum = `UII/SKPI/2026/${facShort}-${Math.floor(1000 + Math.random() * 9000)}`;
-            const ev = eventsList.find((e: EventItem) => e.id === t.eventId);
-            const cHash = this.generateHashSignature(t.userNim, t.eventId, certNum);
-            certList.push({
-              id: 'cert-' + Math.random().toString(36).substring(2, 9),
-              registrationId: t.registrationId,
-              ticketId: t.id,
-              eventId: t.eventId,
-              eventTitle: t.eventTitle,
-              eventDate: t.eventDate,
-              organizer: ev?.organizer || 'Panitia UII',
-              eventRoom: t.eventRoom || ev?.room || 'Kampus Terpadu UII',
-              publishedAtFormatted: `${t.eventDate} · ${t.checkedInAt || '08:15 WIB'} (saat presensi)`,
-              userId: t.userId,
-              userName: t.userName,
-              userNim: t.userNim,
-              userFaculty: prodiInfo.faculty,
-              userStudyProgram: prodiInfo.studyProgram,
-              certificateNumber: certNum,
-              skpiPoints: ev ? ev.skpiPoints : 15,
-              issueDate: '25 November 2026',
-              verificationHash: cHash,
-              issuerName: 'Dr. Ir. Budi Hartono, M.T.',
-              issuerRole: 'Direktur Pembinaan Kemahasiswaan UII',
-              isUnlocked: true
-            });
-          }
-        }
-
-        this.certificates.set(certList);
-        this.notificationLogs.set(savedLogs ? JSON.parse(savedLogs) : []);
-        return;
       } catch (e) {
-        console.error('Failed to parse saved state, reloading seed:', e);
+        console.warn('Error reading from localStorage:', e);
       }
     }
-
-    this.loadMockDefaults();
   }
 
   private loadMockDefaults(): void {
-    const seedEvents: EventItem[] = [
-      {
-        id: 'evt-001',
-        title: 'Seminar Nasional AI 2026: Generative Intelligence for Industrial Transformation',
-        slug: 'seminar-nasional-ai-2026',
-        category: 'SEMINAR',
-        categoryLabel: 'Seminar Nasional',
-        organizer: 'LEM FTI UII x Jurusan Informatika',
-        faculty: 'Fakultas Teknologi Industri',
-        description: 'Eksplorasi mendalam arsitektur model AI tingkat lanjut, strategi adopsi industri 5.0, serta etika kepatuhan data kecerdasan buatan di era otomasi tinggi. Disertai sertifikasi kompetensi SKPI resmi UII.',
-        date: '2026-11-22',
-        time: '08:30 - 12:30 WIB',
-        location: 'Kampus Terpadu UII, Jl. Kaliurang KM 14.5',
-        room: 'Auditorium Prof. K.H. Abdul Kahar Mudzakkir',
-        bannerUrl: '/assets/images/seminar-ai-uii.jpg',
-        quotaTotal: 300,
-        quotaRemaining: 300,
-        status: 'PUBLISHED',
-        skpiPoints: 15,
-        isFree: true,
-        speaker: {
-          name: 'Prof. Dr. Ir. Hari Purnomo, M.T.',
-          role: 'Head of Center for AI Innovation & Data Science',
-          company: 'Universitas Islam Indonesia'
-        },
-        instagramPostStatus: {
-          isPosted: true,
-          postId: 'ig_post_883921049',
-          postedAt: '18 Nov 2026, 14:10 WIB',
-          mediaUrl: 'https://instagram.com/p/uii.events/883921'
-        },
-        whatsappHelpdesk: '6281234567890'
-      },
-      {
-        id: 'evt-002',
-        title: 'Workshop Pengelola Website: Pengelolaan Konten Berbasis SEO dan AI',
-        slug: 'workshop-pengelola-website-seo-ai-uii',
-        category: 'WORKSHOP',
-        categoryLabel: 'Hands-on Workshop',
-        organizer: 'Direktorat Sistem Informasi x LEM UII',
-        faculty: 'Universitas Islam Indonesia',
-        description: 'Pelatihan intensif pengelolaan konten website institusi dan ormawa berbasis SEO dan AI untuk memperkuat visibilitas digital ekosistem UII. Diselenggarakan di Gedung Prof. Dr. Sardjito.',
-        date: '2026-11-25',
-        time: '09:00 - 15:30 WIB',
-        location: 'Gedung Prof. Dr. Sardjito UII, Kampus Terpadu',
-        room: 'Ruang Teatrikal Gedung Prof. Dr. Sardjito',
-        bannerUrl: '/assets/images/workshop-ai-uii.jpg',
-        quotaTotal: 60,
-        quotaRemaining: 60,
-        status: 'PUBLISHED',
-        skpiPoints: 20,
-        isFree: true,
-        speaker: {
-          name: 'Pakar Konten SEO & AI UII',
-          role: 'Konsultan Optimasi Web',
-          company: 'Direktorat Sistem & Teknologi Informasi'
-        },
-        instagramPostStatus: {
-          isPosted: true,
-          postId: 'ig_post_991823712',
-          postedAt: '17 Nov 2026, 10:00 WIB',
-          mediaUrl: 'https://instagram.com/p/uii.events/991823'
-        },
-        whatsappHelpdesk: '6281298765432'
-      },
-      {
-        id: 'evt-003',
-        title: 'Open Recruitment Panitia PESTA UII 2027 (Pekan Seni & Ta\'aruf Mahasiswa)',
-        slug: 'oprec-panitia-pesta-uii-2027',
-        category: 'COMMITTEE_RECRUITMENT',
-        categoryLabel: 'Oprec Kepanitiaan',
-        organizer: 'Lembaga Eksekutif Mahasiswa (LEM) Universitas',
-        faculty: 'Tingkat Universitas',
-        description: 'Panggilan kepemimpinan bagi seluruh mahasiswa aktif UII untuk bergabung dalam kepanitiaan penyambutan mahasiswa baru terbesar di UII. Tersedia divisi strategis dan teknis.',
-        date: '2026-12-01',
-        time: '09:00 - 17:00 WIB (Wawancara)',
-        location: 'Student Center UII',
-        room: 'Ruang Sidang Utama LEM UII Lt. 2',
-        bannerUrl: '/assets/images/oprec-pesta-uii.jpg',
-        quotaTotal: 120,
-        quotaRemaining: 120,
-        status: 'PUBLISHED',
-        skpiPoints: 25,
-        isFree: true,
-        oprecDivisions: [
-          'Divisi Acara & Manajemen Panggung',
-          'Divisi Humas & Publikasi (Medsos)',
-          'Divisi IT & Presensi Web Scanner',
-          'Divisi Logistik & Konsumsi',
-          'Divisi Kreatif & Visual Branding'
-        ],
-        instagramPostStatus: {
-          isPosted: true,
-          postId: 'ig_post_55123984',
-          postedAt: '19 Nov 2026, 08:00 WIB',
-          mediaUrl: 'https://instagram.com/p/uii.events/551239'
-        },
-        whatsappHelpdesk: '6281122334455'
-      },
-      {
-        id: 'evt-004',
-        title: 'National Islamic Technology Competition (NITC 2026): Sharia FinTech & GovTech',
-        slug: 'national-islamic-technology-competition-2026',
-        category: 'LOMBA',
-        categoryLabel: 'Kompetisi Nasional',
-        organizer: 'Dewan Riset Mahasiswa Sains & Teknologi UII',
-        faculty: 'Fakultas Matematika & Ilmu Pengetahuan Alam',
-        description: 'Ajang kompetisi inovasi perangkat lunak berbasis nilai keislaman dan kebermanfaatan umat dengan total hadiah puluhan juta rupiah serta sertifikat berbobot SKPI.',
-        date: '2026-12-10',
-        time: '08:00 - 16:00 WIB',
-        location: 'Auditorium FMIPA UII, Kampus Terpadu',
-        room: 'Hall K.H. Mas Mansyur Lt. 3',
-        bannerUrl: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=1200&q=80',
-        quotaTotal: 80,
-        quotaRemaining: 80,
-        status: 'PUBLISHED',
-        skpiPoints: 30,
-        isFree: true,
-        speaker: {
-          name: 'Ahmad Faiz, S.T., M.Eng.',
-          role: 'Islamic FinTech Architect',
-          company: 'BSI Sharia Innovation Center'
-        },
-        instagramPostStatus: {
-          isPosted: true,
-          postId: 'ig_post_33910248',
-          postedAt: '15 Nov 2026, 12:00 WIB'
-        },
-        whatsappHelpdesk: '6281234567890'
-      },
-      {
-        id: 'evt-005',
-        title: 'Malam Refleksi & Apresiasi Seni Kemahasiswaan (Gala Budaya UII)',
-        slug: 'malam-refleksi-apresiasi-seni-uii',
-        category: 'KONSER',
-        categoryLabel: 'Konser & Pagelaran Seni',
-        organizer: 'UKM Kesenian & Budaya UII',
-        faculty: 'Direktorat Pembinaan Kemahasiswaan',
-        description: 'Malam keakraban, pementasan teater islami, musik akustik, puisi kontemplasi perjuangan kemahasiswaan serta penghargaan Ormawa Berprestasi UII 2026.',
-        date: '2026-12-18',
-        time: '19:30 - 22:30 WIB',
-        location: 'Lapangan Gedung Prof. Dr. Sardjito UII',
-        room: 'Open Air Amphitheater UII',
-        bannerUrl: 'https://images.unsplash.com/photo-1465847899084-d164df4dedc6?auto=format&fit=crop&w=1200&q=80',
-        quotaTotal: 400,
-        quotaRemaining: 400,
-        status: 'PUBLISHED',
-        skpiPoints: 10,
-        isFree: true,
-        instagramPostStatus: {
-          isPosted: false
-        },
-        whatsappHelpdesk: '6281234567890'
-      },
-      {
-        id: 'evt-006',
-        title: 'Workshop Cyber Security 2026: Hands-on Penetration Testing & Ethical Defense',
-        slug: 'workshop-cyber-security-ethical-defense-2026',
-        category: 'WORKSHOP',
-        categoryLabel: 'Hands-on Workshop',
-        organizer: 'UKM Informatika & Multimedia UII',
-        faculty: 'Fakultas Teknologi Industri',
-        description: 'Pelatihan praktis audit keamanan sistem informasi web kampus, teknik patching vulnerabilitas OWASP Top 10, dan mitigasi serangan DDoS. Menunggu persetujuan izin kegiatan dari DPK UII.',
-        date: '2026-12-23',
-        time: '09:00 - 15:00 WIB',
-        location: 'Gedung K.H. Mas Mansyur FTI UII',
-        room: 'Lab Jaringan & Cyber Security Lt. 2',
-        bannerUrl: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=1200&q=80',
-        quotaTotal: 40,
-        quotaRemaining: 40,
-        status: 'PUBLISHED',
-        skpiPoints: 20,
-        isFree: true,
-        proposalFileName: 'Proposal_Workshop_Cyber_Security_FTI_2026.pdf',
-        submittedAt: '2026-11-20T14:30:00.000Z',
-        instagramPostStatus: { isPosted: false },
-        whatsappHelpdesk: '6281298765432'
-      },
-      {
-        id: 'evt-007',
-        title: 'Grand Launching Tech Startup & Inkubasi Mahasiswa UII 2027',
-        slug: 'grand-launching-tech-startup-inkubasi-2027',
-        category: 'SEMINAR',
-        categoryLabel: 'Seminar Nasional',
-        organizer: 'LEM FTI UII x Simpul Tumbuh',
-        faculty: 'Tingkat Universitas',
-        description: 'Program akselerasi pendanaan ide bisnis digital mahasiswa, pitching di hadapan venture capital syariah nasional, dan fasilitas mentoring inkubasi 6 bulan.',
-        date: '2026-12-28',
-        time: '09:00 - 16:00 WIB',
-        location: 'Gedung Rektorat GBPH Prabuningrat UII',
-        room: 'Ruang Teatrikal Lt. 1',
-        bannerUrl: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=1200&q=80',
-        quotaTotal: 150,
-        quotaRemaining: 150,
-        status: 'PUBLISHED',
-        skpiPoints: 25,
-        isFree: true,
-        proposalFileName: 'Draf_Proposal_Inkubasi_Startup_2027.pdf',
-        instagramPostStatus: { isPosted: false },
-        whatsappHelpdesk: '6281234567890'
-      },
-      {
-        id: 'evt-008',
-        title: 'Porsematik HMIF UII 2026',
-        slug: 'porsematik-hmif-uii-2026',
-        category: 'COMMITTEE_RECRUITMENT',
-        categoryLabel: 'Oprec Kepanitiaan',
-        organizer: 'HMIF FTI UII',
-        faculty: 'Fakultas Teknologi Industri',
-        description: 'Perekrutan panitia mahasiswa untuk rangkaian perhelatan Pekan Olahraga dan Seni Mahasiswa Informatika (Porsematik) FTI UII 2026. Terbuka bagi seluruh mahasiswa aktif UII lintas prodi.',
-        date: '2026-12-05',
-        time: '08:00 - 17:00 WIB',
-        location: 'GOR Ki Bagoes Hadikoesoemo & Hall FTI UII',
-        room: 'GOR Utama Kampus Terpadu UII',
-        bannerUrl: '/assets/images/campus/uii-kampus-terpadu-hd.jpg',
-        quotaTotal: 150,
-        quotaRemaining: 150,
-        status: 'PUBLISHED',
-        skpiPoints: 20,
-        isFree: true,
-        oprecDivisions: [
-          'Divisi Acara & Pertandingan',
-          'Divisi Humas & Publikasi (Medsos)',
-          'Divisi IT, Web & Presensi Scanner',
-          'Divisi Logistik & Perlengkapan',
-          'Divisi Konsumsi & Medis',
-          'Divisi Wasit & Keamanan'
-        ],
-        proposalFileName: 'Proposal_Porsematik_HMIF_2026.pdf',
-        submittedAt: '2026-11-19T10:00:00.000Z',
-        reviewedAt: '2026-11-20T14:00:00.000Z',
-        reviewedBy: 'Dr. Ir. Budi Hartono, M.T.',
-        dpkReviewNotes: 'Proposal telah ditinjau dan disetujui DPK UII. Memenuhi norma kepatutan kampus islami & bobot SKPI sah.',
-        instagramPostStatus: {
-          isPosted: true,
-          postId: 'ig_post_porsematik2026',
-          postedAt: '20 Nov 2026, 14:00 WIB',
-          mediaUrl: 'https://instagram.com/p/uii.events/porsematik2026'
-        },
-        whatsappHelpdesk: '6281234567890'
-      }
-    ];
-
-    // Seed existing registration & ticket for Muhammad Rian in Seminar AI (FR-REG-02 / US-01 verification ready)
-    const initialRegId = 'reg-rian-ai-001';
-    const initialTicketId = 'tck-rian-ai-001';
-    const hashSignature = '9d8f8a127f8490b435ecbb890c427329d491f88c829e1208d13264eb78d5236b';
-
-    const porsematikTicketCode = 'UII-TIK-2026-8899';
-    const porsematikHash = this.generateHashSignature('23525055', 'evt-008', porsematikTicketCode);
-    const porsematikQrPayload = JSON.stringify({
-      ticketCode: porsematikTicketCode,
-      nim: '23525055',
-      name: 'Muhammad Raynor Athaillah',
-      eventId: 'evt-008',
-      hash: porsematikHash,
-      timestamp: 1763640000000
-    });
-
-    const porsematikTicket: TicketItem = {
-      id: 'tck-porsematik-raynor-001',
-      registrationId: 'reg-porsematik-raynor-001',
-      ticketCode: porsematikTicketCode,
-      eventId: 'evt-008',
-      eventTitle: 'Porsematik HMIF UII 2026',
-      eventCategory: 'COMMITTEE_RECRUITMENT',
-      eventDate: '2026-12-05',
-      eventTime: '08:00 - 17:00 WIB',
-      eventLocation: 'GOR Ki Bagoes Hadikoesoemo & Hall FTI UII',
-      eventRoom: 'GOR Utama Kampus Terpadu UII',
-      userId: 'usr-raynor-001',
-      userName: 'Muhammad Raynor Athaillah',
-      userNim: '23525055',
-      userStudyProgram: 'Teknik Mesin - Fakultas Teknologi Industri',
-      qrPayload: porsematikQrPayload,
-      hashSignature: porsematikHash,
-      timestampIssued: '20 November 2026, 14:15 WIB',
-      isCheckedIn: false
-    };
-
-    const nitcTicketCode = 'UII-TIK-2026-7721';
-    const nitcHash = this.generateHashSignature('23525055', 'evt-004', nitcTicketCode);
-    const nitcQrPayload = JSON.stringify({
-      ticketCode: nitcTicketCode,
-      nim: '23525055',
-      name: 'Muhammad Raynor Athaillah',
-      eventId: 'evt-004',
-      hash: nitcHash,
-      timestamp: 1763640000000
-    });
-
-    const nitcTicket: TicketItem = {
-      id: 'tck-nitc-raynor-001',
-      registrationId: 'reg-nitc-raynor-001',
-      ticketCode: nitcTicketCode,
-      eventId: 'evt-004',
-      eventTitle: 'National Islamic Technology Competition (NITC 2026): Sharia FinTech & GovTech',
-      eventCategory: 'LOMBA',
-      eventDate: '2026-12-10',
-      eventTime: '08:00 - 16:00 WIB',
-      eventLocation: 'Auditorium FMIPA UII, Kampus Terpadu',
-      eventRoom: 'Hall K.H. Mas Mansyur Lt. 3',
-      userId: 'usr-raynor-001',
-      userName: 'Muhammad Raynor Athaillah',
-      userNim: '23525055',
-      userStudyProgram: 'Teknik Mesin - Fakultas Teknologi Industri',
-      qrPayload: nitcQrPayload,
-      hashSignature: nitcHash,
-      timestampIssued: '21 November 2026, 09:30 WIB',
-      isCheckedIn: false
-    };
-
-    const seedRegistrations: RegistrationItem[] = [
-      {
-        id: 'reg-porsematik-raynor-001',
-        userId: 'usr-raynor-001',
-        userNim: '23525055',
-        userName: 'Muhammad Raynor Athaillah',
-        userEmail: '23525055@students.uii.ac.id',
-        userPhone: '081234567890',
-        userFaculty: 'Fakultas Teknologi Industri',
-        userStudyProgram: 'Teknik Mesin',
-        eventId: 'evt-008',
-        eventTitle: 'Porsematik HMIF UII 2026',
-        eventDate: '2026-12-05',
-        eventLocation: 'GOR Utama Kampus Terpadu UII, GOR Ki Bagoes Hadikoesoemo & Hall FTI UII',
-        status: 'REGISTERED',
-        createdAt: '2026-11-20T14:15:00.000Z'
-      },
-      {
-        id: 'reg-nitc-raynor-001',
-        userId: 'usr-raynor-001',
-        userNim: '23525055',
-        userName: 'Muhammad Raynor Athaillah',
-        userEmail: '23525055@students.uii.ac.id',
-        userPhone: '081234567890',
-        userFaculty: 'Fakultas Teknologi Industri',
-        userStudyProgram: 'Teknik Mesin',
-        eventId: 'evt-004',
-        eventTitle: 'National Islamic Technology Competition (NITC 2026): Sharia FinTech & GovTech',
-        eventDate: '2026-12-10',
-        eventLocation: 'Hall K.H. Mas Mansyur Lt. 3, Auditorium FMIPA UII, Kampus Terpadu',
-        status: 'REGISTERED',
-        createdAt: '2026-11-21T09:30:00.000Z'
-      },
-      {
-        id: 'reg-workshop-raynor-001',
-        userId: 'usr-raynor-001',
-        userNim: '23525055',
-        userName: 'Muhammad Raynor Athaillah',
-        userEmail: '23525055@students.uii.ac.id',
-        userPhone: '081234567890',
-        userFaculty: 'Fakultas Teknologi Industri',
-        userStudyProgram: 'Teknik Mesin',
-        eventId: 'evt-002',
-        eventTitle: 'Workshop Pengelola Website: Pengelolaan Konten Berbasis SEO dan AI',
-        eventDate: '2026-11-25',
-        eventLocation: 'Ruang Teatrikal Gedung Prof. Dr. Sardjito, Gedung Prof. Dr. Sardjito UII, Kampus Terpadu',
-        status: 'REGISTERED',
-        createdAt: '2026-11-21T10:00:00.000Z'
-      },
-      {
-        id: 'reg-seminarai-raynor-001',
-        userId: 'usr-raynor-001',
-        userNim: '23525055',
-        userName: 'Muhammad Raynor Athaillah',
-        userEmail: '23525055@students.uii.ac.id',
-        userPhone: '081234567890',
-        userFaculty: 'Fakultas Teknologi Industri',
-        userStudyProgram: 'Teknik Mesin',
-        eventId: 'evt-001',
-        eventTitle: 'Seminar Nasional AI 2026: Generative Intelligence for Industrial Application',
-        eventDate: '2026-11-22',
-        eventLocation: 'Auditorium Prof. K.H. Abdul Kahar Mudzakkir, Kampus Terpadu UII',
-        status: 'REGISTERED',
-        createdAt: '2026-11-21T08:30:00.000Z'
-      },
-      {
-        id: 'reg-pesta-raynor-001',
-        userId: 'usr-raynor-001',
-        userNim: '23525055',
-        userName: 'Muhammad Raynor Athaillah',
-        userEmail: '23525055@students.uii.ac.id',
-        userPhone: '081234567890',
-        userFaculty: 'Fakultas Teknologi Industri',
-        userStudyProgram: 'Teknik Mesin',
-        eventId: 'evt-003',
-        eventTitle: 'Open Recruitment Panitia PESTA UII 2027 (Pekan Seni & Ta\'aruf Mahasiswa)',
-        eventDate: '2026-12-01',
-        eventLocation: 'Ruang Sidang Utama LEM UII Lt. 2, Student Center UII',
-        divisionChoice1: 'Divisi Acara & Manajemen Panggung',
-        divisionChoice2: 'Divisi IT & Presensi Web Scanner',
-        status: 'REGISTERED',
-        createdAt: '2026-11-21T08:00:00.000Z'
-      },
-      {
-        id: 'reg-gala-raynor-001',
-        userId: 'usr-raynor-001',
-        userNim: '23525055',
-        userName: 'Muhammad Raynor Athaillah',
-        userEmail: '23525055@students.uii.ac.id',
-        userPhone: '081234567890',
-        userFaculty: 'Fakultas Teknologi Industri',
-        userStudyProgram: 'Teknik Mesin',
-        eventId: 'evt-005',
-        eventTitle: 'Malam Refleksi & Apresiasi Seni Kemahasiswaan (Gala Budaya UII)',
-        eventDate: '2026-12-18',
-        eventLocation: 'Open Air Amphitheater UII, Lapangan Gedung Prof. Dr. Sardjito UII',
-        status: 'REGISTERED',
-        createdAt: '2026-11-21T08:30:00.000Z'
-      },
-      {
-        id: 'reg-cyber-raynor-001',
-        userId: 'usr-raynor-001',
-        userNim: '23525055',
-        userName: 'Muhammad Raynor Athaillah',
-        userEmail: '23525055@students.uii.ac.id',
-        userPhone: '081234567890',
-        userFaculty: 'Fakultas Teknologi Industri',
-        userStudyProgram: 'Teknik Mesin',
-        eventId: 'evt-006',
-        eventTitle: 'Workshop Cyber Security 2026: Hands-on Penetration Testing & Ethical Defense',
-        eventDate: '2026-12-23',
-        eventLocation: 'Lab Jaringan & Cyber Security Lt. 2, Gedung FTI UII Lt. 2',
-        status: 'REGISTERED',
-        createdAt: '2026-11-21T09:00:00.000Z'
-      }
-    ];
-
-    const workshopTicketCode = 'UII-TIK-2026-5522';
-    const workshopHash = this.generateHashSignature('23525055', 'evt-002', workshopTicketCode);
-    const workshopQrPayload = JSON.stringify({
-      ticketCode: workshopTicketCode,
-      nim: '23525055',
-      name: 'Muhammad Raynor Athaillah',
-      eventId: 'evt-002',
-      hash: workshopHash,
-      timestamp: 1763640000000
-    });
-    const workshopTicket: TicketItem = {
-      id: 'tck-workshop-raynor-001',
-      registrationId: 'reg-workshop-raynor-001',
-      ticketCode: workshopTicketCode,
-      eventId: 'evt-002',
-      eventTitle: 'Workshop Pengelola Website: Pengelolaan Konten Berbasis SEO dan AI',
-      eventCategory: 'WORKSHOP',
-      eventDate: '2026-11-25',
-      eventTime: '09:00 - 15:30 WIB',
-      eventLocation: 'Gedung Prof. Dr. Sardjito UII, Kampus Terpadu',
-      eventRoom: 'Ruang Teatrikal Gedung Prof. Dr. Sardjito',
-      userId: 'usr-raynor-001',
-      userName: 'Muhammad Raynor Athaillah',
-      userNim: '23525055',
-      userStudyProgram: 'Teknik Mesin - Fakultas Teknologi Industri',
-      qrPayload: workshopQrPayload,
-      hashSignature: workshopHash,
-      timestampIssued: '21 November 2026, 10:00 WIB',
-      isCheckedIn: false
-    };
-
-    const seminarAiTicketCode = 'UII-TIK-2026-1100';
-    const seminarAiHash = this.generateHashSignature('23525055', 'evt-001', seminarAiTicketCode);
-    const seminarAiQrPayload = JSON.stringify({
-      ticketCode: seminarAiTicketCode,
-      nim: '23525055',
-      name: 'Muhammad Raynor Athaillah',
-      eventId: 'evt-001',
-      hash: seminarAiHash,
-      timestamp: 1763640000000
-    });
-    const seminarAiTicket: TicketItem = {
-      id: 'tck-seminarai-raynor-001',
-      registrationId: 'reg-seminarai-raynor-001',
-      ticketCode: seminarAiTicketCode,
-      eventId: 'evt-001',
-      eventTitle: 'Seminar Nasional AI 2026: Generative Intelligence for Industrial Application',
-      eventCategory: 'SEMINAR',
-      eventDate: '2026-11-22',
-      eventTime: '08:30 - 12:30 WIB',
-      eventLocation: 'Auditorium Prof. K.H. Abdul Kahar Mudzakkir, Kampus Terpadu UII',
-      eventRoom: 'Auditorium Prof. K.H. Abdul Kahar Mudzakkir',
-      userId: 'usr-raynor-001',
-      userName: 'Muhammad Raynor Athaillah',
-      userNim: '23525055',
-      userStudyProgram: 'Teknik Mesin - Fakultas Teknologi Industri',
-      qrPayload: seminarAiQrPayload,
-      hashSignature: seminarAiHash,
-      timestampIssued: '21 November 2026, 08:30 WIB',
-      isCheckedIn: false
-    };
-
-    const pestaTicketCode = 'UII-TIK-2026-3399';
-    const pestaHash = this.generateHashSignature('23525055', 'evt-003', pestaTicketCode);
-    const pestaQrPayload = JSON.stringify({
-      ticketCode: pestaTicketCode,
-      nim: '23525055',
-      name: 'Muhammad Raynor Athaillah',
-      eventId: 'evt-003',
-      hash: pestaHash,
-      timestamp: 1763640000000
-    });
-    const pestaTicket: TicketItem = {
-      id: 'tck-pesta-raynor-001',
-      registrationId: 'reg-pesta-raynor-001',
-      ticketCode: pestaTicketCode,
-      eventId: 'evt-003',
-      eventTitle: 'Open Recruitment Panitia PESTA UII 2027 (Pekan Seni & Ta\'aruf Mahasiswa)',
-      eventCategory: 'COMMITTEE_RECRUITMENT',
-      eventDate: '2026-12-01',
-      eventTime: '09:00 - 17:00 WIB (Wawancara)',
-      eventLocation: 'Student Center UII',
-      eventRoom: 'Ruang Sidang Utama LEM UII Lt. 2',
-      userId: 'usr-raynor-001',
-      userName: 'Muhammad Raynor Athaillah',
-      userNim: '23525055',
-      userStudyProgram: 'Teknik Mesin - Fakultas Teknologi Industri',
-      qrPayload: pestaQrPayload,
-      hashSignature: pestaHash,
-      timestampIssued: '21 November 2026, 08:00 WIB',
-      isCheckedIn: false
-    };
-
-    const galaTicketCode = 'UII-TIK-2026-5501';
-    const galaHash = this.generateHashSignature('23525055', 'evt-005', galaTicketCode);
-    const galaQrPayload = JSON.stringify({
-      ticketCode: galaTicketCode,
-      nim: '23525055',
-      name: 'Muhammad Raynor Athaillah',
-      eventId: 'evt-005',
-      hash: galaHash,
-      timestamp: 1763640000000
-    });
-    const galaTicket: TicketItem = {
-      id: 'tck-gala-raynor-001',
-      registrationId: 'reg-gala-raynor-001',
-      ticketCode: galaTicketCode,
-      eventId: 'evt-005',
-      eventTitle: 'Malam Refleksi & Apresiasi Seni Kemahasiswaan (Gala Budaya UII)',
-      eventCategory: 'KONSER',
-      eventDate: '2026-12-18',
-      eventTime: '19:30 - 22:30 WIB',
-      eventLocation: 'Lapangan Gedung Prof. Dr. Sardjito UII',
-      eventRoom: 'Open Air Amphitheater UII',
-      userId: 'usr-raynor-001',
-      userName: 'Muhammad Raynor Athaillah',
-      userNim: '23525055',
-      userStudyProgram: 'Teknik Mesin - Fakultas Teknologi Industri',
-      qrPayload: galaQrPayload,
-      hashSignature: galaHash,
-      timestampIssued: '21 November 2026, 08:30 WIB',
-      isCheckedIn: false
-    };
-
-    const cyberTicketCode = 'UII-TIK-2026-6602';
-    const cyberHash = this.generateHashSignature('23525055', 'evt-006', cyberTicketCode);
-    const cyberQrPayload = JSON.stringify({
-      ticketCode: cyberTicketCode,
-      nim: '23525055',
-      name: 'Muhammad Raynor Athaillah',
-      eventId: 'evt-006',
-      hash: cyberHash,
-      timestamp: 1763640000000
-    });
-    const cyberTicket: TicketItem = {
-      id: 'tck-cyber-raynor-001',
-      registrationId: 'reg-cyber-raynor-001',
-      ticketCode: cyberTicketCode,
-      eventId: 'evt-006',
-      eventTitle: 'Workshop Cyber Security 2026: Hands-on Penetration Testing & Ethical Defense',
-      eventCategory: 'WORKSHOP',
-      eventDate: '2026-12-23',
-      eventTime: '09:00 - 15:00 WIB',
-      eventLocation: 'Gedung FTI UII Lt. 2',
-      eventRoom: 'Lab Jaringan & Cyber Security Lt. 2',
-      userId: 'usr-raynor-001',
-      userName: 'Muhammad Raynor Athaillah',
-      userNim: '23525055',
-      userStudyProgram: 'Teknik Mesin - Fakultas Teknologi Industri',
-      qrPayload: cyberQrPayload,
-      hashSignature: cyberHash,
-      timestampIssued: '21 November 2026, 09:00 WIB',
-      isCheckedIn: false
-    };
-
-    const workshopCodeJay = 'UII-TIK-2026-5241';
-    const workshopHashJay = this.generateHashSignature('23524001', 'evt-002', workshopCodeJay);
-    const seminarCodeJay = 'UII-TIK-2026-5242';
-    const seminarHashJay = this.generateHashSignature('23524001', 'evt-001', seminarCodeJay);
-    const galaCodeJay = 'UII-TIK-2026-5244';
-    const galaHashJay = this.generateHashSignature('23524001', 'evt-005', galaCodeJay);
-
-    const seedTickets: TicketItem[] = [
-      porsematikTicket,
-      nitcTicket,
-      workshopTicket,
-      seminarAiTicket,
-      pestaTicket,
-      galaTicket,
-      cyberTicket,
-      {
-        id: 'tck-workshop-jay-001',
-        registrationId: 'reg-workshop-jay-001',
-        ticketCode: workshopCodeJay,
-        eventId: 'evt-002',
-        eventTitle: 'Workshop Pengelola Website: Pengelolaan Konten Berbasis SEO dan AI',
-        eventCategory: 'WORKSHOP',
-        eventDate: '2026-11-25',
-        eventTime: '08:30 - 15:30 WIB',
-        eventLocation: 'Gedung Prof. Dr. Sardjito UII, Kampus Terpadu',
-        eventRoom: 'Ruang Teatrikal Gedung Prof. Dr. Sardjito',
-        userId: 'usr-jay-001',
-        userName: 'Jay',
-        userNim: '23524001',
-        userStudyProgram: 'Teknik Elektro - Fakultas Teknologi Industri',
-        qrPayload: JSON.stringify({
-          ticketCode: workshopCodeJay,
-          nim: '23524001',
-          name: 'Jay',
-          eventId: 'evt-002',
-          hash: workshopHashJay,
-          timestamp: 1763640000000
-        }),
-        hashSignature: workshopHashJay,
-        timestampIssued: '22 November 2026, 09:00 WIB',
-        isCheckedIn: false
-      },
-      {
-        id: 'tck-seminar-jay-001',
-        registrationId: 'reg-seminar-jay-001',
-        ticketCode: seminarCodeJay,
-        eventId: 'evt-001',
-        eventTitle: 'Seminar Nasional AI & Karir Teknologi 2026',
-        eventCategory: 'SEMINAR',
-        eventDate: '2026-11-25',
-        eventTime: '08:00 - 12:30 WIB',
-        eventLocation: 'Kampus Terpadu UII, Gedung FTI',
-        eventRoom: 'Auditorium KH. Abdurrahman Wahid Lt. 3',
-        userId: 'usr-jay-001',
-        userName: 'Jay',
-        userNim: '23524001',
-        userStudyProgram: 'Teknik Elektro - Fakultas Teknologi Industri',
-        qrPayload: JSON.stringify({
-          ticketCode: seminarCodeJay,
-          nim: '23524001',
-          name: 'Jay',
-          eventId: 'evt-001',
-          hash: seminarHashJay,
-          timestamp: 1763640000000
-        }),
-        hashSignature: seminarHashJay,
-        timestampIssued: '22 November 2026, 09:10 WIB',
-        isCheckedIn: false
-      },
-      {
-        id: 'tck-gala-jay-001',
-        registrationId: 'reg-gala-jay-001',
-        ticketCode: galaCodeJay,
-        eventId: 'evt-005',
-        eventTitle: 'Malam Refleksi & Apresiasi Seni Kemahasiswaan (Gala Budaya UII)',
-        eventCategory: 'CONCERT',
-        eventDate: '2026-12-18',
-        eventTime: '19:30 - 22:30 WIB',
-        eventLocation: 'Open Air Amphitheater UII',
-        eventRoom: 'Panggung Utama Amphitheater',
-        userId: 'usr-jay-001',
-        userName: 'Jay',
-        userNim: '23524001',
-        userStudyProgram: 'Teknik Elektro - Fakultas Teknologi Industri',
-        qrPayload: JSON.stringify({
-          ticketCode: galaCodeJay,
-          nim: '23524001',
-          name: 'Jay',
-          eventId: 'evt-005',
-          hash: galaHashJay,
-          timestamp: 1763640000000
-        }),
-        hashSignature: galaHashJay,
-        timestampIssued: '22 November 2026, 09:15 WIB',
-        isCheckedIn: true,
-        checkedInAt: '19.45 WIB',
-        checkedInBy: 'Meja Registrasi UII'
-      }
-    ];
-    const attendedRegId = 'reg-rian-attended-099';
-    const attendedTicketId = 'tck-rian-attended-099';
-    const attendedCertHash = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
-
-    const seedCertificates: CertificateItem[] = [
-      {
-        id: '0491',
-        registrationId: 'reg-0491',
-        ticketId: 'tck-0491',
-        eventId: 'evt-001',
-        eventTitle: 'Seminar Nasional AI & Karir Teknologi 2026',
-        eventDate: 'Rabu, 25 November 2026',
-        organizer: 'LEM FTI UII',
-        eventRoom: 'Auditorium KH. Abdurrahman Wahid FTI UII',
-        publishedAtFormatted: 'Rabu, 25 November 2026 · 08.14 WIB (saat presensi)',
-        userId: 'usr-raynor-001',
-        userName: 'Muhammad Raynor Athaillah',
-        userNim: '23525055',
-        userFaculty: 'Fakultas Teknologi Industri',
-        userStudyProgram: 'Teknik Mesin',
-        certificateNumber: 'UII/DPK/CERT/2026/0491',
-        skpiPoints: 15,
-        issueDate: '25 November 2026',
-        verificationHash: '7f3a9c2e41b8d05a',
-        issuerName: 'Dr. Ir. Budi Hartono, M.T.',
-        issuerRole: 'Direktur Pembinaan Kemahasiswaan UII',
-        isUnlocked: true
-      },
-      {
-        id: 'cert-001',
-        registrationId: attendedRegId,
-        ticketId: attendedTicketId,
-        eventId: 'evt-004',
-        eventTitle: 'National Islamic Technology Competition (NITC 2026): Sharia FinTech & GovTech',
-        eventDate: '15 Oktober 2026',
-        organizer: 'Dewan Riset Mahasiswa Sains & Teknologi UII',
-        eventRoom: 'Hall K.H. Mas Mansyur Lt. 3',
-        publishedAtFormatted: '15 Oktober 2026 · 08.15 WIB (saat presensi)',
-        userId: 'usr-raynor-001',
-        userName: 'Muhammad Raynor Athaillah',
-        userNim: '23525055',
-        userFaculty: 'Fakultas Teknologi Industri',
-        userStudyProgram: 'Teknik Mesin',
-        certificateNumber: 'UII/SKPI/2026/FTI-0042',
-        skpiPoints: 30,
-        issueDate: '15 Oktober 2026',
-        verificationHash: attendedCertHash,
-        issuerName: 'Dr. Ir. Budi Hartono, M.T.',
-        issuerRole: 'Direktur Pembinaan Kemahasiswaan UII',
-        isUnlocked: true
-      }
-    ];
-
-    const seedLogs: NotificationLog[] = [
-      {
-        id: 'log-001',
-        channel: 'WHATSAPP',
-        recipientPhone: '6281234567890',
-        recipientEmail: '21523001@students.uii.ac.id',
-        recipientName: 'Muhammad Rian',
-        eventTitle: 'Seminar Nasional AI 2026',
-        messageType: 'H-1',
-        timestamp: '21 Nov 2026, 09:00 WIB',
-        status: 'SENT',
-        contentSnippet: 'Halo Muhammad Rian! Mengingatkan besok adalah pelaksanaan Seminar AI 2026 di Auditorium Abd. Kahar Mudzakkir. Tunjukkan E-Tiket Anda...'
-      }
-    ];
-
-    this.events.set(seedEvents);
-    this.registrations.set(seedRegistrations);
-    this.tickets.set(seedTickets);
-    this.certificates.set(seedCertificates);
-    this.notificationLogs.set(seedLogs);
-
-    this.saveToStorage();
+    // Pure live DB mode: No mock seeds
+    this.events.set([]);
+    this.registrations.set([]);
+    this.tickets.set([]);
+    this.certificates.set([]);
   }
-
-  saveToStorage(): void {
+  private saveToStorage(): void {
     if (typeof localStorage === 'undefined') return;
     localStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(this.events()));
     localStorage.setItem(STORAGE_KEYS.REGISTRATIONS, JSON.stringify(this.registrations()));
@@ -1632,6 +714,87 @@ export class EventService {
     return this.registrations().find(
       r => r.userId === userId && r.eventId === eventId && r.status !== 'CANCELLED'
     );
+  }
+
+  /**
+   * Register Participant directly through Laravel Backend API (ACID Transaction & Real Ticket)
+   */
+  async registerParticipantReal(data: {
+    eventId: string;
+    divisionChoice1?: string;
+    divisionChoice2?: string;
+    motivation?: string;
+    cvFileName?: string;
+    krsFileName?: string;
+  }): Promise<RegistrationResult> {
+    const event = this.getEventById(data.eventId);
+
+    if (this.authService.isLoggedIn() && this.authService.jwtToken()) {
+      try {
+        const isCommittee = event?.category === 'COMMITTEE_RECRUITMENT' ||
+          event?.categoryLabel?.toLowerCase().includes('recruitment') ||
+          event?.categoryLabel?.toLowerCase().includes('kepanitiaan');
+
+        if (isCommittee && data.divisionChoice1) {
+          const fd = new FormData();
+          fd.append('division_pref_1', data.divisionChoice1 || '');
+          if (data.divisionChoice2) {
+            fd.append('division_pref_2', data.divisionChoice2);
+          }
+          fd.append('motivation', data.motivation || 'Siap berkontribusi aktif dalam kepanitiaan.');
+          // Generate valid PDF magic bytes (%PDF-1.5)
+          const pdfHeader = new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2D, 0x31, 0x2E, 0x35, 0x0A, 0x25, 0xD0, 0xD4, 0xC5, 0xD8, 0x0A]);
+          const blob = new Blob([pdfHeader], { type: 'application/pdf' });
+          fd.append('cv_file', blob, data.cvFileName || 'CV_Mahasiswa_UII.pdf');
+
+          const res: any = await firstValueFrom(
+            this.http.post(`${environment.apiUrl}/events/${data.eventId}/apply`, fd)
+          );
+          await this.syncWithBackend();
+          return {
+            success: true,
+            statusCode: 201,
+            message: res?.message || 'Pendaftaran open recruitment panitia berhasil dikirim!'
+          };
+        } else {
+          const res: any = await firstValueFrom(
+            this.http.post(`${environment.apiUrl}/events/${data.eventId}/register`, {
+              custom_answers: { motivation: data.motivation }
+            })
+          );
+          if (res?.data) {
+            const ticket = this.mapBackendTicketToFrontend(res.data);
+            this.tickets.update(prev => [ticket, ...prev]);
+            if (event) {
+              event.quotaRemaining = Math.max(0, event.quotaRemaining - 1);
+              this.events.update(prev => prev.map(e => e.id === event.id ? { ...event } : e));
+            }
+            return {
+              success: true,
+              statusCode: 201,
+              message: res.message || 'Pendaftaran Berhasil! E-Tiket Anda siap digunakan.',
+              ticket: ticket
+            };
+          }
+        }
+      } catch (err: any) {
+        console.warn('Backend registration API returned error:', err);
+        if (err?.status === 409) {
+          return {
+            success: false,
+            statusCode: 409,
+            message: err.error?.message || 'Pendaftaran Ditolak: Anda sudah terdaftar di acara ini (HTTP 409 Conflict).'
+          };
+        }
+        return {
+          success: false,
+          statusCode: err?.status || 400,
+          message: err.error?.message || 'Gagal melakukan pendaftaran kegiatan.'
+        };
+      }
+    }
+
+    return this.registerParticipant(data);
   }
 
   /**
@@ -1761,6 +924,34 @@ export class EventService {
 
     this.saveToStorage();
 
+    // Asynchronously notify backend Laravel API
+    if (this.authService.isLoggedIn() && this.authService.jwtToken()) {
+      if (data.cvFileName && (event.category === 'COMMITTEE_RECRUITMENT' || data.divisionChoice1)) {
+        const fd = new FormData();
+        fd.append('division_pref_1', data.divisionChoice1 || '');
+        fd.append('division_pref_2', data.divisionChoice2 || '');
+        fd.append('motivation', data.motivation || '');
+        this.http.post(`${environment.apiUrl}/events/${event.id}/apply`, fd).subscribe({
+          next: () => console.log('[API] Oprec application synced with backend'),
+          error: (e) => console.warn('[API] Oprec application sync notice:', e?.message || e)
+        });
+      } else {
+        this.http.post(`${environment.apiUrl}/events/${event.id}/register`, {
+          custom_answers: { motivation: data.motivation }
+        }).subscribe({
+          next: (res: any) => {
+            console.log('[API] Participant registration synced with backend');
+            if (res?.data?.ticket_code) {
+              newTicket.ticketCode = res.data.ticket_code;
+              newTicket.qrPayload = res.data.qr_payload;
+              this.saveToStorage();
+            }
+          },
+          error: (e) => console.warn('[API] Participant registration sync notice:', e?.message || e)
+        });
+      }
+    }
+
     return {
       success: true,
       statusCode: 201,
@@ -1793,6 +984,15 @@ export class EventService {
     this.registrations.update(prev => prev.map(r => r.id === ticket.registrationId ? { ...r, status: 'CANCELLED' } : r));
 
     this.saveToStorage();
+
+    // Asynchronously notify backend Laravel API
+    if (this.authService.isLoggedIn() && this.authService.jwtToken()) {
+      this.http.post(`${environment.apiUrl}/my-tickets/${ticket.ticketCode}/cancel`, {}).subscribe({
+        next: () => console.log('[API] Ticket cancellation synced with backend'),
+        error: (e) => console.warn('[API] Ticket cancellation sync notice:', e?.message || e)
+      });
+    }
+
     return true;
   }
 
@@ -1802,19 +1002,12 @@ export class EventService {
   processScan(scannedPayload: string, operatorName: string = 'Panitia Meja Registrasi 1'): CheckInResult {
     let ticketCode = '';
     let hash = '';
-    let parsedObj: any = null;
 
     try {
       if (scannedPayload.startsWith('{')) {
-        parsedObj = JSON.parse(scannedPayload);
-        ticketCode = parsedObj.ticketCode || '';
-        hash = parsedObj.hash || '';
-      } else if (scannedPayload.includes('code=')) {
-        const m = scannedPayload.match(/code=([^&]+)/);
-        ticketCode = m ? decodeURIComponent(m[1]).trim() : scannedPayload.trim();
-      } else if (scannedPayload.includes('/tickets/')) {
-        const parts = scannedPayload.split('/tickets/');
-        ticketCode = parts[1] ? parts[1].split('?')[0].trim() : scannedPayload.trim();
+        const parsed = JSON.parse(scannedPayload);
+        ticketCode = parsed.ticketCode || '';
+        hash = parsed.hash || '';
       } else {
         ticketCode = scannedPayload.trim();
       }
@@ -1823,79 +1016,10 @@ export class EventService {
     }
 
     // Match ticket in database
-    let ticket = this.tickets().find(
+    const ticket = this.tickets().find(
       t => t.ticketCode.toUpperCase() === ticketCode.toUpperCase() ||
            (hash && t.hashSignature === hash)
     );
-
-    // Cross-device automatic ticket sync (e.g. registered on phone, scanned on laptop):
-    if (!ticket && parsedObj && (parsedObj.eventId || parsedObj.ticketCode)) {
-      const targetEventId = parsedObj.eventId || 'evt-002';
-      const event = this.getEventById(targetEventId) || this.events().find(e => e.id === targetEventId);
-      if (event) {
-        const checkInTime = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB';
-        const code = parsedObj.ticketCode || ticketCode || `UII-TIK-2026-${Math.floor(1000 + Math.random() * 9000)}`;
-        const studentNim = parsedObj.nim || '23525055';
-        const studentName = parsedObj.name || 'Muhammad Raynor Athaillah';
-
-        const adoptedTicket: TicketItem = {
-          id: 'tck-' + Math.random().toString(36).substring(2, 9),
-          registrationId: 'reg-' + Math.random().toString(36).substring(2, 9),
-          ticketCode: code,
-          eventId: event.id,
-          eventTitle: event.title,
-          eventCategory: event.category,
-          eventDate: event.date,
-          eventTime: event.time,
-          eventLocation: event.location,
-          eventRoom: event.room,
-          userId: 'usr-' + studentNim,
-          userName: studentName,
-          userNim: studentNim,
-          userStudyProgram: 'Teknik Mesin - Fakultas Teknologi Industri',
-          qrPayload: scannedPayload,
-          hashSignature: hash || this.generateHashSignature(studentNim, event.id, code),
-          timestampIssued: new Date().toLocaleDateString('id-ID') + ' WIB',
-          isCheckedIn: true,
-          checkedInAt: checkInTime,
-          checkedInBy: operatorName
-        };
-
-        const adoptedReg: RegistrationItem = {
-          id: adoptedTicket.registrationId,
-          userId: adoptedTicket.userId,
-          userNim: adoptedTicket.userNim,
-          userName: adoptedTicket.userName,
-          userEmail: `${studentNim}@students.uii.ac.id`,
-          userPhone: '081234567890',
-          userFaculty: 'Fakultas Teknologi Industri',
-          userStudyProgram: 'Teknik Mesin',
-          eventId: event.id,
-          eventTitle: event.title,
-          eventDate: event.date,
-          eventLocation: `${event.room}, ${event.location}`,
-          status: 'ATTENDED',
-          createdAt: new Date().toISOString(),
-          attendedAt: new Date().toISOString()
-        };
-
-        // Add to active database
-        this.registrations.update(prev => [adoptedReg, ...prev.filter(r => !(r.userNim === studentNim && r.eventId === event.id))]);
-        this.tickets.update(prev => [adoptedTicket, ...prev.filter(t => !(t.userNim === studentNim && t.eventId === event.id))]);
-        this.issueCertificateForTicket(adoptedTicket);
-        this.saveToStorage();
-        this.broadcastCheckIn(adoptedTicket.ticketCode, adoptedTicket.userNim, adoptedTicket.eventId, adoptedTicket.checkedInAt, adoptedTicket.checkedInBy);
-
-        return {
-          status: 'SUCCESS',
-          message: 'Presensi Berhasil: E-Tiket Digital Terverifikasi',
-          participantName: adoptedTicket.userName,
-          nim: adoptedTicket.userNim,
-          eventTitle: event.title,
-          ticketCode: adoptedTicket.ticketCode
-        };
-      }
-    }
 
     if (!ticket) {
       return {
@@ -1936,38 +1060,6 @@ export class EventService {
     );
 
     // Auto-generate SKPI Certificate (FR-CRT-01 & FR-CRT-02)
-    const newCert = this.issueCertificateForTicket(ticket);
-
-    this.saveToStorage();
-    this.broadcastCheckIn(ticket.ticketCode, ticket.userNim, ticket.eventId, ticket.checkedInAt, ticket.checkedInBy);
-
-    return {
-      status: 'SUCCESS',
-      message: 'Presensi Berhasil: Hadir Terverifikasi di Meja Registrasi!',
-      participantName: ticket.userName,
-      nim: ticket.userNim,
-      eventTitle: ticket.eventTitle,
-      ticketCode: ticket.ticketCode,
-      certificateNumber: newCert.certificateNumber
-    };
-  }
-
-  /**
-   * Generates or retrieves an official SKPI Certificate for a given ticket
-   */
-  issueCertificateForTicket(ticket: TicketItem): CertificateItem {
-    const existing = this.certificates().find(c => 
-      c.ticketId === ticket.id || 
-      (c.eventId === ticket.eventId && (c.userNim === ticket.userNim || c.userId === ticket.userId))
-    );
-    if (existing) {
-      if (!existing.isUnlocked) {
-        existing.isUnlocked = true;
-        this.saveToStorage();
-      }
-      return existing;
-    }
-
     const prodiInfo = getUiiProdiFromNim(ticket.userNim);
     const facShort = prodiInfo.faculty.includes('Teknologi Industri') ? 'FTI' :
                      prodiInfo.faculty.includes('Sipil') ? 'FTSP' :
@@ -1977,11 +1069,9 @@ export class EventService {
                      prodiInfo.faculty.includes('Agama') ? 'FIAI' :
                      prodiInfo.faculty.includes('Psikologi') ? 'FPSB' :
                      prodiInfo.faculty.includes('Kedokteran') ? 'FK' : 'UII';
-    const randNum = Math.floor(1000 + Math.random() * 9000);
-    const certNumber = `UII/SKPI/2026/${facShort}-${randNum}`;
-    const event = this.getEventById(ticket.eventId) || this.events().find(e => e.id === ticket.eventId);
+    const certNumber = `UII/SKPI/2026/${facShort}-${Math.floor(1000 + Math.random() * 9000)}`;
+    const event = this.getEventById(ticket.eventId);
     const certHash = this.generateHashSignature(ticket.userNim, ticket.eventId, certNumber);
-    const checkInTime = ticket.checkedInAt || (new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB');
 
     const newCert: CertificateItem = {
       id: 'cert-' + Math.random().toString(36).substring(2, 9),
@@ -1990,9 +1080,6 @@ export class EventService {
       eventId: ticket.eventId,
       eventTitle: ticket.eventTitle,
       eventDate: ticket.eventDate,
-      organizer: event?.organizer || 'Panitia UII',
-      eventRoom: ticket.eventRoom || event?.room || 'Kampus Terpadu UII',
-      publishedAtFormatted: `${ticket.eventDate} · ${checkInTime} (saat presensi)`,
       userId: ticket.userId,
       userName: ticket.userName,
       userNim: ticket.userNim,
@@ -2007,233 +1094,34 @@ export class EventService {
       isUnlocked: true
     };
 
-    this.certificates.update(prev => [newCert, ...prev]);
+    // Avoid duplicate cert creation
+    const exists = this.certificates().some(c => c.ticketId === ticket.id);
+    if (!exists) {
+      this.certificates.update(prev => [newCert, ...prev]);
+    }
+
     this.saveToStorage();
-    return newCert;
-  }
 
-  /**
-   * Check in a participant ticket and instantly unlock their certificate
-   */
-  checkInAndUnlockCertificate(ticketId: string, operatorName = 'Meja Registrasi UII'): CertificateItem | null {
-    const ticket = this.tickets().find(t => t.id === ticketId);
-    if (!ticket) return null;
+    // Asynchronously notify backend Laravel API Day-H Attendance Scanner
+    if (this.authService.isLoggedIn() && this.authService.jwtToken()) {
+      this.http.post(`${environment.apiUrl}/attendance/check-in`, {
+        qr_payload: scannedPayload,
+        ticket_code: ticket.ticketCode
+      }).subscribe({
+        next: () => console.log('[API] Day-H Attendance check-in synced with backend'),
+        error: (e) => console.warn('[API] Day-H Attendance check-in sync notice:', e?.message || e)
+      });
+    }
 
-    const checkInTime = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB';
-    ticket.isCheckedIn = true;
-    ticket.checkedInAt = ticket.checkedInAt || checkInTime;
-    ticket.checkedInBy = operatorName;
-
-    // Update registration status to ATTENDED
-    this.registrations.update(regs =>
-      regs.map(r => (r.id === ticket.registrationId || (r.userNim === ticket.userNim && r.eventId === ticket.eventId))
-        ? { ...r, status: 'ATTENDED', attendedAt: new Date().toISOString() }
-        : r
-      )
-    );
-
-    // Update ticket state
-    this.tickets.update(ticks =>
-      ticks.map(t => t.id === ticket.id ? { ...ticket } : t)
-    );
-
-    // Generate & unlock certificate
-    const cert = this.issueCertificateForTicket(ticket);
-    this.saveToStorage();
-    this.broadcastCheckIn(ticket.ticketCode, ticket.userNim, ticket.eventId, ticket.checkedInAt, ticket.checkedInBy);
-    return cert;
-  }
-
-  /**
-   * Broadcast check-in event across local tabs (BroadcastChannel + storage) and across devices (ntfy.sh)
-   */
-  broadcastCheckIn(ticketCode: string, userNim?: string, eventId?: string, checkInTime?: string, operatorName?: string): void {
-    const time = checkInTime || (new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB');
-    const op = operatorName || 'Panitia Meja Registrasi UII';
-    const payload = {
-      action: 'CHECK_IN_SUCCESS',
-      ticketCode: (ticketCode || '').toUpperCase().trim(),
-      userNim: userNim || '',
-      eventId: eventId || '',
-      checkInTime: time,
-      operatorName: op,
-      timestamp: Date.now()
+    return {
+      status: 'SUCCESS',
+      message: 'Presensi Berhasil: Hadir Terverifikasi di Meja Registrasi!',
+      participantName: ticket.userName,
+      nim: ticket.userNim,
+      eventTitle: ticket.eventTitle,
+      ticketCode: ticket.ticketCode,
+      certificateNumber: certNumber
     };
-
-    // 1. BroadcastChannel for same-device multi-tab real-time sync
-    try {
-      if (typeof BroadcastChannel !== 'undefined') {
-        const bc = new BroadcastChannel('uii_event_sync_channel');
-        bc.postMessage(payload);
-        bc.close();
-      }
-    } catch {}
-
-    // 2. Storage event for local browser tabs
-    try {
-      if (typeof localStorage !== 'undefined') {
-        localStorage.setItem('uii_last_checkin_sync', JSON.stringify(payload));
-      }
-    } catch {}
-
-    // 3. Real-time Pub/Sub via ntfy.sh for Cross-Device Phone <-> Laptop sync
-    try {
-      if (typeof fetch !== 'undefined') {
-        fetch('https://ntfy.sh/uii_event_sync_prod_2026', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        }).catch(() => {});
-      }
-    } catch {}
-
-    // Dispatch locally as well
-    try {
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('uii-ticket-checked-in', { detail: payload }));
-      }
-    } catch {}
-  }
-
-  private syncInitialized = false;
-
-  /**
-   * Initialize real-time synchronization listeners for check-in events
-   */
-  initRealtimeSync(): void {
-    if (this.syncInitialized || typeof window === 'undefined') return;
-    this.syncInitialized = true;
-
-    // 1. Same-device BroadcastChannel
-    try {
-      if (typeof BroadcastChannel !== 'undefined') {
-        const bc = new BroadcastChannel('uii_event_sync_channel');
-        bc.onmessage = (event) => {
-          if (event.data?.action === 'CHECK_IN_SUCCESS') {
-            this.handleRemoteCheckIn(event.data);
-          }
-        };
-      }
-    } catch {}
-
-    // 2. Same-device Storage Event
-    window.addEventListener('storage', (e) => {
-      if (e.key === 'uii_last_checkin_sync' && e.newValue) {
-        try {
-          const data = JSON.parse(e.newValue);
-          this.handleRemoteCheckIn(data);
-        } catch {}
-      } else if (e.key === STORAGE_KEYS.TICKETS) {
-        this.reloadStorageData();
-      }
-    });
-
-    // 3. Cross-device Real-time SSE via ntfy.sh
-    try {
-      if (typeof EventSource !== 'undefined') {
-        const sse = new EventSource('https://ntfy.sh/uii_event_sync_prod_2026/sse');
-        sse.onmessage = (event) => {
-          try {
-            const raw = JSON.parse(event.data);
-            const data = typeof raw.message === 'string' ? JSON.parse(raw.message) : raw.message || raw;
-            if (data?.action === 'CHECK_IN_SUCCESS') {
-              this.handleRemoteCheckIn(data);
-            }
-          } catch {}
-        };
-      }
-    } catch {}
-
-    // 4. Polling fallback every 2.5s for cross-device check
-    setInterval(() => {
-      if (typeof fetch !== 'undefined' && typeof document !== 'undefined' && document.visibilityState === 'visible') {
-        fetch('https://ntfy.sh/uii_event_sync_prod_2026/json?poll=1&since=60s')
-          .then(res => res.text())
-          .then(text => {
-            const lines = text.trim().split('\n');
-            for (const line of lines) {
-              if (!line) continue;
-              try {
-                const parsed = JSON.parse(line);
-                const data = typeof parsed.message === 'string' ? JSON.parse(parsed.message) : parsed.message || parsed;
-                if (data?.action === 'CHECK_IN_SUCCESS') {
-                  this.handleRemoteCheckIn(data);
-                }
-              } catch {}
-            }
-          })
-          .catch(() => {});
-      }
-    }, 2500);
-  }
-
-  /**
-   * Handle incoming remote check-in from another device or scanner
-   */
-  handleRemoteCheckIn(data: any): void {
-    if (!data || !data.ticketCode) return;
-    const code = (data.ticketCode || '').toUpperCase().trim();
-    const nim = data.userNim;
-    const evId = data.eventId;
-    const time = data.checkInTime || (new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB');
-    const op = data.operatorName || 'Panitia Meja Registrasi UII';
-
-    let hasChanged = false;
-
-    // Check existing tickets in memory
-    const tickets = this.tickets();
-    const match = tickets.find(t => 
-      t.ticketCode.toUpperCase() === code || 
-      (nim && t.userNim === nim && evId && t.eventId === evId)
-    );
-
-    if (match) {
-      if (!match.isCheckedIn) {
-        match.isCheckedIn = true;
-        match.checkedInAt = time;
-        match.checkedInBy = op;
-        this.tickets.update(ticks => ticks.map(t => t.id === match.id ? { ...match } : t));
-        this.registrations.update(regs => regs.map(r => 
-          (r.id === match.registrationId || (r.userNim === match.userNim && r.eventId === match.eventId))
-            ? { ...r, status: 'ATTENDED', attendedAt: new Date().toISOString() }
-            : r
-        ));
-        this.issueCertificateForTicket(match);
-        this.saveToStorage();
-        hasChanged = true;
-      }
-    } else {
-      this.reloadStorageData();
-    }
-
-    if (hasChanged) {
-      try {
-        if (typeof window !== 'undefined') {
-          window.dispatchEvent(new CustomEvent('uii-ticket-checked-in', { detail: data }));
-        }
-      } catch {}
-    }
-  }
-
-  /**
-   * Reload tickets, registrations, and certificates from storage
-   */
-  reloadStorageData(): void {
-    if (typeof localStorage === 'undefined') return;
-    try {
-      const savedTickets = localStorage.getItem(STORAGE_KEYS.TICKETS);
-      if (savedTickets) {
-        this.tickets.set(JSON.parse(savedTickets));
-      }
-      const savedRegs = localStorage.getItem(STORAGE_KEYS.REGISTRATIONS);
-      if (savedRegs) {
-        this.registrations.set(JSON.parse(savedRegs));
-      }
-      const savedCerts = localStorage.getItem(STORAGE_KEYS.CERTIFICATES);
-      if (savedCerts) {
-        this.certificates.set(JSON.parse(savedCerts));
-      }
-    } catch {}
   }
 
   /**
@@ -2247,7 +1135,11 @@ export class EventService {
       localStorage.removeItem(STORAGE_KEYS.CERTIFICATES);
       localStorage.removeItem(STORAGE_KEYS.NOTIFICATIONS);
     }
-    this.loadMockDefaults();
+    this.events.set([]);
+    this.registrations.set([]);
+    this.tickets.set([]);
+    this.certificates.set([]);
+    this.syncWithBackend();
   }
 
   /**

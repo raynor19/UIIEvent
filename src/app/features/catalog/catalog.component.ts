@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -12,10 +12,14 @@ import { EventItem, EventCategory } from '../../core/models/event.model';
   imports: [CommonModule, RouterModule, FormsModule],
   templateUrl: './catalog.component.html'
 })
-export class CatalogComponent {
+export class CatalogComponent implements OnInit {
   eventService = inject(EventService);
   authService = inject(AuthService);
   router = inject(Router);
+
+  async ngOnInit(): Promise<void> {
+    await this.eventService.syncWithBackend();
+  }
 
   searchQuery = signal<string>('');
   selectedCategory = signal<string>('ALL');

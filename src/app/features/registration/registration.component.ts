@@ -121,38 +121,40 @@ export class RegistrationComponent implements OnInit {
     }
   }
 
-  onSubmitRegistration(): void {
+  async onSubmitRegistration(): Promise<void> {
     const evt = this.event();
     if (!evt) return;
     this.isSubmitting.set(true);
     this.conflictError.set(false);
     this.cdr.detectChanges();
 
-    // Fast, responsive execution with instant UI update
-    setTimeout(() => {
-      const result: RegistrationResult = this.eventService.registerParticipant({
-        eventId: evt.id,
-        divisionChoice1: this.divisionChoice1,
-        divisionChoice2: this.divisionChoice2,
-        motivation: this.motivation,
-        cvFileName: this.uploadedFileName || 'CV_Mahasiswa_UII.pdf',
-        krsFileName: 'KRS_Aktif_Semester_Gasal_2026.pdf'
-      });
+    const isOprec = this.isOprecEvent;
+    const result: RegistrationResult = await this.eventService.registerParticipantReal({
+      eventId: evt.id,
+      divisionChoice1: isOprec ? this.divisionChoice1 : undefined,
+      divisionChoice2: isOprec ? this.divisionChoice2 : undefined,
+      motivation: this.motivation,
+      cvFileName: this.uploadedFileName || 'CV_Mahasiswa_UII.pdf',
+      krsFileName: 'KRS_Aktif_Semester_Gasal_2026.pdf'
+    });
 
-      this.isSubmitting.set(false);
+    this.isSubmitting.set(false);
 
-      if (!result.success) {
-        if (result.statusCode === 409) {
-          // HTTP 409 Conflict handling (US-01 / FR-REG-02)
-          this.conflictError.set(true);
-        } else {
-          alert(result.message);
-        }
+    if (!result.success) {
+      if (result.statusCode === 409) {
+        // HTTP 409 Conflict handling (US-01 / FR-REG-02)
+        this.conflictError.set(true);
       } else {
-        this.registrationSuccess.set(true);
-        this.successMessage = result.message;
-        
-        // Find created ticket (support matching by userId or userNim)
+        alert(result.message);
+      }
+    } else {
+      this.registrationSuccess.set(true);
+      this.successMessage = result.message;
+      
+      // If ticket is directly returned or sync from backend
+      if (result.ticket) {
+        this.createdTicket.set(result.ticket);
+      } else {
         const currentUser = this.authService.currentUser();
         const userTickets = this.eventService.tickets().filter(t => 
           (t.userId === currentUser.id || t.userNim === currentUser.nim) && 
@@ -173,8 +175,8 @@ export class RegistrationComponent implements OnInit {
           }
         }
       }
-      this.cdr.detectChanges();
-    }, 150);
+    }
+    this.cdr.detectChanges();
   }
 
   addToGoogleCalendar(): void {

@@ -276,19 +276,6 @@
                             <div class="w-full h-full relative overflow-hidden select-none bg-slate-900">
                               <img [src]="selectedEvent()!.bannerUrl" [alt]="selectedEvent()!.title" class="w-full h-full object-cover" />
                             </div>
-                          } @else if (selectedEvent()!.id === 'evt-adm-01') {
-                            <div class="w-full h-full bg-gradient-to-br from-[#E2D9F3] via-[#F4F1FA] to-[#D5E4F9] p-4 flex flex-col justify-between relative overflow-hidden select-none">
-                              <svg class="absolute -right-4 top-10 w-32 h-32 text-indigo-700/80" fill="none" stroke="currentColor" viewBox="0 0 100 100">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="8" d="M10 50 Q 30 10, 60 50 T 110 50" />
-                                <circle cx="75" cy="70" r="12" fill="#1E3A8A" />
-                                <rect x="15" y="20" width="16" height="16" rx="4" fill="#6366F1" />
-                              </svg>
-                              <div><div class="w-6 h-1.5 bg-indigo-700 rounded-full mb-3"></div></div>
-                              <div class="relative z-10">
-                                <p class="font-black text-indigo-950 text-sm tracking-tight leading-tight">{{ selectedEvent()!.title }}</p>
-                                <p class="text-[9px] text-indigo-800 font-medium mt-0.5">{{ formatDateRow(selectedEvent()!.date) }} · {{ selectedEvent()!.time }}</p>
-                              </div>
-                            </div>
                           } @else {
                             <div class="w-full h-full bg-gradient-to-br from-[#090D16] via-[#161F33] to-[#0A1120] p-4 flex flex-col justify-between text-white relative overflow-hidden select-none">
                               <span class="text-[9px] font-black text-cyan-400 tracking-wider uppercase">{{ selectedEvent()!.organizer }}</span>

@@ -32,6 +32,8 @@ export interface CustomQuestion {
 
 export interface ParticipantItem {
   no: number;
+  id?: string;
+  ticketCode?: string;
   nim: string;
   name: string;
   prodi: string;
@@ -153,12 +155,10 @@ export class PanitiaDashboardComponent implements OnInit {
   // ========================================================
   // SCR-PAN-03: REKAP PESERTA & PRESENSI DATA & STATE
   // ========================================================
-  selectedRekapEventId = signal<string>(
-    (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('eventId')) ||
-    (typeof localStorage !== 'undefined' && localStorage.getItem('uii_panitia_selected_event')) ||
-    'evt-008'
-  );
+  selectedRekapEventId = signal<string>('');
   isEventDropdownOpen = signal<boolean>(false);
+  realOrganizerParticipants = signal<ParticipantItem[]>([]);
+  isLoadingParticipants = signal<boolean>(false);
 
   toggleEventDropdown(): void {
     this.isEventDropdownOpen.update(v => !v);
@@ -175,15 +175,14 @@ export class PanitiaDashboardComponent implements OnInit {
     return found || list[0] || null;
   });
 
-  selectRekapEvent(eventId: string): void {
+  async selectRekapEvent(eventId: string): Promise<void> {
     this.selectedRekapEventId.set(eventId);
-    if (typeof localStorage !== 'undefined') {
-      localStorage.setItem('uii_panitia_selected_event', eventId);
-    }
     this.currentPageParticipants.set(1);
     this.participantSearchQuery.set('');
     this.isEventDropdownOpen.set(false);
-    this.router.navigate([], { queryParams: { eventId }, queryParamsHandling: 'merge' });
+
+    await this.loadParticipantsForEvent(eventId);
+
     const ev = this.events().find(e => e.id === eventId);
     if (ev?.type === 'Oprec') {
       this.activeView.set('SELEKSI_OPREC');
@@ -192,7 +191,78 @@ export class PanitiaDashboardComponent implements OnInit {
     }
   }
 
+  async loadParticipantsForEvent(eventId: string): Promise<void> {
+    if (!eventId) return;
+    this.isLoadingParticipants.set(true);
+    try {
+      const ev = this.events().find(e => e.id === eventId);
+      if (ev?.type === 'Oprec') {
+        const applicantsData = await this.eventService.getOrganizerApplicantsApi(eventId);
+        if (Array.isArray(applicantsData) && applicantsData.length > 0) {
+          const mappedApplicants: ApplicantItem[] = applicantsData.map((item: any, idx: number) => {
+            let mappedStatus: 'MENUNGGU_REVIEW' | 'WAWANCARA_DIJADWALKAN' | 'DITERIMA' | 'DITOLAK' = 'MENUNGGU_REVIEW';
+            if (item.selection_status === 'ACCEPTED') mappedStatus = 'DITERIMA';
+            else if (item.selection_status === 'REJECTED') mappedStatus = 'DITOLAK';
+            else if (item.selection_status === 'INTERVIEW') mappedStatus = 'WAWANCARA_DIJADWALKAN';
+
+            return {
+              nim: item.user?.nim || '',
+              name: item.user?.name || 'Mahasiswa UII',
+              division1: item.division_choice_1 || item.division_pref_1 || 'Divisi Acara',
+              division2: item.division_choice_2 || item.division_pref_2 || 'Divisi Humas',
+              fileUrl: item.cv_file_url || '#',
+              whatsapp: item.user?.phone_number || '081234567890',
+              status: mappedStatus
+            };
+          });
+          this.applicants.set(mappedApplicants);
+        }
+      } else {
+        const data = await this.eventService.getOrganizerRegistrationsApi(eventId);
+        if (Array.isArray(data) && data.length > 0) {
+          const mapped: ParticipantItem[] = data.map((item: any, idx: number) => {
+            let status: 'HADIR' | 'BELUM_HADIR' | 'BATAL' = 'BELUM_HADIR';
+            if (item.status === 'CANCELLED') {
+              status = 'BATAL';
+            } else if (item.status === 'ATTENDED' || item.ticket?.is_checked_in) {
+              status = 'HADIR';
+            }
+
+            const dateObj = new Date(item.registered_at);
+            const formattedDate = !isNaN(dateObj.getTime())
+              ? dateObj.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) + ' WIB'
+              : item.registered_at;
+
+            return {
+              no: idx + 1,
+              id: item.id,
+              ticketCode: item.ticket?.ticket_code || '-',
+              nim: item.user?.nim || '-',
+              name: item.user?.name || 'Mahasiswa UII',
+              prodi: item.user?.study_program || item.user?.faculty || 'Informatika',
+              whatsapp: item.user?.phone_number || '081234567890',
+              registeredAt: formattedDate,
+              status: status
+            };
+          });
+          this.realOrganizerParticipants.set(mapped);
+        } else {
+          this.realOrganizerParticipants.set([]);
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to load participants for event:', e);
+    } finally {
+      this.isLoadingParticipants.set(false);
+    }
+  }
+
   currentEventParticipants = computed(() => {
+    const real = this.realOrganizerParticipants();
+    if (real.length > 0) {
+      return real.map((p, idx) => ({ ...p, no: idx + 1 }));
+    }
+
     const targetEvent = this.selectedRekapEvent();
     if (!targetEvent) return [];
 
@@ -209,7 +279,7 @@ export class PanitiaDashboardComponent implements OnInit {
     });
 
     const mappedFromService: ParticipantItem[] = serviceMatching.map((reg, idx) => {
-      const ticket = allTickets.find(t => t.registrationId === reg.id || (t.eventId === reg.eventId && (t.userNim === reg.userNim || t.userId === reg.userId)));
+      const ticket = allTickets.find(t => t.registrationId === reg.id || t.eventId === reg.eventId);
       let status: 'HADIR' | 'BELUM_HADIR' | 'BATAL' = 'BELUM_HADIR';
       if (reg.status === 'CANCELLED') {
         status = 'BATAL';
@@ -267,7 +337,8 @@ export class PanitiaDashboardComponent implements OnInit {
       list = list.filter(p =>
         p.nim.toLowerCase().includes(query) ||
         p.name.toLowerCase().includes(query) ||
-        p.prodi.toLowerCase().includes(query)
+        p.prodi.toLowerCase().includes(query) ||
+        (p.ticketCode && p.ticketCode.toLowerCase().includes(query))
       );
     }
 
@@ -338,38 +409,7 @@ export class PanitiaDashboardComponent implements OnInit {
   applicantDivisionFilter = signal<string>('SEMUA');
 
   filteredApplicants = computed(() => {
-    const currentEv = this.selectedRekapEvent();
-    const evId = currentEv?.id;
-    const allRegs = this.eventService.registrations();
-    const matchingRegs = allRegs.filter(r => r.eventId === evId || (currentEv && r.eventTitle?.toLowerCase().trim() === currentEv.title.toLowerCase().trim()));
-
-    // Map real registrations for this oprec event
-    const registeredApplicants: ApplicantItem[] = matchingRegs.map((r, idx) => ({
-      id: r.id,
-      no: idx + 1,
-      nim: r.userNim,
-      name: r.userName,
-      prodi: r.userStudyProgram || 'Teknik Mesin',
-      ipk: 3.85,
-      division1: r.divisionChoice1 || 'Divisi Acara & Manajemen Panggung',
-      division2: r.divisionChoice2 || 'Divisi IT & Presensi Web Scanner',
-      status: (r.status === 'ATTENDED' ? 'LOLOS_BERKAS' : 'MENUNGGU') as any,
-      cvUrl: r.cvFileName || 'CV_Mahasiswa_UII.pdf',
-      krsUrl: r.krsFileName || 'KRS_Aktif.pdf',
-      fileUrl: r.cvFileName || 'CV_Mahasiswa_UII.pdf',
-      appliedAt: r.createdAt
-    }));
-
-    // Local dummy applicants
-    const localList = this.applicants();
-    const combined = [...registeredApplicants];
-    for (const a of localList) {
-      if (!combined.some(c => c.nim === a.nim)) {
-        combined.push(a);
-      }
-    }
-
-    let list = combined.map((item, idx) => ({ ...item, no: idx + 1 }));
+    let list = this.applicants();
     const div = this.applicantDivisionFilter();
     const query = this.applicantSearchQuery().trim().toLowerCase();
 
@@ -420,47 +460,7 @@ export class PanitiaDashboardComponent implements OnInit {
   }
 
   private generateInitialApplicants(): ApplicantItem[] {
-    const divisions = ['Acara', 'Publikasi & Medkraf', 'Logistik', 'Humas', 'Konsumsi', 'Perlengkapan', 'Kreatif'];
-    const names = [
-      'Ahmad Fikri Ramadhan', 'Siti Rahma', 'Budi Santoso', 'Nadia Putri Kusuma', 'Yusuf Maulana',
-      'Farah Azzahra', 'Rizal Hidayat', 'Aulia Rahmawati', 'Dimas Prasetyo', 'Intan Permatasari',
-      'Fajar Kurniawan', 'Dewi Lestari', 'Hendra Saputra', 'Maya Anggraini', 'Ilham Wijaya',
-      'Dina Wulandari', 'Bagus Nugroho', 'Rina Sari', 'Eko Prasetyo', 'Anisa Rahma',
-      'Wahyu Hidayat', 'Ratna Juwita', 'Aditya Pratama', 'Mega Utami', 'Bayu Setiawan',
-      'Tri Handayani', 'Agung Wibowo', 'Novita Sari', 'Denny Hendrawan', 'Fitri Handayani',
-      'Bambang Susilo', 'Rini Astuti', 'Dedi Kurniawan', 'Laila Nur', 'Reza Pahlevi',
-      'Sri Wahyuni', 'Doni Kusuma', 'Tari Agustin', 'Haris Munandar', 'Widya Astuti',
-      'Gilang Ramadhan', 'Siska Amelia', 'Teguh Prakoso', 'Nurul Hidayah', 'Indra Gunawan', 'Yulia Citra'
-    ];
-
-    const items: ApplicantItem[] = [];
-    for (let i = 0; i < 46; i++) {
-      const nim = `${21523001 + i}`;
-      const name = names[i % names.length];
-      const div1 = divisions[i % divisions.length];
-      const div2 = divisions[(i + 2) % divisions.length];
-      let status: 'MENUNGGU_REVIEW' | 'WAWANCARA_DIJADWALKAN' | 'DITERIMA' | 'DITOLAK';
-      if (i % 5 === 0) status = 'DITERIMA';
-      else if (i % 5 === 1) status = 'WAWANCARA_DIJADWALKAN';
-      else if (i % 5 === 4) status = 'DITOLAK';
-      else status = 'MENUNGGU_REVIEW';
-
-      items.push({
-        nim,
-        name,
-        division1: div1,
-        division2: i % 3 === 0 ? '—' : div2,
-        fileUrl: `CV_KRS_${name.replace(/\s+/g, '')}.pdf`,
-        status,
-        whatsapp: `08123456${(1000 + i).toString().slice(-4)}`,
-        ...(status === 'WAWANCARA_DIJADWALKAN' ? {
-          interviewDate: 'Kamis, 10 Des 2026',
-          interviewTime: '13.00 WIB',
-          interviewRoom: 'Sekretariat LEM UII, Gedung Student Center'
-        } : {})
-      });
-    }
-    return items;
+    return [];
   }
 
   // Modal Jadwalkan Wawancara State
@@ -477,7 +477,10 @@ export class PanitiaDashboardComponent implements OnInit {
 
   // Filtered list for Dashboard
   eventsWithDynamicCounts = computed(() => {
-    const rawEvents = this.events();
+    let rawEvents = this.events();
+    if (rawEvents.some(e => !e.id.startsWith('evt-'))) {
+      rawEvents = rawEvents.filter(e => !e.id.startsWith('evt-'));
+    }
     const allRegs = this.eventService.registrations();
     return rawEvents.map(e => {
       const matchCount = allRegs.filter(r => 
@@ -534,7 +537,7 @@ export class PanitiaDashboardComponent implements OnInit {
     return this.events().find(e => e.status === 'PERLU_REVISI') || null;
   });
 
-  ngOnInit(): void {
+  async ngOnInit(): Promise<void> {
     const url = this.router.url;
     if (url.includes('/participants')) {
       this.activeView.set('REKAP_PESERTA');
@@ -544,27 +547,22 @@ export class PanitiaDashboardComponent implements OnInit {
       this.openCreateWizard(false);
     }
 
-    // Sync all events from eventService (including newly created & approved events like Porsematik)
+    this.syncEventsFromService();
+    await this.eventService.loadOrganizerEvents();
     this.syncEventsFromService();
 
-    // Check query params or remembered event in localStorage (survives browser refresh!)
-    this.route.queryParams.subscribe(params => {
-      const targetId = params['eventId'] || 
-        (typeof localStorage !== 'undefined' ? localStorage.getItem('uii_panitia_selected_event') : null);
-      if (targetId) {
-        this.selectedRekapEventId.set(targetId);
-        const ev = this.events().find(e => e.id === targetId);
-        if (ev?.type === 'Oprec') {
-          this.activeView.set('SELEKSI_OPREC');
-        } else {
-          this.activeView.set('REKAP_PESERTA');
-        }
-      }
-    });
+    const evts = this.events();
+    if (evts.length > 0) {
+      const targetEvt = evts.find(e => e.status === 'DIPUBLIKASIKAN') || evts[0];
+      this.selectedRekapEventId.set(targetEvt.id);
+      await this.loadParticipantsForEvent(targetEvt.id);
+    }
   }
 
   syncEventsFromService(allSvcEvents = this.eventService.events()): void {
-    const mappedItems: PanitiaEventItem[] = allSvcEvents.map(pe => {
+    const realEvents = allSvcEvents.filter(pe => !pe.id.startsWith('evt-'));
+    const sourceList = realEvents.length > 0 ? realEvents : allSvcEvents;
+    const mappedItems: PanitiaEventItem[] = sourceList.map(pe => {
       const mappedStatus = this.mapServiceStatusToPanitia(pe.status);
       const loc = pe.room ? `${pe.room}, ${pe.location}` : (pe.location || 'Kampus Terpadu UII');
       return {
@@ -602,6 +600,7 @@ export class PanitiaDashboardComponent implements OnInit {
       case 'COMPLETED':
         return 'SELESAI';
       case 'PENDING':
+      case 'PENDING_APPROVAL':
       default:
         return 'MENUNGGU';
     }
@@ -613,10 +612,14 @@ export class PanitiaDashboardComponent implements OnInit {
     this.mobileMenuOpen.set(false);
   }
 
-  openAcaraSaya(): void {
+  async openAcaraSaya(): Promise<void> {
     // When clicking "Acara Saya" on sidebar, navigate to the active event recap (SCR-PAN-03)
     this.activeView.set('REKAP_PESERTA');
     this.mobileMenuOpen.set(false);
+    const currId = this.selectedRekapEventId();
+    if (currId) {
+      await this.loadParticipantsForEvent(currId);
+    }
   }
 
   openSeleksiOprec(): void {
@@ -631,18 +634,19 @@ export class PanitiaDashboardComponent implements OnInit {
     this.mobileMenuOpen.set(false);
 
     if (isRevision) {
-      this.formTitle.set('Seminar Etika Profesi Informatika');
-      this.formCategory.set('Seminar');
+      const rev = this.revisionEvent();
+      this.formTitle.set(rev?.title || 'Kegiatan Mahasiswa UII');
+      this.formCategory.set(rev?.category || 'Seminar');
       this.formExecutionType.set('Offline');
-      this.formLocation.set('Ruang Audiovisual FTI UII');
-      this.formStartDate.set('2026-12-09');
+      this.formLocation.set(rev?.location || 'Ruang Audiovisual FTI UII');
+      this.formStartDate.set(rev?.dateRaw || '2026-12-09');
       this.formStartTime.set('09:00');
-      this.formEndDate.set('2026-12-09');
+      this.formEndDate.set(rev?.dateRaw || '2026-12-09');
       this.formEndTime.set('12:00');
-      this.formSpeaker.set('Dr. Ir. Hari Purnomo, M.T., IPU');
-      this.formPosterUrl.set('/assets/images/seminar-ai-uii.jpg');
-      this.formRegistrationMode.set('PESERTA');
-      this.formQuota.set(150);
+      this.formSpeaker.set(rev?.speaker || '');
+      this.formPosterUrl.set(rev?.bannerUrl || '/assets/images/seminar-ai-uii.jpg');
+      this.formRegistrationMode.set(rev?.type === 'Oprec' ? 'OPREC' : 'PESERTA');
+      this.formQuota.set(rev?.quota || 150);
     } else {
       this.formTitle.set('');
       this.formSpeaker.set('');
@@ -748,23 +752,16 @@ export class PanitiaDashboardComponent implements OnInit {
   }
 
   // Confirm submit to DPK
-  confirmSubmitToDpk(): void {
+  async confirmSubmitToDpk(): Promise<void> {
     this.showSubmitConfirmationModal.set(false);
 
     if (this.isRevisionMode()) {
-      this.events.update(list =>
-        list.map(e => {
-          if (e.id === 'pan-003') {
-            return {
-              ...e,
-              title: this.formTitle(),
-              speaker: this.formSpeaker(),
-              status: 'MENUNGGU'
-            };
-          }
-          return e;
-        })
-      );
+      const targetRevId = this.revisionEvent()?.id || this.selectedEventForDetail()?.id;
+      if (targetRevId) {
+        await this.eventService.submitEventToDpkReal(targetRevId);
+        await this.eventService.loadOrganizerEvents();
+        this.syncEventsFromService();
+      }
       this.showToast('Revisi berhasil diajukan kembali ke DPK UII! Status saat ini: Menunggu Persetujuan.');
     } else {
       const eventTitle = this.formTitle() || 'Acara Baru Ormawa FTI';
@@ -773,8 +770,8 @@ export class PanitiaDashboardComponent implements OnInit {
       const eventLoc = this.formExecutionType() === 'Online' ? 'Daring (Zoom Meeting)' : (this.formLocation() || 'Auditorium KH Mas Mansyur');
       const poster = this.formPosterUrl() || (this.formRegistrationMode() === 'OPREC' ? '/assets/images/dies-natalis-uii.jpg' : '/assets/images/seminar-ai-uii.jpg');
 
-      // 1. Register into EventService so Admin DPK immediately sees it in Curation table
-      const createdItem = this.eventService.createDraftEvent({
+      // 1. Register into EventService & backend API so Admin DPK immediately sees it in Curation table
+      const createdItem = await this.eventService.createDraftEventReal({
         title: eventTitle,
         category: eventCategory,
         categoryLabel: this.formCategory() || 'Seminar Kampus',
@@ -793,27 +790,17 @@ export class PanitiaDashboardComponent implements OnInit {
         isFree: true,
         speaker: this.formSpeaker() ? { name: this.formSpeaker(), role: 'Pembicara Acara', company: 'UII' } : undefined,
         proposalFileName: 'Proposal_' + eventTitle.replace(/\s+/g, '_') + '.pdf',
+        divisions: this.formDivisions(),
         submittedAt: new Date().toISOString()
       });
 
-      // 2. Add to Panitia dashboard event list
-      const newEvt: PanitiaEventItem = {
-        id: createdItem.id,
-        title: createdItem.title,
-        dateStr: this.formatDateRowPanitia(createdItem.date),
-        dateRaw: createdItem.date,
-        type: this.formRegistrationMode() === 'OPREC' ? 'Oprec' : 'Peserta',
-        registeredCount: 0,
-        quota: createdItem.quotaTotal,
-        status: 'MENUNGGU',
-        hasScanner: false,
-        category: this.formCategory(),
-        location: createdItem.location,
-        bannerUrl: createdItem.bannerUrl,
-        speaker: this.formSpeaker()
-      };
-      this.events.update(list => [newEvt, ...list]);
-      this.showToast(`Acara "${createdItem.title}" berhasil diajukan ke DPK UII untuk penerbitan izin resmi!`);
+      if (createdItem) {
+        await this.eventService.submitEventToDpkReal(createdItem.id);
+      }
+
+      await this.eventService.loadOrganizerEvents();
+      this.syncEventsFromService();
+      this.showToast(`Acara "${createdItem?.title || eventTitle}" berhasil diajukan ke DPK UII untuk penerbitan izin resmi!`);
     }
 
     this.activeView.set('DASHBOARD');
@@ -839,10 +826,11 @@ export class PanitiaDashboardComponent implements OnInit {
   }
 
   // Row "Lihat Rekap" click in Table:
-  viewEventDetail(event: PanitiaEventItem): void {
+  async viewEventDetail(event: PanitiaEventItem): Promise<void> {
     this.selectedRekapEventId.set(event.id);
     this.currentPageParticipants.set(1);
     this.participantSearchQuery.set('');
+    await this.loadParticipantsForEvent(event.id);
     if (event.type === 'Oprec') {
       this.activeView.set('SELEKSI_OPREC');
     } else {
@@ -923,14 +911,22 @@ export class PanitiaDashboardComponent implements OnInit {
     this.closeInterviewModal();
   }
 
-  acceptApplicant(applicant: ApplicantItem): void {
+  async acceptApplicant(applicant: ApplicantItem): Promise<void> {
+    const regId = (applicant as any).id || (applicant as any).registrationId;
+    if (regId) {
+      await this.eventService.updateApplicantSelectionApi(regId, 'ACCEPTED', 'Dinyatakan diterima oleh panitia');
+    }
     this.applicants.update(list =>
       list.map(a => a.nim === applicant.nim ? { ...a, status: 'DITERIMA' } : a)
     );
     this.showToast(`Pelamar ${applicant.name} dinyatakan DITERIMA di ${applicant.division1}!`);
   }
 
-  rejectApplicant(applicant: ApplicantItem): void {
+  async rejectApplicant(applicant: ApplicantItem): Promise<void> {
+    const regId = (applicant as any).id || (applicant as any).registrationId;
+    if (regId) {
+      await this.eventService.updateApplicantSelectionApi(regId, 'REJECTED', 'Dinyatakan belum lolos seleksi');
+    }
     this.applicants.update(list =>
       list.map(a => a.nim === applicant.nim ? { ...a, status: 'DITOLAK' } : a)
     );

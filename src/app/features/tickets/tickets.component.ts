@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, OnDestroy, signal, ChangeDetectorRef } from '@angular/core';
+import { Component, inject, OnInit, signal, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute } from '@angular/router';
 import * as QRCode from 'qrcode';
@@ -12,7 +12,7 @@ import { TicketItem } from '../../core/models/ticket.model';
   imports: [CommonModule, RouterModule],
   templateUrl: './tickets.component.html'
 })
-export class TicketsComponent implements OnInit, OnDestroy {
+export class TicketsComponent implements OnInit {
   eventService = inject(EventService);
   authService = inject(AuthService);
   route = inject(ActivatedRoute);
@@ -24,8 +24,6 @@ export class TicketsComponent implements OnInit, OnDestroy {
   ticketToCancel = signal<TicketItem | null>(null);
   showCancelModal = signal<boolean>(false);
   cancelSuccessNotice = signal<string>('');
-
-  private checkInListener: any = null;
 
   get userTickets(): TicketItem[] {
     const user = this.authService.currentUser();
@@ -44,33 +42,18 @@ export class TicketsComponent implements OnInit, OnDestroy {
     return all;
   }
 
-  ngOnInit(): void {
-    this.generateAllQrCodes();
-
-    // Listen for real-time check-in events (from scanner / panitia / another device)
-    if (typeof window !== 'undefined') {
-      this.checkInListener = (e: any) => {
-        const detail = e.detail;
-        this.cancelSuccessNotice.set(`✓ Barcode Berhasil Di-scan! Tiket ${detail?.ticketCode || ''} tercatat HADIR dan E-Sertifikat resmi telah aktif.`);
-        this.generateAllQrCodes();
-        this.cdr.markForCheck();
-        setTimeout(() => this.cancelSuccessNotice.set(''), 6000);
-      };
-      window.addEventListener('uii-ticket-checked-in', this.checkInListener);
-    }
-  }
-
-  ngOnDestroy(): void {
-    if (typeof window !== 'undefined' && this.checkInListener) {
-      window.removeEventListener('uii-ticket-checked-in', this.checkInListener);
-    }
+  async ngOnInit(): Promise<void> {
+    await this.eventService.loadMyTickets();
+    await this.generateAllQrCodes();
   }
 
   async generateAllQrCodes(): Promise<void> {
     for (const ticket of this.userTickets) {
       if (!this.qrDataUrls[ticket.id]) {
         try {
-          const url = await QRCode.toDataURL(ticket.qrPayload, {
+          const payloadToEncode = ticket.qrPayload || ticket.ticketCode;
+          if (!payloadToEncode) continue;
+          const url = await QRCode.toDataURL(payloadToEncode, {
             margin: 1,
             width: 280,
             color: {
@@ -97,21 +80,14 @@ export class TicketsComponent implements OnInit, OnDestroy {
     this.showCancelModal.set(false);
   }
 
-  confirmCancelTicket(): void {
+  async confirmCancelTicket(): Promise<void> {
     const ticket = this.ticketToCancel();
     if (ticket) {
-      this.eventService.cancelRegistration(ticket.id);
+      await this.eventService.cancelRegistrationReal(ticket.ticketCode);
       this.cancelSuccessNotice.set(`Pendaftaran untuk ${ticket.eventTitle} berhasil dibatalkan. Kuota telah dikembalikan.`);
       this.closeCancelModal();
+      await this.generateAllQrCodes();
       setTimeout(() => this.cancelSuccessNotice.set(''), 4000);
-    }
-  }
-
-  checkInTicket(ticket: TicketItem): void {
-    const cert = this.eventService.checkInAndUnlockCertificate(ticket.id);
-    if (cert) {
-      this.cancelSuccessNotice.set(`✓ Presensi Berhasil! Anda tercatat HADIR dan E-Sertifikat resmi serta ${cert.skpiPoints} Poin SKPI telah aktif.`);
-      setTimeout(() => this.cancelSuccessNotice.set(''), 6000);
     }
   }
 

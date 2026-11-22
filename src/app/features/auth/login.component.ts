@@ -201,7 +201,7 @@ export class LoginComponent implements OnInit, OnDestroy {
     }
   }
 
-  onLoginSubmit(): void {
+  async onLoginSubmit(): Promise<void> {
     if (!this.identifier.trim()) {
       this.errorMessage = 'Silakan isi NIM atau Email resmi UII Anda.';
       return;
@@ -212,9 +212,8 @@ export class LoginComponent implements OnInit, OnDestroy {
     this.successMessage = '';
     this.cdr.detectChanges();
 
-    // Emulate JWT token handshake (RFC 7519)
-    setTimeout(() => {
-      const res = this.authService.login(this.identifier, this.password);
+    try {
+      const res = await this.authService.login(this.identifier, this.password);
       this.isLoading = false;
 
       if (res.success) {
@@ -232,8 +231,11 @@ export class LoginComponent implements OnInit, OnDestroy {
       } else {
         this.errorMessage = res.message;
       }
-      this.cdr.detectChanges();
-    }, 200);
+    } catch (e: any) {
+      this.isLoading = false;
+      this.errorMessage = 'Terjadi kesalahan sistem saat menghubungi server.';
+    }
+    this.cdr.detectChanges();
   }
 
   openGoogleLogin(): void {
@@ -301,7 +303,7 @@ export class LoginComponent implements OnInit, OnDestroy {
     return getUiiProdiFromNim(this.regNim);
   }
 
-  onRegisterSubmit(): void {
+  async onRegisterSubmit(): Promise<void> {
     if (!this.regName.trim()) {
       this.errorMessage = 'Silakan masukkan nama lengkap Anda.';
       return;
@@ -324,12 +326,13 @@ export class LoginComponent implements OnInit, OnDestroy {
     this.successMessage = '';
     this.cdr.detectChanges();
 
-    setTimeout(() => {
+    try {
       const prodiInfo = getUiiProdiFromNim(this.regNim);
-      const res = this.authService.register({
+      const res = await this.authService.register({
         name: this.regName,
         nim: this.regNim,
         email: this.regEmail,
+        password: this.regPassword,
         role: this.regRole,
         faculty: this.regRole === 'MAHASISWA' ? prodiInfo.faculty : this.regFaculty,
         studyProgram: this.regRole === 'MAHASISWA' ? prodiInfo.studyProgram : this.regStudyProgram,
@@ -360,7 +363,10 @@ export class LoginComponent implements OnInit, OnDestroy {
       } else {
         this.errorMessage = res.message;
       }
-      this.cdr.detectChanges();
-    }, 150);
+    } catch (e: any) {
+      this.isRegisterLoading = false;
+      this.errorMessage = 'Terjadi kesalahan sistem saat mendaftarkan akun.';
+    }
+    this.cdr.detectChanges();
   }
 }

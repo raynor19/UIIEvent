@@ -1,4 +1,4 @@
-import { Component, inject, computed, signal } from '@angular/core';
+import { Component, inject, computed, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -13,11 +13,21 @@ import * as QRCode from 'qrcode';
   imports: [CommonModule, RouterModule, FormsModule],
   templateUrl: './mahasiswa-dashboard.component.html'
 })
-export class MahasiswaDashboardComponent {
+export class MahasiswaDashboardComponent implements OnInit {
   authService = inject(AuthService);
   eventService = inject(EventService);
 
   currentUser = this.authService.currentUser;
+
+  async ngOnInit(): Promise<void> {
+    if (this.authService.isLoggedIn()) {
+      await Promise.all([
+        this.eventService.loadMyTickets(),
+        this.eventService.loadMyCertificates(),
+        this.eventService.loadMyApplications()
+      ]);
+    }
+  }
 
   // Active Tab: Terdaftar, Riwayat Selesai, Oprec & Lainnya
   activeTab = signal<'TERDAFTAR' | 'RIWAYAT' | 'OPREC'>('TERDAFTAR');

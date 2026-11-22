@@ -224,7 +224,8 @@ export class AdminDashboardComponent implements OnInit {
     return `Menampilkan ${start}-${end} dari 12 data`;
   });
 
-  ngOnInit(): void {
+  async ngOnInit(): Promise<void> {
+    await this.eventService.loadAdminEvents();
     this.checkRoute();
     this.router.events
       .pipe(filter(e => e instanceof NavigationEnd))
@@ -307,7 +308,7 @@ export class AdminDashboardComponent implements OnInit {
 
   // ================= COMPUTED FOR CURATION =================
   pendingEvents = computed(() => {
-    return this.eventService.events().filter(e => e.status === 'PENDING');
+    return this.eventService.events().filter(e => e.status === 'PENDING' || (e.status as any) === 'PENDING_APPROVAL');
   });
 
   filteredPendingEvents = computed(() => {
@@ -358,9 +359,6 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   formatSubmittedAt(item: EventItem): string {
-    if (item.id === 'evt-adm-01') return '19 Nov, 16.05';
-    if (item.id === 'evt-adm-02') return '19 Nov, 11.20';
-    if (item.id === 'evt-adm-03') return '18 Nov, 20.47';
     if (item.submittedAt) {
       try {
         const d = new Date(item.submittedAt);
@@ -372,16 +370,16 @@ export class AdminDashboardComponent implements OnInit {
         return 'Hari ini';
       }
     }
-    return '19 Nov, 16.00';
+    return '-';
   }
 
   selectEvent(item: EventItem): void {
     this.selectedEventId.set(item.id);
   }
 
-  approveEvent(event: EventItem | null): void {
+  async approveEvent(event: EventItem | null): Promise<void> {
     if (!event) return;
-    const success = this.eventService.dpkApproveEvent(event.id, this.currentUser().name);
+    const success = await this.eventService.adminApproveEventReal(event.id);
     if (success) {
       this.toastMessage.set('✓ Acara disetujui dan poster berhasil terbit di @uii.events!');
       this.showToastApproved.set(true);
@@ -429,7 +427,7 @@ export class AdminDashboardComponent implements OnInit {
     this.rejectionError.set(false);
   }
 
-  submitReject(): void {
+  async submitReject(): Promise<void> {
     const reason = this.rejectionReason().trim();
     if (!reason) {
       this.rejectionError.set(true);
@@ -438,13 +436,13 @@ export class AdminDashboardComponent implements OnInit {
     const current = this.selectedEvent();
     if (!current) return;
 
-    this.eventService.dpkRejectEvent(current.id, reason, this.currentUser().name);
+    await this.eventService.adminRejectEventReal(current.id, reason);
     this.closeRejectModal();
   }
 
   resetFigmaSubmissions(): void {
     this.eventService.resetToInitialMock();
-    this.selectedEventId.set('evt-adm-01');
+    this.selectedEventId.set('');
     this.showToastApproved.set(false);
     this.showIgErrorBanner.set(false);
   }
