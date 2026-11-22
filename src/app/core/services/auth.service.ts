@@ -131,6 +131,17 @@ export const MOCK_USERS: UserProfile[] = [
     avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80'
   },
   {
+    id: 'usr-jay-001',
+    nim: '23524001',
+    name: 'Jay',
+    email: '23524001@students.uii.ac.id',
+    phone: '081234567891',
+    faculty: 'Fakultas Teknologi Industri',
+    studyProgram: 'Teknik Elektro',
+    role: 'MAHASISWA',
+    avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80'
+  },
+  {
     id: 'usr-sarah-002',
     nim: '20523120',
     name: 'Panitia UII',
@@ -213,11 +224,13 @@ export class AuthService {
       }
 
       if (savedToken && savedId) {
-        if (savedId === 'usr-rian-001' || savedId === '21523001' || savedId === 'usr-raynor-001') {
-          savedId = 'usr-raynor-001';
-          localStorage.setItem(this.USER_STORAGE_KEY, 'usr-raynor-001');
-        }
-        const found = MOCK_USERS.find(u => u.id === savedId || u.nim === savedId);
+        const cleanSavedId = savedId.replace(/^usr-/, '');
+        const found = MOCK_USERS.find(u => 
+          u.id === savedId || 
+          u.nim === savedId || 
+          u.nim === cleanSavedId ||
+          (cleanSavedId === '23524001' && (u.id === 'usr-jay-001' || u.nim === '23524001'))
+        );
         if (found) {
           if (found.role === 'MAHASISWA' && found.nim) {
             const info = getUiiProdiFromNim(found.nim);
@@ -231,10 +244,10 @@ export class AuthService {
         }
       }
     }
-    // Default active session for instant interactive testing: Muhammad Raynor Athaillah
-    this.currentUser.set(MOCK_USERS[0]);
+    // Default active session for instant interactive testing: Jay
+    this.currentUser.set(MOCK_USERS[1] || MOCK_USERS[0]);
     this.isLoggedIn.set(true);
-    this.jwtToken.set('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJ1c3ItcmF5bm9yLTAwMSIsInJvbGUiOiJNQUhBU0lTV0EifQ');
+    this.jwtToken.set('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJ1c3ItamF5LTAwMSIsInJvbGUiOiJNQUhBU0lTV0EifQ');
   }
 
   /**
@@ -305,11 +318,99 @@ export class AuthService {
    * Local Directory Fallback Login
    */
   loginLocal(identifier: string, password?: string): { success: boolean; message: string; user?: UserProfile } {
-    const cleanId = identifier.trim().toLowerCase();
+    const cleanId = (identifier || '').trim().toLowerCase();
 
-    const user = MOCK_USERS.find(
-      u => u.nim.toLowerCase() === cleanId || u.email.toLowerCase() === cleanId
+    // 1. Direct match in MOCK_USERS by NIM, Email, Name, or ID
+    let user = MOCK_USERS.find(
+      u => u.nim.toLowerCase() === cleanId || 
+           u.email.toLowerCase() === cleanId ||
+           u.name.toLowerCase() === cleanId ||
+           u.id.toLowerCase() === cleanId
     );
+
+    // 2. Direct persona alias matching (Supports "jay", "raynor", "panitia", "admin"):
+    if (!user) {
+      if (cleanId === 'jay' || cleanId.startsWith('jay') || cleanId === '23524001' || cleanId.includes('23524001') || cleanId.includes('jay')) {
+        user = MOCK_USERS.find(u => u.id === 'usr-jay-001' || u.nim === '23524001');
+      } else if (cleanId === 'raynor' || cleanId.startsWith('raynor') || cleanId === '23525055' || cleanId.includes('23525055') || cleanId.includes('raynor')) {
+        user = MOCK_USERS.find(u => u.id === 'usr-raynor-001' || u.nim === '23525055');
+      } else if (cleanId === 'panitia' || cleanId.startsWith('panitia') || cleanId === '20523120') {
+        user = MOCK_USERS.find(u => u.role === 'PANITIA');
+      } else if (cleanId === 'admin' || cleanId.startsWith('admin') || cleanId.includes('19740512') || cleanId === 'dpk') {
+        user = MOCK_USERS.find(u => u.role === 'DPK_ADMIN' || u.id === 'usr-budi-admin');
+      }
+    }
+
+    // 3. Check registered users list in localStorage
+    if (!user && typeof localStorage !== 'undefined') {
+      const savedRegistered = localStorage.getItem('uii_registered_users_list');
+      if (savedRegistered) {
+        try {
+          const list: UserProfile[] = JSON.parse(savedRegistered);
+          user = list.find(u => 
+            u.nim.toLowerCase() === cleanId || 
+            u.email.toLowerCase() === cleanId ||
+            u.name.toLowerCase() === cleanId
+          );
+          if (user && !MOCK_USERS.some(u => u.id === user!.id || u.nim === user!.nim)) {
+            MOCK_USERS.push(user);
+          }
+        } catch (e) {}
+      }
+    }
+
+    // 4. Dynamic UII Campus Directory SSO Resolution:
+    if (!user) {
+      const cleanDigits = cleanId.replace(/\D/g, '');
+      const isNimFormat = cleanDigits.length >= 6 && cleanDigits.length <= 10;
+      const isUiiEmail = cleanId.includes('@students.uii.ac.id') || cleanId.includes('@uii.ac.id');
+      const isEmail = cleanId.includes('@');
+      const isAlphaName = /^[a-zA-Z\s]{2,30}$/.test(cleanId);
+
+      if (isNimFormat || isUiiEmail || isAlphaName || cleanId.includes('jay') || cleanId === '23524001') {
+        const nim = isNimFormat ? cleanDigits : (cleanId.includes('jay') ? '23524001' : (cleanDigits.length >= 6 ? cleanDigits : `2352${Math.floor(1000 + Math.random() * 9000)}`));
+        const prodiInfo = getUiiProdiFromNim(nim);
+
+        let detectedName = 'Mahasiswa UII';
+        if (cleanId.includes('jay') || (password && password.toLowerCase().includes('jay'))) {
+          detectedName = 'Jay';
+        } else if (isAlphaName) {
+          detectedName = cleanId.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+        } else if (password && password.length >= 3 && !password.toLowerCase().startsWith('password')) {
+          const alphaMatch = password.match(/^[a-zA-Z]+/);
+          if (alphaMatch && alphaMatch[0].length >= 3) {
+            detectedName = alphaMatch[0].charAt(0).toUpperCase() + alphaMatch[0].slice(1).toLowerCase();
+          }
+        } else if (isEmail) {
+          const namePart = cleanId.split('@')[0].replace(/[._]/g, ' ');
+          detectedName = namePart.charAt(0).toUpperCase() + namePart.slice(1);
+        }
+
+        user = {
+          id: `usr-${nim}`,
+          nim: nim,
+          name: detectedName,
+          email: isEmail ? cleanId : `${nim}@students.uii.ac.id`,
+          phone: '081234567891',
+          faculty: prodiInfo.faculty,
+          studyProgram: prodiInfo.studyProgram,
+          role: 'MAHASISWA',
+          avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80'
+        };
+
+        MOCK_USERS.push(user);
+        if (typeof localStorage !== 'undefined') {
+          try {
+            const existingSaved = localStorage.getItem('uii_registered_users_list');
+            const list: UserProfile[] = existingSaved ? JSON.parse(existingSaved) : [];
+            if (!list.some(u => u.nim === user!.nim || u.email === user!.email)) {
+              list.push(user);
+              localStorage.setItem('uii_registered_users_list', JSON.stringify(list));
+            }
+          } catch (e) {}
+        }
+      }
+    }
 
     if (!user) {
       return {

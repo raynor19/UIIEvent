@@ -642,31 +642,40 @@ export class EventService {
   }
 
   private initializeData(): void {
+    let hasEvents = false;
+    let hasTickets = false;
+
     if (typeof localStorage !== 'undefined') {
       try {
         const savedEvents = localStorage.getItem(STORAGE_KEYS.EVENTS);
         if (savedEvents) {
           const parsed: EventItem[] = JSON.parse(savedEvents);
-          const valid = parsed.filter(e => !e.id.startsWith('evt-'));
-          this.events.set(valid);
+          if (parsed && parsed.length > 0) {
+            this.events.set(parsed);
+            hasEvents = true;
+          }
         }
         const savedTickets = localStorage.getItem(STORAGE_KEYS.TICKETS);
         if (savedTickets) {
-          const parsed = JSON.parse(savedTickets);
-          const valid = parsed.filter((t: any) => !t.eventId?.startsWith('evt-') && !t.id?.startsWith('tck-'));
-          this.tickets.set(valid);
+          const parsed: TicketItem[] = JSON.parse(savedTickets);
+          if (parsed && parsed.length > 0) {
+            this.tickets.set(parsed);
+            hasTickets = true;
+          }
         }
         const savedRegs = localStorage.getItem(STORAGE_KEYS.REGISTRATIONS);
         if (savedRegs) {
-          const parsed = JSON.parse(savedRegs);
-          const valid = parsed.filter((r: any) => !r.eventId?.startsWith('evt-') && !r.id?.startsWith('reg-'));
-          this.registrations.set(valid);
+          const parsed: RegistrationItem[] = JSON.parse(savedRegs);
+          if (parsed && parsed.length > 0) {
+            this.registrations.set(parsed);
+          }
         }
         const savedCerts = localStorage.getItem(STORAGE_KEYS.CERTIFICATES);
         if (savedCerts) {
-          const parsed = JSON.parse(savedCerts);
-          const valid = parsed.filter((c: any) => !c.eventId?.startsWith('evt-'));
-          this.certificates.set(valid);
+          const parsed: CertificateItem[] = JSON.parse(savedCerts);
+          if (parsed && parsed.length > 0) {
+            this.certificates.set(parsed);
+          }
         }
         const savedLogs = localStorage.getItem(STORAGE_KEYS.NOTIFICATIONS);
         if (savedLogs) {
@@ -676,14 +685,369 @@ export class EventService {
         console.warn('Error reading from localStorage:', e);
       }
     }
+
+    if (!hasEvents || this.events().length === 0 || !hasTickets || this.tickets().length === 0) {
+      this.loadMockDefaults();
+    }
   }
 
   private loadMockDefaults(): void {
-    // Pure live DB mode: No mock seeds
-    this.events.set([]);
-    this.registrations.set([]);
-    this.tickets.set([]);
-    this.certificates.set([]);
+    const seedEvents: EventItem[] = [
+      {
+        id: 'evt-001',
+        title: 'Seminar Nasional AI 2026: Generative Intelligence for Industrial Transformation',
+        slug: 'seminar-nasional-ai-2026',
+        category: 'SEMINAR',
+        categoryLabel: 'Seminar Nasional',
+        organizer: 'LEM FTI UII x Jurusan Informatika',
+        faculty: 'Fakultas Teknologi Industri',
+        description: 'Eksplorasi mendalam arsitektur model AI tingkat lanjut, strategi adopsi industri 5.0, serta etika kepatuhan data kecerdasan buatan di era otomasi tinggi. Disertai sertifikasi kompetensi SKPI resmi UII.',
+        date: '2026-11-22',
+        time: '08:30 - 12:30 WIB',
+        location: 'Kampus Terpadu UII, Jl. Kaliurang KM 14.5',
+        room: 'Auditorium Prof. K.H. Abdul Kahar Mudzakkir',
+        bannerUrl: '/assets/images/seminar-ai-uii.jpg',
+        quotaTotal: 300,
+        quotaRemaining: 300,
+        status: 'PUBLISHED',
+        skpiPoints: 15,
+        isFree: true,
+        speaker: {
+          name: 'Prof. Dr. Ir. Hari Purnomo, M.T.',
+          role: 'Head of Center for AI Innovation & Data Science',
+          company: 'Universitas Islam Indonesia'
+        },
+        instagramPostStatus: {
+          isPosted: true,
+          postId: 'ig_post_883921049',
+          postedAt: '18 Nov 2026, 14:10 WIB',
+          mediaUrl: 'https://instagram.com/p/uii.events/883921'
+        },
+        whatsappHelpdesk: '6281234567890'
+      },
+      {
+        id: 'evt-002',
+        title: 'Workshop Pengelola Website: Pengelolaan Konten Berbasis SEO dan AI',
+        slug: 'workshop-pengelola-website-seo-ai-uii',
+        category: 'WORKSHOP',
+        categoryLabel: 'Hands-on Workshop',
+        organizer: 'Direktorat Sistem Informasi x LEM UII',
+        faculty: 'Universitas Islam Indonesia',
+        description: 'Pelatihan intensif pengelolaan konten website institusi dan ormawa berbasis SEO dan AI untuk memperkuat visibilitas digital ekosistem UII. Diselenggarakan di Gedung Prof. Dr. Sardjito.',
+        date: '2026-11-25',
+        time: '09:00 - 15:30 WIB',
+        location: 'Gedung Prof. Dr. Sardjito UII, Kampus Terpadu',
+        room: 'Ruang Teatrikal Gedung Prof. Dr. Sardjito',
+        bannerUrl: '/assets/images/workshop-ai-uii.jpg',
+        quotaTotal: 60,
+        quotaRemaining: 60,
+        status: 'PUBLISHED',
+        skpiPoints: 20,
+        isFree: true,
+        speaker: {
+          name: 'Pakar Konten SEO & AI UII',
+          role: 'Konsultan Optimasi Web',
+          company: 'Direktorat Sistem & Teknologi Informasi'
+        },
+        instagramPostStatus: {
+          isPosted: true,
+          postId: 'ig_post_991823712',
+          postedAt: '17 Nov 2026, 10:00 WIB',
+          mediaUrl: 'https://instagram.com/p/uii.events/991823'
+        },
+        whatsappHelpdesk: '6281298765432'
+      },
+      {
+        id: 'evt-003',
+        title: 'Open Recruitment Panitia PESTA UII 2027 (Pekan Seni & Ta\'aruf Mahasiswa)',
+        slug: 'oprec-panitia-pesta-uii-2027',
+        category: 'COMMITTEE_RECRUITMENT',
+        categoryLabel: 'Oprec Kepanitiaan',
+        organizer: 'Lembaga Eksekutif Mahasiswa (LEM) Universitas',
+        faculty: 'Tingkat Universitas',
+        description: 'Panggilan kepemimpinan bagi seluruh mahasiswa aktif UII untuk bergabung dalam kepanitiaan penyambutan mahasiswa baru terbesar di UII. Tersedia divisi strategis dan teknis.',
+        date: '2026-12-01',
+        time: '09:00 - 17:00 WIB (Wawancara)',
+        location: 'Student Center UII',
+        room: 'Ruang Sidang Utama LEM UII Lt. 2',
+        bannerUrl: '/assets/images/oprec-pesta-uii.jpg',
+        quotaTotal: 120,
+        quotaRemaining: 120,
+        status: 'PUBLISHED',
+        skpiPoints: 25,
+        isFree: true,
+        oprecDivisions: [
+          'Divisi Acara & Manajemen Panggung',
+          'Divisi Humas & Publikasi (Medsos)',
+          'Divisi IT & Presensi Web Scanner',
+          'Divisi Logistik & Konsumsi',
+          'Divisi Kreatif & Visual Branding'
+        ],
+        instagramPostStatus: {
+          isPosted: true,
+          postId: 'ig_post_55123984',
+          postedAt: '19 Nov 2026, 08:00 WIB',
+          mediaUrl: 'https://instagram.com/p/uii.events/551239'
+        },
+        whatsappHelpdesk: '6281122334455'
+      },
+      {
+        id: 'evt-004',
+        title: 'National Islamic Technology Competition (NITC 2026): Sharia FinTech & GovTech',
+        slug: 'national-islamic-technology-competition-2026',
+        category: 'LOMBA',
+        categoryLabel: 'Kompetisi Nasional',
+        organizer: 'Dewan Riset Mahasiswa Sains & Teknologi UII',
+        faculty: 'Fakultas Matematika & Ilmu Pengetahuan Alam',
+        description: 'Ajang kompetisi inovasi perangkat lunak berbasis nilai keislaman dan kebermanfaatan umat dengan total hadiah puluhan juta rupiah serta sertifikat berbobot SKPI.',
+        date: '2026-12-10',
+        time: '08:00 - 16:00 WIB',
+        location: 'Auditorium FMIPA UII, Kampus Terpadu',
+        room: 'Hall K.H. Mas Mansyur Lt. 3',
+        bannerUrl: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=1200&q=80',
+        quotaTotal: 80,
+        quotaRemaining: 80,
+        status: 'PUBLISHED',
+        skpiPoints: 30,
+        isFree: true,
+        speaker: {
+          name: 'Ahmad Faiz, S.T., M.Eng.',
+          role: 'Islamic FinTech Architect',
+          company: 'BSI Sharia Innovation Center'
+        },
+        instagramPostStatus: {
+          isPosted: true,
+          postId: 'ig_post_33910248',
+          postedAt: '15 Nov 2026, 12:00 WIB'
+        },
+        whatsappHelpdesk: '6281234567890'
+      },
+      {
+        id: 'evt-005',
+        title: 'Malam Refleksi & Apresiasi Seni Kemahasiswaan (Gala Budaya UII)',
+        slug: 'malam-refleksi-apresiasi-seni-uii',
+        category: 'KONSER',
+        categoryLabel: 'Konser & Pagelaran Seni',
+        organizer: 'UKM Kesenian & Budaya UII',
+        faculty: 'Direktorat Pembinaan Kemahasiswaan',
+        description: 'Malam keakraban, pementasan teater islami, musik akustik, puisi kontemplasi perjuangan kemahasiswaan serta penghargaan Ormawa Berprestasi UII 2026.',
+        date: '2026-12-18',
+        time: '19:30 - 22:30 WIB',
+        location: 'Lapangan Gedung Prof. Dr. Sardjito UII',
+        room: 'Open Air Amphitheater UII',
+        bannerUrl: 'https://images.unsplash.com/photo-1465847899084-d164df4dedc6?auto=format&fit=crop&w=1200&q=80',
+        quotaTotal: 400,
+        quotaRemaining: 400,
+        status: 'PUBLISHED',
+        skpiPoints: 10,
+        isFree: true,
+        instagramPostStatus: {
+          isPosted: false
+        },
+        whatsappHelpdesk: '6281234567890'
+      },
+      {
+        id: 'evt-006',
+        title: 'Workshop Cyber Security 2026: Hands-on Penetration Testing & Ethical Defense',
+        slug: 'workshop-cyber-security-ethical-defense-2026',
+        category: 'WORKSHOP',
+        categoryLabel: 'Hands-on Workshop',
+        organizer: 'UKM Informatika & Multimedia UII',
+        faculty: 'Fakultas Teknologi Industri',
+        description: 'Pelatihan praktis audit keamanan sistem informasi web kampus, teknik patching vulnerabilitas OWASP Top 10, dan mitigasi serangan DDoS.',
+        date: '2026-12-23',
+        time: '09:00 - 15:00 WIB',
+        location: 'Gedung K.H. Mas Mansyur FTI UII',
+        room: 'Lab Jaringan & Cyber Security Lt. 2',
+        bannerUrl: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=1200&q=80',
+        quotaTotal: 40,
+        quotaRemaining: 40,
+        status: 'PUBLISHED',
+        skpiPoints: 20,
+        isFree: true,
+        whatsappHelpdesk: '6281298765432'
+      }
+    ];
+
+    const workshopCodeJay = 'UII-TIK-2026-5241';
+    const workshopHashJay = this.generateHashSignature('23524001', 'evt-002', workshopCodeJay);
+    const seminarCodeJay = 'UII-TIK-2026-5242';
+    const seminarHashJay = this.generateHashSignature('23524001', 'evt-001', seminarCodeJay);
+    const galaCodeJay = 'UII-TIK-2026-5244';
+    const galaHashJay = this.generateHashSignature('23524001', 'evt-005', galaCodeJay);
+
+    const seedTickets: TicketItem[] = [
+      {
+        id: 'tck-workshop-jay-001',
+        registrationId: 'reg-workshop-jay-001',
+        ticketCode: workshopCodeJay,
+        eventId: 'evt-002',
+        eventTitle: 'Workshop Pengelola Website: Pengelolaan Konten Berbasis SEO dan AI',
+        eventCategory: 'WORKSHOP',
+        eventDate: '2026-11-25',
+        eventTime: '08:30 - 15:30 WIB',
+        eventLocation: 'Gedung Prof. Dr. Sardjito UII, Kampus Terpadu',
+        eventRoom: 'Ruang Teatrikal Gedung Prof. Dr. Sardjito',
+        userId: 'usr-jay-001',
+        userName: 'Jay',
+        userNim: '23524001',
+        userStudyProgram: 'Teknik Elektro - Fakultas Teknologi Industri',
+        qrPayload: JSON.stringify({
+          ticketCode: workshopCodeJay,
+          nim: '23524001',
+          name: 'Jay',
+          eventId: 'evt-002',
+          hash: workshopHashJay,
+          timestamp: 1763640000000
+        }),
+        hashSignature: workshopHashJay,
+        timestampIssued: '22 November 2026, 09:00 WIB',
+        isCheckedIn: false
+      },
+      {
+        id: 'tck-seminar-jay-001',
+        registrationId: 'reg-seminar-jay-001',
+        ticketCode: seminarCodeJay,
+        eventId: 'evt-001',
+        eventTitle: 'Seminar Nasional AI & Karir Teknologi 2026',
+        eventCategory: 'SEMINAR',
+        eventDate: '2026-11-25',
+        eventTime: '08:00 - 12:30 WIB',
+        eventLocation: 'Kampus Terpadu UII, Gedung FTI',
+        eventRoom: 'Auditorium KH. Abdurrahman Wahid Lt. 3',
+        userId: 'usr-jay-001',
+        userName: 'Jay',
+        userNim: '23524001',
+        userStudyProgram: 'Teknik Elektro - Fakultas Teknologi Industri',
+        qrPayload: JSON.stringify({
+          ticketCode: seminarCodeJay,
+          nim: '23524001',
+          name: 'Jay',
+          eventId: 'evt-001',
+          hash: seminarHashJay,
+          timestamp: 1763640000000
+        }),
+        hashSignature: seminarHashJay,
+        timestampIssued: '22 November 2026, 09:10 WIB',
+        isCheckedIn: false
+      },
+      {
+        id: 'tck-gala-jay-001',
+        registrationId: 'reg-gala-jay-001',
+        ticketCode: galaCodeJay,
+        eventId: 'evt-005',
+        eventTitle: 'Malam Refleksi & Apresiasi Seni Kemahasiswaan (Gala Budaya UII)',
+        eventCategory: 'CONCERT',
+        eventDate: '2026-12-18',
+        eventTime: '19:30 - 22:30 WIB',
+        eventLocation: 'Open Air Amphitheater UII',
+        eventRoom: 'Panggung Utama Amphitheater',
+        userId: 'usr-jay-001',
+        userName: 'Jay',
+        userNim: '23524001',
+        userStudyProgram: 'Teknik Elektro - Fakultas Teknologi Industri',
+        qrPayload: JSON.stringify({
+          ticketCode: galaCodeJay,
+          nim: '23524001',
+          name: 'Jay',
+          eventId: 'evt-005',
+          hash: galaHashJay,
+          timestamp: 1763640000000
+        }),
+        hashSignature: galaHashJay,
+        timestampIssued: '22 November 2026, 09:15 WIB',
+        isCheckedIn: true,
+        checkedInAt: '19.45 WIB',
+        checkedInBy: 'Meja Registrasi UII'
+      }
+    ];
+
+    const seedRegistrations: RegistrationItem[] = [
+      {
+        id: 'reg-workshop-jay-001',
+        userId: 'usr-jay-001',
+        userNim: '23524001',
+        userName: 'Jay',
+        userEmail: '23524001@students.uii.ac.id',
+        userPhone: '081234567891',
+        userFaculty: 'Fakultas Teknologi Industri',
+        userStudyProgram: 'Teknik Elektro',
+        eventId: 'evt-002',
+        eventTitle: 'Workshop Pengelola Website: Pengelolaan Konten Berbasis SEO dan AI',
+        eventDate: '2026-11-25',
+        eventLocation: 'Ruang Teatrikal Gedung Prof. Dr. Sardjito',
+        status: 'REGISTERED',
+        createdAt: '2026-11-22T09:00:00.000Z'
+      },
+      {
+        id: 'reg-seminar-jay-001',
+        userId: 'usr-jay-001',
+        userNim: '23524001',
+        userName: 'Jay',
+        userEmail: '23524001@students.uii.ac.id',
+        userPhone: '081234567891',
+        userFaculty: 'Fakultas Teknologi Industri',
+        userStudyProgram: 'Teknik Elektro',
+        eventId: 'evt-001',
+        eventTitle: 'Seminar Nasional AI & Karir Teknologi 2026',
+        eventDate: '2026-11-25',
+        eventLocation: 'Auditorium KH. Abdurrahman Wahid Lt. 3',
+        status: 'REGISTERED',
+        createdAt: '2026-11-22T09:10:00.000Z'
+      },
+      {
+        id: 'reg-gala-jay-001',
+        userId: 'usr-jay-001',
+        userNim: '23524001',
+        userName: 'Jay',
+        userEmail: '23524001@students.uii.ac.id',
+        userPhone: '081234567891',
+        userFaculty: 'Fakultas Teknologi Industri',
+        userStudyProgram: 'Teknik Elektro',
+        eventId: 'evt-005',
+        eventTitle: 'Malam Refleksi & Apresiasi Seni Kemahasiswaan (Gala Budaya UII)',
+        eventDate: '2026-12-18',
+        eventLocation: 'Open Air Amphitheater UII',
+        status: 'ATTENDED',
+        createdAt: '2026-11-22T09:15:00.000Z',
+        attendedAt: '2026-11-22T19:45:00.000Z'
+      }
+    ];
+
+    const galaCertCode = 'UII/SKPI/2026/FTI-5244';
+    const galaCertHash = this.generateHashSignature('23524001', 'evt-005', galaCertCode);
+
+    const seedCertificates: CertificateItem[] = [
+      {
+        id: 'cert-gala-jay-001',
+        registrationId: 'reg-gala-jay-001',
+        ticketId: 'tck-gala-jay-001',
+        eventId: 'evt-005',
+        eventTitle: 'Malam Refleksi & Apresiasi Seni Kemahasiswaan (Gala Budaya UII)',
+        eventDate: '18 Desember 2026',
+        organizer: 'UKM Kesenian & Budaya UII',
+        eventRoom: 'Open Air Amphitheater UII',
+        publishedAtFormatted: '18 Desember 2026 · 19.45 WIB (saat presensi)',
+        userId: 'usr-jay-001',
+        userName: 'Jay',
+        userNim: '23524001',
+        userFaculty: 'Fakultas Teknologi Industri',
+        userStudyProgram: 'Teknik Elektro',
+        certificateNumber: galaCertCode,
+        skpiPoints: 10,
+        issueDate: '18 Desember 2026',
+        verificationHash: galaCertHash,
+        issuerName: 'Dr. Ir. Budi Hartono, M.T.',
+        issuerRole: 'Direktur Pembinaan Kemahasiswaan UII',
+        isUnlocked: true
+      }
+    ];
+
+    this.events.set(seedEvents);
+    this.registrations.set(seedRegistrations);
+    this.tickets.set(seedTickets);
+    this.certificates.set(seedCertificates);
+    this.saveToStorage();
   }
   private saveToStorage(): void {
     if (typeof localStorage === 'undefined') return;
