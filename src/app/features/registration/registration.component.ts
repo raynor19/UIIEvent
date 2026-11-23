@@ -153,8 +153,9 @@ export class RegistrationComponent implements OnInit {
       this.successMessage = result.message;
       
       // If ticket is directly returned or sync from backend
+      let targetTicket: TicketItem | null = null;
       if (result.ticket) {
-        this.createdTicket.set(result.ticket);
+        targetTicket = result.ticket;
       } else {
         const currentUser = this.authService.currentUser();
         const userTickets = this.eventService.tickets().filter(t => 
@@ -162,19 +163,28 @@ export class RegistrationComponent implements OnInit {
           t.eventId === evt.id
         );
         if (userTickets.length > 0) {
-          const t = userTickets[userTickets.length - 1];
-          this.createdTicket.set(t);
-          if (t && t.qrPayload) {
-            QRCode.toDataURL(t.qrPayload, {
-              margin: 1,
-              width: 240,
-              color: { dark: '#002B66', light: '#FFFFFF' }
-            }).then(url => {
+          targetTicket = userTickets[userTickets.length - 1];
+        }
+      }
+
+      if (targetTicket) {
+        this.createdTicket.set(targetTicket);
+        const qrPayloadToUse = targetTicket.qrPayload || targetTicket.ticketCode;
+        QRCode.toDataURL(qrPayloadToUse, {
+          margin: 1,
+          width: 240,
+          color: { dark: '#002B66', light: '#FFFFFF' }
+        }).then(url => {
+          this.qrDataUrl.set(url);
+          this.cdr.detectChanges();
+        }).catch(err => {
+          console.error('Failed to generate registration QR code', err);
+          QRCode.toDataURL(targetTicket!.ticketCode, { margin: 1, width: 240 })
+            .then(url => {
               this.qrDataUrl.set(url);
               this.cdr.detectChanges();
-            }).catch(err => console.error('Failed to generate registration QR code', err));
-          }
-        }
+            });
+        });
       }
     }
     this.cdr.detectChanges();

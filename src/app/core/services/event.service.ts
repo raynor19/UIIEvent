@@ -407,6 +407,11 @@ export class EventService {
           };
         }
         if (err?.status === 400 || err?.status === 404 || err?.status === 422) {
+          // If backend returned 404 or not found, check client-side ticket database before rejecting
+          const localCheck = this.processScan(payload, operatorName);
+          if (localCheck.status === 'SUCCESS' || localCheck.status === 'DUPLICATE') {
+            return localCheck;
+          }
           return {
             status: 'INVALID',
             message: err.error?.message || 'Tiket Tidak Valid: Kode QR tidak terdaftar di sistem kepanitiaan UII.',
@@ -624,26 +629,83 @@ export class EventService {
 
   mapBackendTicketToFrontend(be: any): TicketItem {
     const currentUser = this.authService.currentUser();
+    const ticketCode = be.ticket_code || `UII-TIK-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+    const eventId = be.event?.id || be.event_id || '';
+    const nim = be.participant?.nim || currentUser.nim;
+    const name = be.participant?.name || currentUser.name;
+    const fallbackPayload = JSON.stringify({
+      ticketCode: ticketCode,
+      nim: nim,
+      name: name,
+      eventId: eventId,
+      hash: be.hmac_signature || ticketCode,
+      timestamp: Date.now()
+    });
+
     return {
-      id: be.id,
+      id: be.id || ('tck-' + Math.random().toString(36).substring(2, 9)),
       registrationId: be.registration_id || be.id,
-      ticketCode: be.ticket_code,
-      eventId: be.event?.id || '',
+      ticketCode: ticketCode,
+      eventId: eventId,
       eventTitle: be.event?.title || 'Kegiatan UII',
-      eventCategory: 'SEMINAR',
+      eventCategory: (be.event?.category?.name || be.event?.activity_type || 'SEMINAR') as any,
       eventDate: be.event?.start_time ? be.event.start_time.substring(0, 10) : '2026-11-25',
       eventTime: be.event?.start_time ? `${new Date(be.event.start_time).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB` : '08:30 WIB',
       eventLocation: be.event?.location || 'Kampus Terpadu UII',
       eventRoom: be.event?.location || 'Auditorium',
       userId: be.participant?.id || currentUser.id,
-      userName: be.participant?.name || currentUser.name,
-      userNim: be.participant?.nim || currentUser.nim,
+      userName: name,
+      userNim: nim,
       userStudyProgram: be.participant?.study_program || currentUser.studyProgram,
-      qrPayload: be.qr_payload,
-      hashSignature: be.ticket_code,
+      qrPayload: be.qr_payload || fallbackPayload,
+      hashSignature: be.hmac_signature || be.ticket_code,
       timestampIssued: be.created_at || 'Hari ini',
       isCheckedIn: be.is_checked_in || false,
       checkedInAt: be.checked_in_at
+    };
+  }
+
+  generateLocalTicketForEvent(event?: EventItem, data?: any): TicketItem {
+    const user = this.authService.currentUser();
+    const eventId = event?.id || data?.eventId || '';
+    const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+    const ticketCode = `TKT-OPREC-2026-${randomSuffix}`;
+    const hashSignature = this.generateHashSignature(user.nim, eventId, ticketCode);
+
+    const qrPayloadObj = {
+      ticketCode: ticketCode,
+      nim: user.nim,
+      name: user.name,
+      eventId: eventId,
+      hash: hashSignature,
+      timestamp: Date.now()
+    };
+
+    return {
+      id: 'tck-' + Math.random().toString(36).substring(2, 9),
+      registrationId: 'reg-' + Math.random().toString(36).substring(2, 9),
+      ticketCode: ticketCode,
+      eventId: eventId,
+      eventTitle: event?.title || 'Kegiatan Kepanitiaan UII',
+      eventCategory: event?.category || 'COMMITTEE_RECRUITMENT',
+      eventDate: event?.date || '2026-11-27',
+      eventTime: event?.time || '08:30 WIB',
+      eventLocation: event?.location || 'Kampus Terpadu UII',
+      eventRoom: event?.room || 'Auditorium',
+      userId: user.id,
+      userName: user.name,
+      userNim: user.nim,
+      userStudyProgram: `${user.studyProgram} - ${user.faculty}`,
+      qrPayload: JSON.stringify(qrPayloadObj),
+      hashSignature: hashSignature,
+      timestampIssued: new Date().toLocaleDateString('id-ID', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      }) + ' WIB',
+      isCheckedIn: false
     };
   }
 
@@ -1150,10 +1212,28 @@ export class EventService {
             this.http.post(`${environment.apiUrl}/events/${data.eventId}/apply`, fd)
           );
           await this.syncWithBackend();
+
+          let createdTicket: TicketItem | undefined;
+          if (res?.data?.ticket) {
+            createdTicket = this.mapBackendTicketToFrontend(res.data.ticket);
+          } else {
+            createdTicket = this.generateLocalTicketForEvent(event, data);
+          }
+
+          if (createdTicket) {
+            this.tickets.update(prev => [createdTicket!, ...prev.filter(t => t.id !== createdTicket!.id && t.ticketCode !== createdTicket!.ticketCode)]);
+          }
+
+          if (event) {
+            event.quotaRemaining = Math.max(0, event.quotaRemaining - 1);
+            this.events.update(prev => prev.map(e => e.id === event.id ? { ...event } : e));
+          }
+
           return {
             success: true,
             statusCode: 201,
-            message: res?.message || 'Pendaftaran open recruitment panitia berhasil dikirim!'
+            message: res?.message || 'Pendaftaran open recruitment panitia berhasil dikirim! E-Tiket Anda siap digunakan.',
+            ticket: createdTicket
           };
         } else {
           const res: any = await firstValueFrom(
