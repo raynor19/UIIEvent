@@ -517,6 +517,7 @@ export class AuthService {
           name: userData.name,
           email: userData.email,
           password: userData.password || 'password123',
+          password_confirmation: userData.password || 'password123',
           phone_number: userData.phone || '081234567890',
           nim: userData.nim,
           faculty: userData.faculty,

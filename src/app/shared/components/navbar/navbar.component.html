@@ -101,11 +101,11 @@
           <button 
             (click)="authService.logout()"
             title="Keluar dari sesi SSO"
-            class="px-3 py-1.5 rounded-xl bg-red-950/50 hover:bg-red-900 border border-red-500/30 text-red-300 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer">
+            class="px-2.5 sm:px-3 py-1.5 rounded-xl bg-red-600 hover:bg-red-700 active:bg-red-800 text-white text-xs font-bold flex items-center gap-1.5 transition cursor-pointer shadow-sm">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
             </svg>
-            <span class="hidden sm:inline">Keluar</span>
+            <span class="inline">Keluar</span>
           </button>
         } @else {
           <a 
