@@ -1,7 +1,7 @@
 <nav class="md:hidden fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-md border-t border-slate-200 z-50 py-1.5 px-3 shadow-lg no-print">
   @if (authService.currentUser().role === 'MAHASISWA') {
-    <!-- Navigation for Mahasiswa (4 items: Dashboard, Katalog, Tiket Saya, Sertifikat SKPI) -->
-    <div class="grid grid-cols-4 gap-1">
+    <!-- Navigation for Mahasiswa (5 items: Dashboard, Katalog, Tiket Saya, Sertifikat SKPI, Keluar) -->
+    <div class="grid grid-cols-5 gap-1">
       <a routerLink="/dashboard/mahasiswa" routerLinkActive="text-uii-blue font-bold scale-105"
          class="flex flex-col items-center justify-center py-1 text-slate-500 hover:text-uii-blue transition">
         <svg class="w-5 h-5 mb-0.5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -43,10 +43,19 @@
           </span>
         }
       </a>
+
+      <!-- Tombol Keluar Langsung di Mobile Thumb Zone -->
+      <button type="button" (click)="authService.logout()"
+              class="flex flex-col items-center justify-center py-1 text-rose-500 hover:text-rose-700 active:scale-95 transition cursor-pointer">
+        <svg class="w-5 h-5 mb-0.5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+        </svg>
+        <span class="text-[10px] font-bold text-rose-600">Keluar</span>
+      </button>
     </div>
   } @else if (authService.currentUser().role === 'PANITIA') {
-    <!-- Navigation for Panitia (4 items: Dashboard, Katalog, Scanner Meja, SKPI) -->
-    <div class="grid grid-cols-4 gap-1">
+    <!-- Navigation for Panitia (5 items: Dashboard, Katalog, Scanner Meja, SKPI, Keluar) -->
+    <div class="grid grid-cols-5 gap-1">
       <a routerLink="/dashboard" routerLinkActive="text-uii-blue font-bold scale-105"
          class="flex flex-col items-center justify-center py-1 text-slate-500 hover:text-uii-blue transition">
         <svg class="w-5 h-5 mb-0.5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -80,10 +89,19 @@
         </svg>
         <span class="text-[10px]">SKPI</span>
       </a>
+
+      <!-- Tombol Keluar Langsung di Mobile Thumb Zone -->
+      <button type="button" (click)="authService.logout()"
+              class="flex flex-col items-center justify-center py-1 text-rose-500 hover:text-rose-700 active:scale-95 transition cursor-pointer">
+        <svg class="w-5 h-5 mb-0.5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+        </svg>
+        <span class="text-[10px] font-bold text-rose-600">Keluar</span>
+      </button>
     </div>
   } @else {
-    <!-- Navigation for Super Admin DPK (3 items: Dashboard DPK, Katalog Acara, Verifikasi SKPI) -->
-    <div class="grid grid-cols-3 gap-1">
+    <!-- Navigation for Super Admin DPK (4 items: Dashboard DPK, Katalog Acara, Verifikasi SKPI, Keluar) -->
+    <div class="grid grid-cols-4 gap-1">
       <a routerLink="/dashboard" routerLinkActive="text-purple-900 font-bold scale-105"
          class="flex flex-col items-center justify-center py-1 text-slate-500 hover:text-purple-900 transition">
         <svg class="w-5 h-5 mb-0.5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -107,6 +125,15 @@
         </svg>
         <span class="text-[10px]">SKPI Register</span>
       </a>
+
+      <!-- Tombol Keluar Langsung di Mobile Thumb Zone -->
+      <button type="button" (click)="authService.logout()"
+              class="flex flex-col items-center justify-center py-1 text-rose-500 hover:text-rose-700 active:scale-95 transition cursor-pointer">
+        <svg class="w-5 h-5 mb-0.5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+        </svg>
+        <span class="text-[10px] font-bold text-rose-600">Keluar</span>
+      </button>
     </div>
   }
 </nav>
