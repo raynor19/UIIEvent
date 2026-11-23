@@ -65,6 +65,38 @@ export class EventService {
   constructor(private authService: AuthService) {
     this.initializeData();
     this.syncWithBackend();
+    this.startKeepAlivePing();
+  }
+
+  /**
+   * Ping backend every 10 minutes to prevent Render.com cold start
+   */
+  private startKeepAlivePing(): void {
+    const PING_INTERVAL_MS = 10 * 60 * 1000; // 10 minutes
+    const doPing = () => {
+      this.http.get(`${environment.apiUrl}/ping`).subscribe({
+        next: () => console.debug('[Keep-alive] Backend ping OK'),
+        error: () => {} // silent
+      });
+    };
+    // Initial ping after 5 seconds to wake up Render.com
+    setTimeout(doPing, 5000);
+    setInterval(doPing, PING_INTERVAL_MS);
+  }
+
+  /**
+   * Check if current token is a real Sanctum token (not mock)
+   */
+  private hasRealToken(): boolean {
+    const token = this.authService.jwtToken();
+    if (!token) return false;
+    // Real Sanctum tokens don't end with '.sig' and don't contain mock payload markers
+    if (token.endsWith('.sig')) return false;
+    // Real tokens also have proper profile saved
+    const profile = typeof localStorage !== 'undefined'
+      ? localStorage.getItem('uii_user_profile')
+      : null;
+    return !!profile;
   }
 
   /**
@@ -729,7 +761,8 @@ export class EventService {
   }): Promise<RegistrationResult> {
     const event = this.getEventById(data.eventId);
 
-    if (this.authService.isLoggedIn() && this.authService.jwtToken()) {
+    // Only call real backend if user has a real Sanctum token (not a mock JWT)
+    if (this.authService.isLoggedIn() && this.authService.jwtToken() && this.hasRealToken()) {
       try {
         const isCommittee = event?.category === 'COMMITTEE_RECRUITMENT' ||
           event?.categoryLabel?.toLowerCase().includes('recruitment') ||
@@ -783,7 +816,37 @@ export class EventService {
           return {
             success: false,
             statusCode: 409,
-            message: err.error?.message || 'Pendaftaran Ditolak: Anda sudah terdaftar di acara ini (HTTP 409 Conflict).'
+            message: err.error?.message || 'Pendaftaran Ditolak: Anda sudah terdaftar di acara ini.'
+          };
+        }
+        if (err?.status === 401) {
+          return {
+            success: false,
+            statusCode: 401,
+            message: 'Sesi login Anda telah berakhir. Silakan login ulang untuk mendaftar kegiatan.'
+          };
+        }
+        if (err?.status === 403) {
+          return {
+            success: false,
+            statusCode: 403,
+            message: err.error?.message || 'Akses ditolak: Anda tidak memiliki izin untuk mendaftar kegiatan ini.'
+          };
+        }
+        if (err?.status === 422) {
+          const validationMsg = err.error?.errors?.map((e: any) => e.message).join(', ');
+          return {
+            success: false,
+            statusCode: 422,
+            message: validationMsg || err.error?.message || 'Data pendaftaran tidak valid.'
+          };
+        }
+        // Network error / Failed to fetch (CORS, timeout, server offline)
+        if (err?.status === 0 || err?.name === 'TimeoutError') {
+          return {
+            success: false,
+            statusCode: 0,
+            message: 'Gagal menghubungi server. Periksa koneksi internet Anda atau coba beberapa saat lagi.'
           };
         }
         return {

@@ -36,6 +36,7 @@ export class RegistrationComponent implements OnInit {
 
   // Conflict state & Success State (SCR-REG-03)
   conflictError = signal<boolean>(false);
+  errorMessage = signal<string>('');
   registrationSuccess = signal<boolean>(false);
   successMessage = '';
   createdTicket = signal<TicketItem | null>(null);
@@ -145,7 +146,7 @@ export class RegistrationComponent implements OnInit {
         // HTTP 409 Conflict handling (US-01 / FR-REG-02)
         this.conflictError.set(true);
       } else {
-        alert(result.message);
+        this.errorMessage.set(result.message);
       }
     } else {
       this.registrationSuccess.set(true);

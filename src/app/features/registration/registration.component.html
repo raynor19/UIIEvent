@@ -116,6 +116,20 @@
         </div>
       }
 
+      <!-- ================= GENERIC ERROR BANNER (Network / Auth / Server errors) ================= -->
+      @if (errorMessage()) {
+        <div class="bg-orange-50 border-2 border-orange-400/80 rounded-2xl p-5 shadow-sm text-xs space-y-2 animate-in">
+          <div class="flex items-start gap-2 text-orange-900 font-black text-sm">
+            <span>❌</span>
+            <span>Pendaftaran Gagal</span>
+          </div>
+          <p class="text-orange-800 leading-relaxed">{{ errorMessage() }}</p>
+          <button type="button" (click)="errorMessage.set('')" class="text-orange-700 hover:underline font-bold text-xs">
+            Tutup
+          </button>
+        </div>
+      }
+
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         
         <!-- Left: Form Body (8 cols on lg) -->
